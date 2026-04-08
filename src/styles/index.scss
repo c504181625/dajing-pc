@@ -1,0 +1,62 @@
+@use './variables.scss';
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family:
+    'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', 'Noto Sans SC', sans-serif;
+  color: var(--dj-color-text-primary);
+  background: var(--dj-color-bg-page);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.app-card {
+  border: none !important;
+  border-radius: var(--dj-radius) !important;
+  box-shadow: 0 6px 24px rgb(15 32 64 / 6%) !important;
+}
+
+.page-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--dj-space-3);
+  align-items: center;
+  margin-bottom: var(--dj-space-3);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--dj-space-3);
+}
+
+.summary-card {
+  padding: var(--dj-space-4);
+  background: linear-gradient(135deg, #fff 0%, #f7faff 100%);
+  border-radius: var(--dj-radius);
+}
+
+.summary-label {
+  font-size: 13px;
+  color: var(--dj-color-text-regular);
+}
+
+.summary-value {
+  margin-top: 10px;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--dj-color-text-primary);
+}
