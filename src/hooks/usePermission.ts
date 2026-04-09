@@ -10,7 +10,7 @@ export function usePermission() {
   }
 
   return {
-    permissions: computed(() => userStore.userInfo?.permissions || []),
+    permissions: computed(() => userStore.userInfo?.permissionCodes || []),
     hasPermission,
   }
 }

@@ -1,6 +1,6 @@
 import 'vue-router'
 
-import type { RoleCode } from './auth'
+import type { AccountType, EnterpriseCapability, PlatformRole } from './auth'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -8,7 +8,9 @@ declare module 'vue-router' {
     icon?: string
     hidden?: boolean
     alwaysShow?: boolean
-    roles?: RoleCode[]
+    accountTypes?: AccountType[]
+    platformRoles?: PlatformRole[]
+    enterpriseCapabilities?: EnterpriseCapability[]
     permissions?: string[]
     activeMenu?: string
   }

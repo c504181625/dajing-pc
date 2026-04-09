@@ -31,7 +31,7 @@ defineProps<{
   </el-card>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .qualification-list {
   display: flex;
   flex-direction: column;

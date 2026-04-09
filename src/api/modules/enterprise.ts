@@ -1,12 +1,55 @@
-import { mockPromise } from '../mock'
+import type { PageResult } from '@/types/api'
+import type {
+  AuditActionPayload,
+  EnterpriseAuditDetail,
+  EnterpriseAuditItem,
+  EnterpriseCapabilityProfile,
+  EnterpriseProfile,
+  EnterpriseAuditQuery,
+} from '@/types/business'
+import { http } from '@/utils/request'
+import { isUseMock } from '../helper'
+import {
+  mockGetEnterpriseAuditDetail,
+  mockGetEnterpriseAuditList,
+  mockGetEnterpriseCapabilities,
+  mockGetEnterpriseProfile,
+  mockSubmitEnterpriseProfile,
+  mockUpdateEnterpriseProfile,
+  mockSubmitEnterpriseAuditAction,
+} from '@/mock/modules/enterprise'
 
-export function getEnterpriseProfile() {
-  return mockPromise({
-    enterpriseName: '苏州智造检测有限公司',
-    socialCreditCode: '91320594MA1Q2A0X1Y',
-    legalPerson: '陈海波',
-    contactName: '陈璐',
-    contactPhone: '13800001111',
-    address: '江苏省苏州市工业园区星湖街 328 号',
-  })
+export function getEnterpriseAuditList(params?: EnterpriseAuditQuery): Promise<PageResult<EnterpriseAuditItem>> {
+  if (isUseMock()) return mockGetEnterpriseAuditList(params)
+  return http<PageResult<EnterpriseAuditItem>>({ url: '/enterprise/audit/page', method: 'get', params })
+}
+
+export function getEnterpriseAuditDetail(id: string): Promise<EnterpriseAuditDetail> {
+  if (isUseMock()) return mockGetEnterpriseAuditDetail(id)
+  return http<EnterpriseAuditDetail>({ url: `/enterprise/audit/${id}`, method: 'get' })
+}
+
+export function submitEnterpriseAuditAction(payload: AuditActionPayload): Promise<boolean> {
+  if (isUseMock()) return mockSubmitEnterpriseAuditAction(payload)
+  return http<boolean>({ url: '/enterprise/audit/action', method: 'post', data: payload })
+}
+
+export function getEnterpriseProfile(enterpriseId?: string): Promise<EnterpriseProfile> {
+  if (isUseMock()) return mockGetEnterpriseProfile(enterpriseId)
+  return http<EnterpriseProfile>({ url: '/enterprise/profile', method: 'get', params: { enterpriseId } })
+}
+
+export function getEnterpriseCapabilities(enterpriseId?: string): Promise<EnterpriseCapabilityProfile> {
+  if (isUseMock()) return mockGetEnterpriseCapabilities(enterpriseId)
+  return http<EnterpriseCapabilityProfile>({ url: '/enterprise/capabilities', method: 'get', params: { enterpriseId } })
+}
+
+export function updateEnterpriseProfile(payload: EnterpriseProfile): Promise<boolean> {
+  if (isUseMock()) return mockUpdateEnterpriseProfile(payload)
+  return http<boolean>({ url: '/enterprise/profile', method: 'put', data: payload })
+}
+
+export function submitEnterpriseProfile(): Promise<boolean> {
+  if (isUseMock()) return mockSubmitEnterpriseProfile()
+  return http<boolean>({ url: '/enterprise/profile/submit', method: 'post' })
 }

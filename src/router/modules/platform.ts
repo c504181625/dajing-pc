@@ -1,8 +1,10 @@
 import type { RouteRecordRaw } from 'vue-router'
 
+import { PERMISSION_CODE } from '@/enum/permission'
+import { ACCOUNT_TYPE } from '@/enum/role'
 import Layout from '@/layout/index.vue'
 
-const RoutePlaceholder = () => import('@/views/common/RoutePlaceholder.vue')
+const platformAccountTypes = [ACCOUNT_TYPE.platformAdmin]
 
 export const platformRoutes: RouteRecordRaw = {
   path: '/platform',
@@ -12,7 +14,7 @@ export const platformRoutes: RouteRecordRaw = {
   meta: {
     title: '平台运营后台',
     icon: 'Monitor',
-    roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'AUDITOR'],
+    accountTypes: platformAccountTypes,
   },
   children: [
     {
@@ -22,7 +24,19 @@ export const platformRoutes: RouteRecordRaw = {
       meta: {
         title: '工作台',
         icon: 'Odometer',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'AUDITOR'],
+        accountTypes: platformAccountTypes,
+        permissions: [PERMISSION_CODE.platformDashboardView],
+      },
+    },
+    {
+      path: 'user',
+      name: 'PlatformUserManagement',
+      component: () => import('@/views/platform/user/index.vue'),
+      meta: {
+        title: '用户管理',
+        icon: 'User',
+        accountTypes: platformAccountTypes,
+        permissions: [PERMISSION_CODE.userManageView],
       },
     },
     {
@@ -30,9 +44,10 @@ export const platformRoutes: RouteRecordRaw = {
       name: 'EnterpriseAudit',
       component: () => import('@/views/platform/enterprise-audit/index.vue'),
       meta: {
-        title: '企业审核管理',
+        title: '机构审核',
         icon: 'Checked',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'AUDITOR'],
+        accountTypes: platformAccountTypes,
+        permissions: [PERMISSION_CODE.auditEnterpriseQuery],
       },
     },
     {
@@ -40,20 +55,11 @@ export const platformRoutes: RouteRecordRaw = {
       name: 'EnterpriseAuditDetail',
       component: () => import('@/views/platform/enterprise-audit/detail.vue'),
       meta: {
-        title: '企业审核详情',
+        title: '机构审核详情',
         hidden: true,
         activeMenu: '/platform/enterprise-audit',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'AUDITOR'],
-      },
-    },
-    {
-      path: 'user',
-      name: 'UserManagement',
-      component: () => import('@/views/shared/user/index.vue'),
-      meta: {
-        title: '用户管理',
-        icon: 'User',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN'],
+        accountTypes: platformAccountTypes,
+        permissions: [PERMISSION_CODE.auditEnterpriseQuery],
       },
     },
     {
@@ -63,7 +69,19 @@ export const platformRoutes: RouteRecordRaw = {
       meta: {
         title: '需求管理',
         icon: 'Tickets',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'AUDITOR'],
+        accountTypes: platformAccountTypes,
+        permissions: [PERMISSION_CODE.demandManageView],
+      },
+    },
+    {
+      path: 'consult',
+      name: 'ConsultManagement',
+      component: () => import('@/views/platform/consult/index.vue'),
+      meta: {
+        title: '咨询管理',
+        icon: 'ChatLineSquare',
+        accountTypes: platformAccountTypes,
+        permissions: [PERMISSION_CODE.consultManageView],
       },
     },
     {
@@ -73,7 +91,20 @@ export const platformRoutes: RouteRecordRaw = {
       meta: {
         title: '订单管理',
         icon: 'List',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'AUDITOR'],
+        accountTypes: platformAccountTypes,
+        permissions: [PERMISSION_CODE.orderManageView],
+      },
+    },
+    {
+      path: 'order/:id',
+      name: 'OrderDetail',
+      component: () => import('@/views/platform/order/detail.vue'),
+      meta: {
+        title: '订单详情',
+        hidden: true,
+        activeMenu: '/platform/order',
+        accountTypes: platformAccountTypes,
+        permissions: [PERMISSION_CODE.orderManageView],
       },
     },
     {
@@ -83,47 +114,52 @@ export const platformRoutes: RouteRecordRaw = {
       meta: {
         title: '报告管理',
         icon: 'Document',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN', 'AUDITOR'],
+        accountTypes: platformAccountTypes,
+        permissions: [PERMISSION_CODE.reportManageView],
+      },
+    },
+    {
+      path: 'report/:id',
+      name: 'ReportDetail',
+      component: () => import('@/views/platform/report/detail.vue'),
+      meta: {
+        title: '报告详情',
+        hidden: true,
+        activeMenu: '/platform/report',
+        accountTypes: platformAccountTypes,
+        permissions: [PERMISSION_CODE.reportManageView],
       },
     },
     {
       path: 'comment',
       name: 'CommentManagement',
-      component: RoutePlaceholder,
+      component: () => import('@/views/platform/comment/index.vue'),
       meta: {
         title: '评价管理',
         icon: 'ChatDotRound',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN'],
+        accountTypes: platformAccountTypes,
+        permissions: [PERMISSION_CODE.commentManageView],
       },
     },
     {
-      path: 'content',
-      name: 'ContentManagement',
-      component: RoutePlaceholder,
+      path: 'message',
+      name: 'PlatformMessageManagement',
+      component: () => import('@/views/platform/message/index.vue'),
       meta: {
-        title: '内容资讯管理',
-        icon: 'Reading',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN'],
+        title: '消息中心',
+        icon: 'Bell',
+        accountTypes: platformAccountTypes,
+        permissions: [PERMISSION_CODE.messageManageView],
       },
     },
     {
-      path: 'community-audit',
-      name: 'CommunityAudit',
-      component: RoutePlaceholder,
+      path: 'profile',
+      name: 'PlatformProfile',
+      component: () => import('@/views/platform/profile/index.vue'),
       meta: {
-        title: '社区审核管理',
-        icon: 'Comment',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN'],
-      },
-    },
-    {
-      path: 'statistics',
-      name: 'StatisticsReport',
-      component: RoutePlaceholder,
-      meta: {
-        title: '统计报表',
-        icon: 'TrendCharts',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN'],
+        title: '运营方信息',
+        hidden: true,
+        accountTypes: platformAccountTypes,
       },
     },
   ],

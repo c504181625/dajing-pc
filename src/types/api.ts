@@ -2,6 +2,8 @@ export interface ApiResponse<T> {
   code: number
   message: string
   data: T
+  success?: boolean
+  requestId?: string
 }
 
 export interface Pagination {
@@ -19,13 +21,26 @@ export interface PageQuery {
   pageSize: number
 }
 
+export interface SortField {
+  field: string
+  order: 'asc' | 'desc'
+}
+
 export interface ListQuery extends PageQuery {
   keyword?: string
   status?: string
   startDate?: string
   endDate?: string
+  dateRange?: [string, string] | []
+  sort?: SortField[]
 }
 
 export interface DetailResponse<T> {
   detail: T
+}
+
+export interface OptionItem {
+  label: string
+  value: string | number | boolean
+  disabled?: boolean
 }

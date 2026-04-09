@@ -8,14 +8,17 @@ const props = defineProps<{
   route: RouteRecordRaw
 }>()
 
-const visibleChildren = computed(() => {
-  return (props.route.children || []).filter((child) => !child.meta?.hidden)
-})
+const visibleChildren = computed(() => (props.route.children || []).filter((child) => !child.meta?.hidden))
 
 const iconComponent = computed(() => {
   const name = props.route.meta?.icon as keyof typeof iconMap | undefined
   return name ? iconMap[name] : null
 })
+
+function resolvePath(path: string) {
+  if (path.startsWith('/')) return path
+  return `${props.route.path}/${path}`.replace(/\/+/g, '/')
+}
 </script>
 
 <template>
@@ -32,7 +35,7 @@ const iconComponent = computed(() => {
       :key="child.path"
       :route="{
         ...child,
-        path: child.path.startsWith('/') ? child.path : `${route.path}/${child.path}`.replace('//', '/'),
+        path: resolvePath(child.path),
       }"
     />
   </el-sub-menu>

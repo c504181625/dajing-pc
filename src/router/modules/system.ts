@@ -1,8 +1,9 @@
 import type { RouteRecordRaw } from 'vue-router'
 
+import { PERMISSION_CODE } from '@/enum/permission'
+import { ACCOUNT_TYPE, PLATFORM_ROLE } from '@/enum/role'
 import Layout from '@/layout/index.vue'
-
-const RoutePlaceholder = () => import('@/views/common/RoutePlaceholder.vue')
+import RoutePlaceholder from '@/views/common/RoutePlaceholder.vue'
 
 export const systemRoutes: RouteRecordRaw = {
   path: '/system',
@@ -12,17 +13,19 @@ export const systemRoutes: RouteRecordRaw = {
   meta: {
     title: '系统设置',
     icon: 'Setting',
-    roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN'],
+    accountTypes: [ACCOUNT_TYPE.platformAdmin],
   },
   children: [
     {
       path: 'role',
       name: 'RoleManagement',
-      component: () => import('@/views/system/role/index.vue'),
+      component: () => import('@/views/platform/system/role/index.vue'),
       meta: {
-        title: '角色权限管理',
+        title: '角色权限',
         icon: 'Lock',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN'],
+        accountTypes: [ACCOUNT_TYPE.platformAdmin],
+        platformRoles: [PLATFORM_ROLE.superAdmin, PLATFORM_ROLE.platformAdmin],
+        permissions: [PERMISSION_CODE.roleManageView],
       },
     },
     {
@@ -32,47 +35,44 @@ export const systemRoutes: RouteRecordRaw = {
       meta: {
         title: '基础数据维护',
         icon: 'Collection',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN'],
-      },
-    },
-    {
-      path: 'service-project',
-      name: 'ServiceProjectManagement',
-      component: RoutePlaceholder,
-      meta: {
-        title: '服务项目管理',
-        icon: 'Grid',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN'],
+        accountTypes: [ACCOUNT_TYPE.platformAdmin],
+        platformRoles: [PLATFORM_ROLE.superAdmin],
+        permissions: [PERMISSION_CODE.dictionaryManageView],
       },
     },
     {
       path: 'workflow-template',
-      name: 'WorkflowTemplate',
-      component: RoutePlaceholder,
+      name: 'WorkflowTemplateManagement',
+      component: () => import('@/views/platform/workflow/template/index.vue'),
       meta: {
-        title: '流程模板管理',
-        icon: 'Share',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN'],
+        title: '流程模板',
+        icon: 'Connection',
+        accountTypes: [ACCOUNT_TYPE.platformAdmin],
+        platformRoles: [PLATFORM_ROLE.superAdmin, PLATFORM_ROLE.platformAdmin],
+        permissions: [PERMISSION_CODE.workflowManageView],
       },
     },
     {
       path: 'workflow-node',
-      name: 'WorkflowNode',
-      component: RoutePlaceholder,
+      name: 'WorkflowNodeManagement',
+      component: () => import('@/views/platform/workflow/node/index.vue'),
       meta: {
-        title: '工作流节点管理',
-        icon: 'Connection',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN'],
+        title: '工作流节点',
+        icon: 'Share',
+        accountTypes: [ACCOUNT_TYPE.platformAdmin],
+        platformRoles: [PLATFORM_ROLE.superAdmin, PLATFORM_ROLE.platformAdmin],
+        permissions: [PERMISSION_CODE.workflowManageView],
       },
     },
     {
-      path: 'settings',
-      name: 'MoreSystemSettings',
-      component: RoutePlaceholder,
+      path: 'workflow-record',
+      name: 'WorkflowRecordManagement',
+      component: () => import('@/views/platform/workflow/record/index.vue'),
       meta: {
-        title: '更多系统配置',
-        icon: 'Tools',
-        roles: ['SUPER_ADMIN', 'PLATFORM_ADMIN'],
+        title: '工作流审批记录',
+        icon: 'Document',
+        accountTypes: [ACCOUNT_TYPE.platformAdmin],
+        permissions: [PERMISSION_CODE.workflowManageView],
       },
     },
   ],

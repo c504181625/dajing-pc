@@ -1,20 +1,20 @@
-import { mockPromise } from '../mock'
+import type { PageResult } from '@/types/api'
+import type { UserDetail, UserItem, UserQuery } from '@/types/business'
+import { http } from '@/utils/request'
+import { isUseMock } from '../helper'
+import { mockGetUserDetail, mockGetUserList, mockToggleUserStatus } from '@/mock/modules/user'
 
-export function getUserList() {
-  return mockPromise([
-    {
-      id: 'user-001',
-      name: '平台管理员',
-      mobile: '13800000001',
-      roleNames: '平台运营管理员',
-      status: 'ENABLE',
-    },
-    {
-      id: 'user-002',
-      name: '陈璐',
-      mobile: '13800001111',
-      roleNames: '企业主账号',
-      status: 'ENABLE',
-    },
-  ])
+export function getUserList(params?: UserQuery): Promise<PageResult<UserItem>> {
+  if (isUseMock()) return mockGetUserList(params)
+  return http<PageResult<UserItem>>({ url: '/system/user/page', method: 'get', params })
+}
+
+export function getUserDetail(id: string): Promise<UserDetail> {
+  if (isUseMock()) return mockGetUserDetail(id)
+  return http<UserDetail>({ url: `/system/user/${id}`, method: 'get' })
+}
+
+export function toggleUserStatus(id: string): Promise<boolean> {
+  if (isUseMock()) return mockToggleUserStatus(id)
+  return http<boolean>({ url: `/system/user/${id}/toggle-status`, method: 'post' })
 }

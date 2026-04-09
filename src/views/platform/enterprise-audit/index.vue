@@ -2,12 +2,12 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { getEnterpriseAuditList } from '@/api/modules/audit'
+import { getEnterpriseAuditList } from '@/api/modules/enterprise'
 import PageContainer from '@/components/PageContainer.vue'
-import PermissionButton from '@/components/PermissionButton.vue'
-import SearchForm from '@/components/SearchForm.vue'
-import StatusTag from '@/components/StatusTag.vue'
-import TablePanel from '@/components/TablePanel.vue'
+import PermissionButton from '@/components-business/PermissionButton/index.vue'
+import SearchForm from '@/components-business/SearchForm/index.vue'
+import StatusTag from '@/components-business/StatusTag/index.vue'
+import TablePanel from '@/components-business/TablePanel/index.vue'
 import { AUDIT_STATUS_MAP, SERVICE_TYPE_OPTIONS } from '@/constants/dicts'
 import type { EnterpriseAuditItem, EnterpriseAuditQuery } from '@/types/business'
 

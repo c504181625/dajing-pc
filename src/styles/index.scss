@@ -19,21 +19,27 @@ a {
   text-decoration: none;
 }
 
+button,
+input,
+textarea {
+  font-family: inherit;
+}
+
 * {
   box-sizing: border-box;
 }
 
 .app-card {
-  border: none !important;
+  border: 1px solid rgb(15 23 42 / 6%) !important;
   border-radius: var(--dj-radius) !important;
-  box-shadow: 0 6px 24px rgb(15 32 64 / 6%) !important;
+  box-shadow: 0 10px 32px rgb(15 32 64 / 6%) !important;
 }
 
 .page-toolbar {
   display: flex;
   justify-content: space-between;
-  gap: var(--dj-space-3);
   align-items: center;
+  gap: var(--dj-space-3);
   margin-bottom: var(--dj-space-3);
 }
 
@@ -45,8 +51,8 @@ a {
 
 .summary-card {
   padding: var(--dj-space-4);
-  background: linear-gradient(135deg, #fff 0%, #f7faff 100%);
   border-radius: var(--dj-radius);
+  background: linear-gradient(135deg, #fff 0%, #f7faff 100%);
 }
 
 .summary-label {
@@ -59,4 +65,44 @@ a {
   font-size: 28px;
   font-weight: 700;
   color: var(--dj-color-text-primary);
+}
+
+.detail-grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: start;
+}
+
+.el-table th.el-table__cell {
+  text-align: center;
+}
+
+.el-table th.el-table__cell .cell {
+  justify-content: center;
+  text-align: center;
+}
+
+.el-table td.el-table__cell {
+  text-align: left;
+}
+
+.el-table td.el-table__cell .cell {
+  text-align: left;
+}
+
+@media (max-width: 1280px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .detail-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
 }

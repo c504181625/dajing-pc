@@ -1,29 +1,44 @@
 <script setup lang="ts">
+import { Document } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { getEnterpriseAuditDetail, submitAuditAction } from '@/api/modules/audit'
-import DictTag from '@/components/DictTag.vue'
-import PageContainer from '@/components/PageContainer.vue'
-import StatusTag from '@/components/StatusTag.vue'
-import AuditActionBar from '@/components-business/AuditActionBar.vue'
-import EnterpriseQualificationCard from '@/components-business/EnterpriseQualificationCard.vue'
-import EnterpriseSummaryCard from '@/components-business/EnterpriseSummaryCard.vue'
-import FilePreview from '@/components-business/FilePreview.vue'
+import { getEnterpriseAuditDetail, submitEnterpriseAuditAction } from '@/api/modules/enterprise'
+import AttachmentPreview from '@/components-business/AttachmentPreview/index.vue'
+import AuditActionBar from '@/components-business/AuditActionBar/index.vue'
+import DetailSection from '@/components-business/DetailSection/index.vue'
+import EmptyBlock from '@/components-business/EmptyBlock/index.vue'
+import PageContainer from '@/components-business/PageContainer/index.vue'
+import OperationTimeline from '@/components-business/OperationTimeline/index.vue'
+import SectionCard from '@/components-business/SectionCard/index.vue'
+import StatusTag from '@/components-business/StatusTag/index.vue'
 import { AUDIT_STATUS_MAP, SERVICE_TYPE_OPTIONS } from '@/constants/dicts'
-import { AuditStatus } from '@/enum/common'
+import { AuditAction, AuditStatus } from '@/enum/status'
 import type { AttachmentItem, EnterpriseAuditDetail } from '@/types/business'
 
 const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
 const actionLoading = ref(false)
-const detail = ref<EnterpriseAuditDetail>()
+const detail = ref<EnterpriseAuditDetail | null>(null)
 const previewVisible = ref(false)
 const previewFiles = ref<AttachmentItem[]>([])
 
-const canOperate = computed(() => detail.value?.status === AuditStatus.Pending || detail.value?.status === AuditStatus.Supplement)
+const canOperate = computed(() => {
+  return detail.value?.status === AuditStatus.Pending || detail.value?.status === AuditStatus.Supplement
+})
+
+const attachmentGroups = computed(() => {
+  if (!detail.value) return []
+  return [
+    { title: '营业执照', file: detail.value.businessLicense },
+    ...detail.value.qualificationFiles.map((file) => ({
+      title: '资质附件',
+      file,
+    })),
+  ]
+})
 
 async function loadDetail() {
   loading.value = true
@@ -39,14 +54,23 @@ function openPreview(files: AttachmentItem[]) {
   previewVisible.value = true
 }
 
-async function handleAudit(action: 'approve' | 'reject' | 'supplement', remark: string) {
+function getServiceLabel(value: string) {
+  return SERVICE_TYPE_OPTIONS.find((item) => item.value === value)?.label || value
+}
+
+async function handleSubmit(payload: { action: AuditAction; remark: string }) {
   if (!detail.value) return
+  if (payload.action === AuditAction.Reject && !payload.remark.trim()) {
+    ElMessage.warning('驳回原因必填')
+    return
+  }
+
   actionLoading.value = true
   try {
-    await submitAuditAction({
+    await submitEnterpriseAuditAction({
       auditId: detail.value.id,
-      action,
-      remark: remark || '系统示例提交',
+      action: payload.action,
+      remark: payload.remark || '系统示例提交',
     })
     ElMessage.success('审核动作已提交')
     await loadDetail()
@@ -60,112 +84,226 @@ loadDetail()
 
 <template>
   <PageContainer
-    :title="detail?.enterpriseName || '企业审核详情'"
-    subtitle="推荐采用新页面承载审核详情，将企业资料、证照、附件与审核动作放在同一上下文中完成。"
+    title="机构审核详情"
+    :subtitle="detail ? `${detail.enterpriseName} · 请重点核验企业基础资料、服务范围和资质附件。` : '加载审核详情中...'"
   >
     <template #extra>
       <el-button @click="router.back()">返回列表</el-button>
       <StatusTag v-if="detail" :status="detail.status" :map="AUDIT_STATUS_MAP" />
     </template>
 
-    <el-row v-loading="loading" :gutter="16">
-      <el-col :span="16">
-        <EnterpriseSummaryCard v-if="detail" :detail="detail" />
+    <EmptyBlock
+      v-if="!loading && !detail"
+      title="未找到审核信息"
+      description="当前审核记录不存在，可能已失效或被删除。"
+    />
 
-        <el-card v-if="detail" shadow="never" class="app-card">
-          <template #header>
-            <div class="section-header">
-              <span>服务范围与附件</span>
-              <el-space>
-                <el-button text type="primary" @click="openPreview([detail.businessLicense])">营业执照</el-button>
-                <el-button text type="primary" @click="openPreview(detail.qualificationFiles)">资质附件</el-button>
-              </el-space>
-            </div>
-          </template>
+    <div v-else v-loading="loading" class="detail-grid-2">
+      <div class="left-column">
+        <SectionCard title="企业信息摘要" description="用于快速确认企业主体、联系人和地址等基础信息。">
+          <el-descriptions v-if="detail" :column="2" border>
+            <el-descriptions-item label="企业名称">{{ detail.enterpriseName }}</el-descriptions-item>
+            <el-descriptions-item label="企业类型">{{ detail.enterpriseType }}</el-descriptions-item>
+            <el-descriptions-item label="统一社会信用代码">{{ detail.socialCreditCode }}</el-descriptions-item>
+            <el-descriptions-item label="注册资本">{{ detail.registeredCapital }}</el-descriptions-item>
+            <el-descriptions-item label="公司性质">{{ detail.companyType }}</el-descriptions-item>
+            <el-descriptions-item label="法定代表人">{{ detail.legalPerson }}</el-descriptions-item>
+            <el-descriptions-item label="联系人">{{ detail.contactName }}</el-descriptions-item>
+            <el-descriptions-item label="联系电话">{{ detail.contactPhone }}</el-descriptions-item>
+            <el-descriptions-item label="联系邮箱">{{ detail.email }}</el-descriptions-item>
+            <el-descriptions-item label="提交时间">{{ detail.submitTime }}</el-descriptions-item>
+            <el-descriptions-item label="办公地址" :span="2">
+              {{ detail.province }}{{ detail.city }}{{ detail.district }}{{ detail.address }}
+            </el-descriptions-item>
+          </el-descriptions>
+        </SectionCard>
 
-          <div class="service-tags">
-            <DictTag v-for="service in detail.serviceTypes" :key="service" :value="service" :options="SERVICE_TYPE_OPTIONS" />
+        <DetailSection title="服务范围与附件" description="集中展示机构申请的服务范围以及营业执照、资质材料。">
+          <div v-if="detail" class="service-tags">
+            <el-tag v-for="service in detail.serviceTypes" :key="service" effect="plain">
+              {{ getServiceLabel(service) }}
+            </el-tag>
           </div>
 
-          <el-descriptions :column="2" border class="detail-desc">
-            <el-descriptions-item label="企业类型">{{ detail.companyType }}</el-descriptions-item>
-            <el-descriptions-item label="注册资本">{{ detail.registeredCapital }}</el-descriptions-item>
-            <el-descriptions-item label="营业执照">
-              {{ detail.businessLicense.name }}
-            </el-descriptions-item>
-            <el-descriptions-item label="联系邮箱">{{ detail.email }}</el-descriptions-item>
-          </el-descriptions>
-        </el-card>
-
-        <EnterpriseQualificationCard v-if="detail" :qualifications="detail.qualifications" />
-      </el-col>
-
-      <el-col :span="8">
-        <AuditActionBar
-          :loading="actionLoading"
-          :disabled="!canOperate"
-          @approve="handleAudit('approve', $event)"
-          @reject="handleAudit('reject', $event)"
-          @supplement="handleAudit('supplement', $event)"
-        />
-
-        <el-card v-if="detail" shadow="never" class="app-card history-card">
-          <template #header>
-            <span>审核记录</span>
-          </template>
-
-          <el-timeline>
-            <el-timeline-item
-              v-for="record in detail.auditRecords"
-              :key="record.id"
-              :timestamp="record.createdAt"
-              type="primary"
-              placement="top"
+          <div class="attachment-grid">
+            <div
+              v-for="item in attachmentGroups"
+              :key="item.file.id"
+              class="attachment-card"
+              @click="openPreview([item.file])"
             >
-              <div class="history-title">{{ record.action }}</div>
-              <div class="history-meta">{{ record.operator }}</div>
-              <div class="history-desc">{{ record.remark }}</div>
-            </el-timeline-item>
-          </el-timeline>
-        </el-card>
-      </el-col>
-    </el-row>
+              <div class="attachment-icon">
+                <el-icon><Document /></el-icon>
+              </div>
+              <div class="attachment-copy">
+                <strong>{{ item.file.name }}</strong>
+                <span>{{ item.title }} · {{ item.file.fileType.toUpperCase() }}</span>
+              </div>
+              <span class="attachment-link">预览文件</span>
+            </div>
+          </div>
+        </DetailSection>
 
-    <FilePreview v-model:visible="previewVisible" :files="previewFiles" />
+        <DetailSection title="资质证书" description="重点关注证书有效期、编号和适用服务范围。">
+          <div v-if="detail?.qualifications.length" class="qualification-list">
+            <div v-for="qualification in detail.qualifications" :key="qualification.id" class="qualification-item">
+              <div>
+                <div class="qualification-name">{{ qualification.name }}</div>
+                <div class="qualification-no">证书编号：{{ qualification.number }}</div>
+              </div>
+              <div class="qualification-meta">
+                <el-tag :type="qualification.status === 'valid' ? 'success' : qualification.status === 'expiring' ? 'warning' : 'danger'">
+                  {{ qualification.status === 'valid' ? '有效' : qualification.status === 'expiring' ? '即将到期' : '已过期' }}
+                </el-tag>
+                <span>有效期至 {{ qualification.validUntil }}</span>
+              </div>
+            </div>
+          </div>
+          <EmptyBlock
+            v-else
+            title="暂无资质证书"
+            description="企业暂未上传资质证书，请结合审核意见要求其补充材料。"
+          />
+        </DetailSection>
+      </div>
+
+      <div class="right-column">
+        <AuditActionBar :loading="actionLoading" :disabled="!canOperate" @submit="handleSubmit" />
+
+        <SectionCard title="审核说明" description="审核状态、审核人和补充意见会集中展示在右侧，便于连续处理。">
+          <el-descriptions v-if="detail" :column="1" border>
+            <el-descriptions-item label="当前状态">
+              <StatusTag :status="detail.status" :map="AUDIT_STATUS_MAP" />
+            </el-descriptions-item>
+            <el-descriptions-item label="当前审核人">{{ detail.reviewerName || '未分配' }}</el-descriptions-item>
+            <el-descriptions-item label="最新备注">{{ detail.remark || '暂无备注' }}</el-descriptions-item>
+          </el-descriptions>
+        </SectionCard>
+
+        <DetailSection title="审核记录" description="时间线记录每次提交、分配、补充材料和最终审核动作。">
+          <OperationTimeline v-if="detail" :nodes="detail.auditRecords" />
+        </DetailSection>
+      </div>
+    </div>
+
+    <AttachmentPreview v-model:visible="previewVisible" :files="previewFiles" />
   </PageContainer>
 </template>
 
 <style scoped lang="scss">
-.section-header {
+.left-column,
+.right-column {
   display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: center;
+  flex-direction: column;
+  gap: 18px;
 }
 
 .service-tags {
   display: flex;
   flex-wrap: wrap;
+  gap: 10px;
+}
+
+.attachment-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  margin-bottom: 16px;
 }
 
-.detail-desc {
-  margin-top: 12px;
+.attachment-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--dj-color-border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fff 0%, #fbfcff 100%);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.history-card {
-  margin-top: 16px;
+.attachment-card:hover {
+  border-color: rgb(31 94 255 / 30%);
+  box-shadow: 0 10px 22px rgb(31 94 255 / 8%);
 }
 
-.history-title {
-  font-weight: 600;
+.attachment-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: rgb(31 94 255 / 10%);
+  color: var(--dj-color-primary);
+  font-size: 18px;
 }
 
-.history-meta,
-.history-desc {
+.attachment-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.attachment-copy strong {
+  display: block;
+  font-size: 14px;
+  color: var(--dj-color-text-primary);
+}
+
+.attachment-copy span {
+  display: block;
   margin-top: 4px;
+  font-size: 12px;
+  color: var(--dj-color-text-regular);
+}
+
+.attachment-link {
+  color: var(--dj-color-primary);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.qualification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qualification-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--dj-color-border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fff 0%, #fbfcff 100%);
+}
+
+.qualification-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--dj-color-text-primary);
+}
+
+.qualification-no,
+.qualification-meta span {
+  margin-top: 6px;
   font-size: 13px;
   color: var(--dj-color-text-regular);
+}
+
+.qualification-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 1280px) {
+  .attachment-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

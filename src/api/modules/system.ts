@@ -1,9 +1,14 @@
-import { mockPromise } from '../mock'
+import type { PermissionTreeNode, RoleItem } from '@/types/business'
+import { http } from '@/utils/request'
+import { isUseMock } from '../helper'
+import { mockGetPermissionTree, mockGetRoleList } from '@/mock/modules/system'
 
-export function getRoleList() {
-  return mockPromise([
-    { id: 'role-001', name: '平台运营管理员', code: 'PLATFORM_ADMIN', dataScope: '全部企业' },
-    { id: 'role-002', name: '审核员', code: 'AUDITOR', dataScope: '指派企业' },
-    { id: 'role-003', name: '企业检测机构', code: 'ENTERPRISE_LAB', dataScope: '本企业' },
-  ])
+export function getRoleList(): Promise<RoleItem[]> {
+  if (isUseMock()) return mockGetRoleList()
+  return http<RoleItem[]>({ url: '/system/role/list', method: 'get' })
+}
+
+export function getPermissionTree(): Promise<PermissionTreeNode[]> {
+  if (isUseMock()) return mockGetPermissionTree()
+  return http<PermissionTreeNode[]>({ url: '/system/permission/tree', method: 'get' })
 }

@@ -2,6 +2,7 @@
 import { useRoute } from 'vue-router'
 
 import PageContainer from '@/components/PageContainer.vue'
+import EmptyBlock from '@/components-business/EmptyBlock/index.vue'
 
 const route = useRoute()
 </script>
@@ -9,10 +10,11 @@ const route = useRoute()
 <template>
   <PageContainer
     :title="String(route.meta.title || '建设中页面')"
-    subtitle="该模块已在工程骨架中预留菜单、权限与扩展点，可继续按业务优先级补齐表格、详情与接口。"
+    subtitle="该模块已有菜单、权限和接口位，建议在此基础上继续补充列表、详情和操作流。"
   >
-    <el-card shadow="never" class="app-card">
-      <el-empty description="当前页面作为一期扩展占位，建议在后续迭代中按模块拆分列表、详情与权限按钮。" />
-    </el-card>
+    <EmptyBlock
+      :title="String(route.meta.title || '功能预留')"
+      description="当前页面暂未进入一期主开发清单，但骨架已预留完成。"
+    />
   </PageContainer>
 </template>

@@ -1,11 +1,20 @@
 import NProgress from 'nprogress'
 import type { Router } from 'vue-router'
 
-import { usePermissionStore } from '@/store/modules/permission'
+import { canAccessRoute, usePermissionStore } from '@/store/modules/permission'
 import { useUserStore } from '@/store/modules/user'
 import { getAccessToken } from '@/utils/auth'
 
-const whiteList = ['/login']
+const whiteList = [
+  '/login',
+  '/register/personal',
+  '/register/enterprise',
+  '/apply/institution',
+  '/forgot-password',
+  '/auth-result',
+]
+
+let isRecoveringDynamicRoute = false
 
 export function setupRouterGuard(router: Router) {
   router.beforeEach(async (to, _from, next) => {
@@ -15,28 +24,67 @@ export function setupRouterGuard(router: Router) {
     const token = getAccessToken()
 
     if (token) {
-      if (to.path === '/login') {
-        next(userStore.landingPath)
-        return
-      }
+      try {
+        if (!userStore.userLoaded) {
+          await userStore.fetchCurrentUser()
+        }
 
-      if (!userStore.userLoaded) {
-        await userStore.fetchCurrentUser()
-      }
+        if (userStore.needResetPassword && to.path !== '/first-login-reset-password') {
+          next({
+            path: '/first-login-reset-password',
+            query: to.fullPath ? { redirect: to.fullPath } : undefined,
+            replace: true,
+          })
+          return
+        }
 
-      if (!permissionStore.isRoutesGenerated && userStore.userInfo) {
-        const accessedRoutes = permissionStore.generateRoutes(userStore.userInfo)
-        accessedRoutes.forEach((route) => {
-          if (route.name && !router.hasRoute(route.name)) {
-            router.addRoute(route)
+        const shouldRecoverDynamicRoute =
+          to.name === 'NotFound' && !!userStore.userInfo && !whiteList.includes(to.path) && !isRecoveringDynamicRoute
+
+        if ((!permissionStore.isRoutesGenerated || shouldRecoverDynamicRoute) && userStore.userInfo) {
+          if (shouldRecoverDynamicRoute) {
+            permissionStore.resetRoutes(router)
+            isRecoveringDynamicRoute = true
           }
-        })
 
-        next({ ...to, replace: true })
+          permissionStore.mountRoutes(router, userStore.userInfo)
+
+          next({ path: to.fullPath, replace: true })
+          return
+        }
+      } catch {
+        isRecoveringDynamicRoute = false
+        userStore.resetUser()
+        permissionStore.resetRoutes(router)
+        next({
+          path: '/login',
+          query: to.fullPath ? { redirect: to.fullPath } : undefined,
+          replace: true,
+        })
         return
       }
 
+      if (to.path === '/login' && !userStore.needResetPassword) {
+        next()
+        return
+      }
+
+      if (userStore.userInfo && !canAccessRoute(to, userStore.userInfo)) {
+        isRecoveringDynamicRoute = false
+        next('/401')
+        return
+      }
+
+      isRecoveringDynamicRoute = false
       next()
+      return
+    }
+
+    if (to.path === '/first-login-reset-password') {
+      next({
+        path: '/login',
+        query: to.fullPath ? { redirect: to.fullPath } : undefined,
+      })
       return
     }
 
@@ -52,6 +100,7 @@ export function setupRouterGuard(router: Router) {
   })
 
   router.afterEach(() => {
+    isRecoveringDynamicRoute = false
     NProgress.done()
   })
 }

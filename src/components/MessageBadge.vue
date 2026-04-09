@@ -5,7 +5,7 @@ defineProps<{
 </script>
 
 <template>
-  <el-badge :value="value" :max="99">
+  <el-badge :value="value" :hidden="value <= 0" :max="99">
     <slot />
   </el-badge>
 </template>
