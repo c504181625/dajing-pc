@@ -39,7 +39,7 @@ const accountModels = computed(() => [
 const capabilityModels = computed(() => [
   ENTERPRISE_CAPABILITY.demander,
   ENTERPRISE_CAPABILITY.serviceProvider,
-  ENTERPRISE_CAPABILITY.labProvider,
+  ENTERPRISE_CAPABILITY.provider,
 ].map((item) => ({
   key: item,
   title: ENTERPRISE_CAPABILITY_LABEL_MAP[item],

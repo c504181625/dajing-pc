@@ -1,187 +1,212 @@
 <script setup lang="ts">
-import { Delete, Reading, RefreshRight } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 
 import {
   deleteMessage,
   getMessageDetail,
   getMessageList,
+  getMessageStats,
   readAllMessages,
   readMessage,
 } from '@/api/modules/message'
-import ActionToolbar from '@/components-business/ActionToolbar/index.vue'
 import DetailSection from '@/components-business/DetailSection/index.vue'
 import EmptyBlock from '@/components-business/EmptyBlock/index.vue'
 import PageContainer from '@/components-business/PageContainer/index.vue'
 import PermissionButton from '@/components-business/PermissionButton/index.vue'
+import SearchForm from '@/components-business/SearchForm/index.vue'
 import SectionCard from '@/components-business/SectionCard/index.vue'
+import StatsPanel from '@/components-business/StatsPanel/index.vue'
 import StatusTag from '@/components-business/StatusTag/index.vue'
-import { MESSAGE_READ_STATUS_MAP, MESSAGE_TYPE_OPTIONS } from '@/constants/dicts'
+import { MESSAGE_READ_STATUS_MAP } from '@/constants/dicts'
 import { PERMISSION_CODE } from '@/enum/permission'
 import { MessageReadStatus, MessageType } from '@/enum/status'
-import { useMessageStore } from '@/store/modules/message'
-import type { MessageItem, MessageQuery } from '@/types/business'
+import type { MessageItem, MessageQuery, MessageStats } from '@/types/business'
 
 const loading = ref(false)
+const total = ref(0)
+const list = ref<MessageItem[]>([])
 const detailVisible = ref(false)
-const activeTab = ref<'all' | MessageType>('all')
-const tableData = ref<MessageItem[]>([])
 const currentMessage = ref<MessageItem | null>(null)
-const messageStore = useMessageStore()
+
+const stats = ref<MessageStats>({
+  total: 0,
+  unread: 0,
+  system: 0,
+  demand: 0,
+  consult: 0,
+  order: 0,
+  audit: 0,
+  orderNotice: 0,
+  alert: 0,
+})
 
 const queryForm = reactive<MessageQuery>({
   pageNum: 1,
   pageSize: 10,
   keyword: '',
-  type: '',
   readStatus: '',
+  priority: '',
+  type: '',
 })
 
-const tabs = computed(() => [
-  { label: '全部消息', value: 'all', count: messageStore.stats.total },
-  { label: '系统通知', value: MessageType.System, count: messageStore.stats.system },
-  { label: '需求通知', value: MessageType.Demand, count: messageStore.stats.demand },
-  { label: '咨询通知', value: MessageType.Consult, count: messageStore.stats.consult },
-  { label: '订单通知', value: MessageType.Order, count: messageStore.stats.order },
+const searchFields = [
+  {
+    label: '关键词',
+    prop: 'keyword',
+    placeholder: '消息标题 / 内容摘要',
+  },
+  {
+    label: '阅读状态',
+    prop: 'readStatus',
+    component: 'select' as const,
+    placeholder: '请选择阅读状态',
+    options: Object.values(MESSAGE_READ_STATUS_MAP),
+  },
+  {
+    label: '优先级',
+    prop: 'priority',
+    component: 'select' as const,
+    placeholder: '请选择优先级',
+    options: [
+      { label: '高', value: 'high' },
+      { label: '中', value: 'medium' },
+      { label: '低', value: 'low' },
+    ],
+  },
+]
+
+const statCards = computed(() => [
+  {
+    title: '全部消息',
+    value: stats.value.total,
+    hint: '当前消息中心汇总的全部站内通知数量',
+  },
+  {
+    title: '审核通知',
+    value: stats.value.audit,
+    hint: '机构审核、资质审核与流程节点提醒',
+  },
+  {
+    title: '订单通知',
+    value: stats.value.orderNotice,
+    hint: '订单状态变化、支付节点与履约提醒',
+  },
+  {
+    title: '告警通知',
+    value: stats.value.alert,
+    hint: '异常风险、超时预警与系统告警消息',
+  },
 ])
 
+const messageTypeText = computed<Record<string, string>>(() => ({
+  [MessageType.Order]: '订单通知',
+  [MessageType.System]: '系统通知',
+  [MessageType.Consult]: '咨询通知',
+  [MessageType.Demand]: '需求通知',
+}))
+
 async function loadStats() {
-  await messageStore.refreshStats()
+  stats.value = await getMessageStats()
 }
 
 async function loadData() {
   loading.value = true
   try {
-    queryForm.type = activeTab.value === 'all' ? '' : activeTab.value
     const res = await getMessageList(queryForm)
-    tableData.value = res.list
+    list.value = res.list
+    total.value = res.total
   } finally {
     loading.value = false
   }
 }
 
-async function refreshPage() {
+async function refreshAll() {
   await Promise.all([loadStats(), loadData()])
 }
 
-async function handleTabChange() {
+function handleSearch() {
   queryForm.pageNum = 1
-  await loadData()
+  void refreshAll()
 }
 
-async function handleRead(id: string, silent = false) {
-  await readMessage(id)
-  if (!silent) ElMessage.success('已标记为已读')
-  await refreshPage()
+function handlePageChange(page: number) {
+  queryForm.pageNum = page
+  void loadData()
+}
+
+function handleSizeChange(size: number) {
+  queryForm.pageSize = size
+  queryForm.pageNum = 1
+  void loadData()
+}
+
+async function openDetail(item: MessageItem) {
+  if (item.readStatus === MessageReadStatus.Unread) {
+    await readMessage(item.id)
+    item.readStatus = MessageReadStatus.Read
+    await loadStats()
+  }
+
+  currentMessage.value = await getMessageDetail(item.id)
+  detailVisible.value = true
 }
 
 async function handleReadAll() {
-  if (!messageStore.unreadCount) {
-    ElMessage.info('当前没有未读消息')
-    return
-  }
   await readAllMessages()
-  ElMessage.success('全部消息已标记为已读')
-  await refreshPage()
+  ElMessage.success('已全部标记为已读')
+  await refreshAll()
 }
 
-async function handleDelete(row: MessageItem) {
+async function handleDelete(item: MessageItem) {
   try {
-    await ElMessageBox.confirm(`确认删除消息“${row.title}”吗？`, '删除确认', {
+    await ElMessageBox.confirm(`确认删除消息“${item.title}”吗？`, '删除确认', {
       type: 'warning',
     })
   } catch {
     return
   }
-  await deleteMessage(row.id)
+
+  await deleteMessage(item.id)
   ElMessage.success('消息已删除')
-  if (currentMessage.value?.id === row.id) {
-    detailVisible.value = false
+  await refreshAll()
+
+  if (currentMessage.value?.id === item.id) {
     currentMessage.value = null
+    detailVisible.value = false
   }
-  await refreshPage()
 }
 
-async function openDetail(row: MessageItem) {
-  if (row.readStatus === MessageReadStatus.Unread) {
-    await handleRead(row.id, true)
-  }
-  currentMessage.value = await getMessageDetail(row.id)
-  detailVisible.value = true
-}
-
-function getTypeLabel(type: MessageType) {
-  return MESSAGE_TYPE_OPTIONS.find((item) => item.value === type)?.label || type
-}
-
-refreshPage()
+onMounted(() => {
+  void refreshAll()
+})
 </script>
 
 <template>
-  <PageContainer
-    title="消息中心"
-    subtitle="统一查看系统通知、需求通知、咨询通知和订单通知，支持详情查看、已读管理和删除。"
-  >
-    <SectionCard title="消息分类" description="按消息类型快速筛选，未读数量会与顶部消息入口联动。">
-      <el-tabs v-model="activeTab" @tab-change="handleTabChange">
-        <el-tab-pane v-for="tab in tabs" :key="tab.value" :name="tab.value">
-          <template #label>
-            <span class="tab-label">
-              {{ tab.label }}
-              <em>{{ tab.count }}</em>
-            </span>
-          </template>
-        </el-tab-pane>
-      </el-tabs>
+  <PageContainer title="消息中心" subtitle="统一查看审核、订单、告警与系统通知消息。">
+    <StatsPanel :items="statCards" />
 
-      <ActionToolbar>
-        <el-input
-          v-model="queryForm.keyword"
-          clearable
-          placeholder="搜索消息标题或内容摘要"
-          style="width: 280px"
-          @keyup.enter="loadData"
-        />
-        <el-select
-          v-model="queryForm.readStatus"
-          clearable
-          placeholder="阅读状态"
-          style="width: 160px"
-          @change="loadData"
-        >
-          <el-option
-            v-for="option in Object.values(MESSAGE_READ_STATUS_MAP)"
-            :key="option.value"
-            :label="option.label"
-            :value="option.value"
-          />
-        </el-select>
+    <SearchForm v-model="queryForm" :fields="searchFields" @search="handleSearch" @reset="refreshAll">
+      <template #actions>
+        <PermissionButton :permission="PERMISSION_CODE.operatorMessageView" @click="handleReadAll">
+          全部已读
+        </PermissionButton>
+      </template>
+    </SearchForm>
 
-        <template #right>
-          <el-button :icon="RefreshRight" @click="refreshPage">刷新</el-button>
-          <PermissionButton
-            :permission="PERMISSION_CODE.messageManageView"
-            :icon="Reading"
-            @click="handleReadAll"
-          >
-            全部已读
-          </PermissionButton>
-        </template>
-      </ActionToolbar>
-    </SectionCard>
-
-    <SectionCard title="消息列表" description="优先处理未读消息，点击“查看详情”可展开完整内容。">
-      <div v-if="tableData.length || loading" v-loading="loading" class="message-list">
+    <SectionCard title="消息列表" description="保留卡片式消息展示，下方补充分页器。">
+      <div v-if="list.length || loading" v-loading="loading" class="message-list">
         <article
-          v-for="item in tableData"
+          v-for="item in list"
           :key="item.id"
           class="message-item"
           :class="{ unread: item.readStatus === MessageReadStatus.Unread }"
         >
           <div class="message-main" @click="openDetail(item)">
             <div class="message-meta">
-              <el-tag effect="plain">{{ getTypeLabel(item.type) }}</el-tag>
+              <el-tag effect="plain">
+                {{ messageTypeText[item.type] || item.type }}
+              </el-tag>
               <StatusTag :status="item.readStatus" :map="MESSAGE_READ_STATUS_MAP" />
               <span class="message-time">{{ item.createdAt }}</span>
             </div>
@@ -192,15 +217,7 @@ refreshPage()
           <div class="message-actions">
             <el-button text type="primary" @click="openDetail(item)">查看详情</el-button>
             <PermissionButton
-              v-if="item.readStatus === MessageReadStatus.Unread"
-              :permission="PERMISSION_CODE.messageManageView"
-              text
-              @click="handleRead(item.id)"
-            >
-              标记已读
-            </PermissionButton>
-            <PermissionButton
-              :permission="PERMISSION_CODE.messageManageView"
+              :permission="PERMISSION_CODE.operatorMessageView"
               text
               type="danger"
               @click="handleDelete(item)"
@@ -214,63 +231,41 @@ refreshPage()
       <EmptyBlock
         v-else
         title="暂无消息"
-        description="当前筛选条件下没有匹配消息，可以切换分类或清空关键词后重试。"
+        description="当前筛选条件下没有匹配消息，可以清空筛选条件后重试。"
       />
+
+      <div v-if="total > 0" class="pagination-wrap">
+        <el-pagination
+          background
+          layout="total, sizes, prev, pager, next, jumper"
+          prev-text="上一页"
+          next-text="下一页"
+          :total="total"
+          :current-page="queryForm.pageNum"
+          :page-size="queryForm.pageSize"
+          :page-sizes="[10, 20, 50]"
+          @current-change="handlePageChange"
+          @size-change="handleSizeChange"
+        />
+      </div>
     </SectionCard>
 
     <el-drawer v-model="detailVisible" title="消息详情" size="560px">
-      <DetailSection
-        v-if="currentMessage"
-        title="消息内容"
-        description="消息详情通过 API 获取，后续可无缝替换为真实接口。"
-      >
+      <DetailSection v-if="currentMessage" title="消息内容">
         <el-descriptions :column="1" border>
           <el-descriptions-item label="消息标题">{{ currentMessage.title }}</el-descriptions-item>
-          <el-descriptions-item label="消息类型">{{ getTypeLabel(currentMessage.type) }}</el-descriptions-item>
-          <el-descriptions-item label="阅读状态">
-            <StatusTag :status="currentMessage.readStatus" :map="MESSAGE_READ_STATUS_MAP" />
+          <el-descriptions-item label="消息类型">
+            {{ messageTypeText[currentMessage.type] || currentMessage.type }}
           </el-descriptions-item>
           <el-descriptions-item label="发送时间">{{ currentMessage.createdAt }}</el-descriptions-item>
-          <el-descriptions-item label="内容详情">{{ currentMessage.content }}</el-descriptions-item>
+          <el-descriptions-item label="消息内容">{{ currentMessage.content }}</el-descriptions-item>
         </el-descriptions>
-
-        <ActionToolbar>
-          <PermissionButton
-            v-if="currentMessage.readStatus === MessageReadStatus.Unread"
-            :permission="PERMISSION_CODE.messageManageView"
-            @click="handleRead(currentMessage.id)"
-          >
-            标记已读
-          </PermissionButton>
-          <template #right>
-            <PermissionButton
-              :permission="PERMISSION_CODE.messageManageView"
-              type="danger"
-              plain
-              :icon="Delete"
-              @click="handleDelete(currentMessage)"
-            >
-              删除消息
-            </PermissionButton>
-          </template>
-        </ActionToolbar>
       </DetailSection>
     </el-drawer>
   </PageContainer>
 </template>
 
 <style scoped lang="scss">
-.tab-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.tab-label em {
-  font-style: normal;
-  color: var(--dj-color-text-regular);
-}
-
 .message-list {
   display: flex;
   flex-direction: column;
@@ -286,20 +281,11 @@ refreshPage()
   border: 1px solid var(--dj-color-border);
   border-radius: 16px;
   background: #fff;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
 }
 
 .message-item.unread {
   border-color: rgb(31 94 255 / 24%);
   background: linear-gradient(90deg, rgb(31 94 255 / 4%) 0%, #fff 22%);
-}
-
-.message-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 28px rgb(15 32 64 / 7%);
 }
 
 .message-main {
@@ -312,31 +298,50 @@ refreshPage()
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+  margin-bottom: 8px;
 }
 
 .message-time {
   font-size: 12px;
-  color: var(--dj-color-text-regular);
+  color: var(--dj-color-text-secondary);
 }
 
 .message-title {
-  margin: 10px 0 8px;
+  margin: 0;
   font-size: 16px;
+  font-weight: 700;
   color: var(--dj-color-text-primary);
 }
 
 .message-content {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.7;
+  margin: 8px 0 0;
   color: var(--dj-color-text-regular);
+  line-height: 1.7;
 }
 
 .message-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.pagination-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+@media (max-width: 900px) {
+  .message-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .message-actions,
+  .pagination-wrap {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
 }
 </style>

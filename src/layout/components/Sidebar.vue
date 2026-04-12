@@ -55,9 +55,11 @@ function handleSelect(index: string) {
   width: var(--dj-sidebar-width);
   height: 100vh;
   flex: 0 0 var(--dj-sidebar-width);
-  background: linear-gradient(180deg, #111c2e 0%, #15243e 55%, #132645 100%);
-  border-right: 1px solid rgb(255 255 255 / 5%);
-  box-shadow: 8px 0 30px rgb(10 24 48 / 12%);
+  background:
+    radial-gradient(circle at top left, rgb(31 94 255 / 8%), transparent 28%),
+    linear-gradient(180deg, #fcfdff 0%, #f6f8fc 100%);
+  border-right: 1px solid rgb(15 23 42 / 6%);
+  box-shadow: 10px 0 28px rgb(15 23 42 / 5%);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -71,7 +73,7 @@ function handleSelect(index: string) {
   align-items: center;
   gap: 14px;
   padding: 20px 22px 18px;
-  border-bottom: 1px solid rgb(255 255 255 / 8%);
+  border-bottom: 1px solid rgb(15 23 42 / 6%);
 }
 
 .brand-logo {
@@ -81,6 +83,8 @@ function handleSelect(index: string) {
   object-fit: contain;
   border-radius: 12px;
   padding: 6px;
+  background: linear-gradient(180deg, #fff 0%, #eef4ff 100%);
+  box-shadow: inset 0 0 0 1px rgb(31 94 255 / 10%);
 }
 
 .brand-text {
@@ -90,7 +94,7 @@ function handleSelect(index: string) {
 }
 
 .brand-text strong {
-  color: #fff;
+  color: #18243d;
   font-size: 17px;
   font-weight: 700;
   line-height: 1.2;
@@ -98,7 +102,7 @@ function handleSelect(index: string) {
 
 .brand-text span {
   font-size: 12px;
-  color: rgb(255 255 255 / 62%);
+  color: #6b7a90;
 }
 
 .sidebar-scrollbar {
@@ -131,11 +135,12 @@ function handleSelect(index: string) {
   height: 44px;
   margin-bottom: 6px;
   border-radius: 12px;
-  color: rgb(230 236 245 / 72%);
+  color: #5b6b84;
   font-size: 14px;
   transition:
     background-color 0.2s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .sidebar-menu:deep(.el-sub-menu__icon-arrow) {
@@ -144,8 +149,9 @@ function handleSelect(index: string) {
 
 .sidebar-menu:deep(.el-sub-menu__title:hover),
 .sidebar-menu:deep(.el-menu-item:hover) {
-  color: #fff;
-  background: rgb(255 255 255 / 8%);
+  color: #1d4ed8;
+  background: rgb(31 94 255 / 7%);
+  box-shadow: inset 0 0 0 1px rgb(31 94 255 / 10%);
 }
 
 .sidebar-menu:deep(.el-sub-menu .el-menu-item) {
@@ -156,14 +162,14 @@ function handleSelect(index: string) {
 }
 
 .sidebar-menu:deep(.el-menu-item.is-active) {
-  color: #fff;
-  background: linear-gradient(90deg, rgb(31 94 255 / 85%) 0%, rgb(31 94 255 / 35%) 100%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
+  color: #1446bf;
+  background: linear-gradient(90deg, rgb(31 94 255 / 15%) 0%, rgb(31 94 255 / 5%) 100%);
+  box-shadow: inset 0 0 0 1px rgb(31 94 255 / 14%);
 }
 
 .sidebar-menu:deep(.el-sub-menu.is-opened > .el-sub-menu__title) {
-  color: #fff;
-  background: rgb(255 255 255 / 6%);
+  color: #17326b;
+  background: rgb(15 23 42 / 4%);
 }
 
 .sidebar-menu:deep(.el-menu-item .el-icon),

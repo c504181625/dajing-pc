@@ -1,189 +1,186 @@
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
-import { reactive, ref } from 'vue'
+import { computed, reactive } from 'vue'
+import { useRouter } from 'vue-router'
 
-import { createDemand, getDemandList } from '@/api/modules/demand'
+import { createDemand } from '@/api/modules/demand'
 import PageContainer from '@/components/PageContainer.vue'
-import SearchForm from '@/components-business/SearchForm/index.vue'
-import StatusTag from '@/components-business/StatusTag/index.vue'
-import TablePanel from '@/components-business/TablePanel/index.vue'
-import { DEMAND_STATUS_MAP, SERVICE_TYPE_OPTIONS } from '@/constants/dicts'
+import ActionPanel from '@/components-business/ActionPanel/index.vue'
+import DetailSection from '@/components-business/DetailSection/index.vue'
+import { SERVICE_TYPE_OPTIONS } from '@/constants/dicts'
+import { ACCOUNT_TYPE } from '@/enum/role'
 import { PublishMode, ServiceType } from '@/enum/status'
-import type { DemandForm, DemandItem, DemandQuery } from '@/types/business'
+import { useUserStore } from '@/store/modules/user'
+import type { DemandForm } from '@/types/business'
 
-const loading = ref(false)
-const dialogVisible = ref(false)
-const tableData = ref<DemandItem[]>([])
-
-const queryForm = reactive<DemandQuery>({
-  pageNum: 1,
-  pageSize: 10,
-  keyword: '',
-  status: '',
-  serviceType: '',
-})
+const router = useRouter()
+const userStore = useUserStore()
 
 const form = reactive<DemandForm>({
   title: '',
   serviceType: ServiceType.Standard,
   publishMode: PublishMode.PlatformAssign,
-  contactName: '',
-  contactPhone: '',
+  contactName: userStore.userInfo?.name || '',
+  contactPhone: userStore.userInfo?.mobile || '',
   content: '',
 })
 
-const searchFields = [
-  { label: '关键词', prop: 'keyword', placeholder: '需求标题/企业名称/机构名称' },
-  {
-    label: '服务类型',
-    prop: 'serviceType',
-    component: 'select' as const,
-    placeholder: '请选择服务类型',
-    options: SERVICE_TYPE_OPTIONS,
-  },
-  {
-    label: '状态',
-    prop: 'status',
-    component: 'select' as const,
-    placeholder: '请选择状态',
-    options: Object.values(DEMAND_STATUS_MAP),
-  },
-]
+const currentAccountType = computed(() => userStore.userInfo?.accountType)
+const backPath = computed(() =>
+  currentAccountType.value === ACCOUNT_TYPE.personal ? '/personal/demand' : '/enterprise/demand',
+)
 
-const publishModeOptions = [
-  { label: '平台分配机构', value: PublishMode.PlatformAssign },
-  { label: '自主选择机构', value: PublishMode.SelfSelect },
-]
+const serviceTypeLabel = computed(
+  () => SERVICE_TYPE_OPTIONS.find((item) => item.value === form.serviceType)?.label || '-',
+)
 
-function resetQuery() {
-  Object.assign(queryForm, {
-    pageNum: 1,
-    pageSize: 10,
-    keyword: '',
-    status: '',
-    serviceType: '',
-  })
-  loadData()
-}
+const publishModeLabel = computed(() =>
+  form.publishMode === PublishMode.SelfSelect ? '自主选择机构' : '平台分配机构',
+)
 
-function resetForm() {
-  Object.assign(form, {
-    title: '',
-    serviceType: ServiceType.Standard,
-    publishMode: PublishMode.PlatformAssign,
-    contactName: '',
-    contactPhone: '',
-    content: '',
-  })
-}
+const pageTitle = computed(() => '发布需求')
+const pageSubtitle = computed(() =>
+  currentAccountType.value === ACCOUNT_TYPE.personal
+    ? '个人用户可直接提交检测、培训、标准化等服务需求，由平台或机构继续跟进。'
+    : '企业与服务机构均可在统一后台创建需求，形成完整的询单、下单和服务协同链路。',
+)
 
-async function loadData() {
-  loading.value = true
-  try {
-    const res = await getDemandList(queryForm)
-    tableData.value = res.list
-  } finally {
-    loading.value = false
-  }
-}
-
-async function submitDemand() {
-  if (!form.title || !form.contactName || !form.contactPhone || !form.content) {
-    ElMessage.warning('请补全需求标题、联系人、联系电话和需求说明')
+async function handleSubmit() {
+  if (!form.title.trim() || !form.contactName.trim() || !form.contactPhone.trim() || !form.content.trim()) {
+    ElMessage.warning('请完整填写需求标题、联系人、联系电话和需求说明')
     return
   }
+
   await createDemand(form)
   ElMessage.success('需求已提交')
-  dialogVisible.value = false
-  resetForm()
-  loadData()
+  router.push(backPath.value)
 }
-
-loadData()
 </script>
 
 <template>
-  <PageContainer title="发布需求" subtitle="创建新需求并查看本企业已提交的需求记录。">
-    <SearchForm v-model="queryForm" :fields="searchFields" @search="loadData" @reset="resetQuery" />
+  <PageContainer :title="pageTitle" :subtitle="pageSubtitle">
+    <el-row :gutter="16">
+      <el-col :span="16">
+        <DetailSection title="基础信息">
+          <el-form label-position="top" class="publish-form">
+            <el-row :gutter="16">
+              <el-col :span="12">
+                <el-form-item label="需求标题">
+                  <el-input v-model="form.title" placeholder="请输入本次委托需求标题" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="服务类型">
+                  <el-select v-model="form.serviceType" placeholder="请选择服务类型">
+                    <el-option
+                      v-for="item in SERVICE_TYPE_OPTIONS"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"
+                    />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="24">
+                <el-form-item label="对接方式">
+                  <el-radio-group v-model="form.publishMode">
+                    <el-radio-button :value="PublishMode.PlatformAssign">平台分配机构</el-radio-button>
+                    <el-radio-button :value="PublishMode.SelfSelect">自主选择机构</el-radio-button>
+                  </el-radio-group>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-form>
+        </DetailSection>
 
-    <TablePanel title="我的委托需求">
-      <template #toolbar>
-        <el-button type="primary" @click="dialogVisible = true">新建需求</el-button>
-      </template>
+        <DetailSection title="联系人信息" style="margin-top: 16px">
+          <el-form label-position="top" class="publish-form">
+            <el-row :gutter="16">
+              <el-col :span="12">
+                <el-form-item label="联系人">
+                  <el-input v-model="form.contactName" placeholder="请输入联系人姓名" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="联系电话">
+                  <el-input v-model="form.contactPhone" placeholder="请输入联系电话" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-form>
+        </DetailSection>
 
-      <el-table v-loading="loading" :data="tableData" border>
-        <el-table-column prop="title" label="需求标题" min-width="240" />
-        <el-table-column prop="enterpriseName" label="企业名称" min-width="180" />
-        <el-table-column label="服务类型" width="140">
-          <template #default="{ row }">
-            {{ SERVICE_TYPE_OPTIONS.find((item) => item.value === row.serviceType)?.label || row.serviceType }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="assignedOrg" label="承接机构" min-width="180" />
-        <el-table-column label="状态" width="120">
-          <template #default="{ row }">
-            <StatusTag :status="row.status" :map="DEMAND_STATUS_MAP" />
-          </template>
-        </el-table-column>
-        <el-table-column prop="createdAt" label="提交时间" min-width="160" />
-      </el-table>
-    </TablePanel>
+        <DetailSection title="需求说明" style="margin-top: 16px">
+          <el-form label-position="top" class="publish-form">
+            <el-form-item label="服务描述">
+              <el-input
+                v-model="form.content"
+                type="textarea"
+                :rows="8"
+                maxlength="1000"
+                show-word-limit
+                placeholder="请描述服务目标、样品或资料情况、期望周期及特别说明"
+              />
+            </el-form-item>
+          </el-form>
+        </DetailSection>
+      </el-col>
 
-    <el-dialog v-model="dialogVisible" title="新建需求" width="640px" @closed="resetForm">
-      <el-form label-position="top">
-        <el-row :gutter="16">
-          <el-col :span="12">
-            <el-form-item label="需求标题">
-              <el-input v-model="form.title" placeholder="请输入需求标题" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="服务类型">
-              <el-select v-model="form.serviceType" placeholder="请选择服务类型">
-                <el-option
-                  v-for="item in SERVICE_TYPE_OPTIONS"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="对接模式">
-              <el-radio-group v-model="form.publishMode">
-                <el-radio-button
-                  v-for="item in publishModeOptions"
-                  :key="item.value"
-                  :value="item.value"
-                >
-                  {{ item.label }}
-                </el-radio-button>
-              </el-radio-group>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="联系人">
-              <el-input v-model="form.contactName" placeholder="请输入联系人姓名" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="联系电话">
-              <el-input v-model="form.contactPhone" placeholder="请输入联系电话" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-form-item label="需求说明">
-              <el-input v-model="form.content" type="textarea" :rows="5" placeholder="请输入需求说明" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
+      <el-col :span="8">
+        <div class="side-stack">
+          <DetailSection title="需求摘要">
+            <el-descriptions :column="1" border>
+              <el-descriptions-item label="服务类型">{{ serviceTypeLabel }}</el-descriptions-item>
+              <el-descriptions-item label="对接方式">{{ publishModeLabel }}</el-descriptions-item>
+              <el-descriptions-item label="联系人">{{ form.contactName || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="联系电话">{{ form.contactPhone || '-' }}</el-descriptions-item>
+            </el-descriptions>
+          </DetailSection>
 
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitDemand">提交需求</el-button>
-      </template>
-    </el-dialog>
+          <DetailSection title="提交说明" style="margin-top: 16px">
+            <ul class="submit-tips">
+              <li>提交后会同步进入需求管理列表，便于继续跟进。</li>
+              <li>选择“平台分配机构”时，平台会自动进入受理与派单流程。</li>
+              <li>选择“自主选择机构”时，服务机构也可在统一后台接单处理。</li>
+            </ul>
+          </DetailSection>
+
+          <ActionPanel style="margin-top: 16px">
+            <el-button
+              type="primary"
+              class="action-panel-button action-panel-button--primary"
+              @click="handleSubmit"
+            >
+              提交需求
+            </el-button>
+            <el-button
+              class="action-panel-button action-panel-button--soft"
+              @click="router.push(backPath)"
+            >
+              返回需求列表
+            </el-button>
+          </ActionPanel>
+        </div>
+      </el-col>
+    </el-row>
   </PageContainer>
 </template>
+
+<style scoped lang="scss">
+.publish-form {
+  max-width: 100%;
+}
+
+.side-stack {
+  position: sticky;
+  top: 0;
+}
+
+.submit-tips {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--dj-color-text-regular);
+  line-height: 1.8;
+}
+
+</style>

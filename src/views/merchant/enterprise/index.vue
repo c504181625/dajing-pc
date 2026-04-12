@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
 import { computed, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 import {
   getEnterpriseProfile,
@@ -13,10 +14,11 @@ import ChangePasswordDialog from '@/components-business/ChangePasswordDialog/ind
 import DetailSection from '@/components-business/DetailSection/index.vue'
 import PermissionButton from '@/components-business/PermissionButton/index.vue'
 import { SERVICE_TYPE_OPTIONS } from '@/constants/dicts'
-import { ACCOUNT_TYPE, ENTERPRISE_CAPABILITY_LABEL_MAP } from '@/enum/role'
+import { ENTERPRISE_CAPABILITY, ENTERPRISE_CAPABILITY_LABEL_MAP } from '@/enum/role'
 import { useUserStore } from '@/store/modules/user'
 import type { AttachmentItem, EnterpriseProfile } from '@/types/business'
 
+const route = useRoute()
 const userStore = useUserStore()
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -38,21 +40,39 @@ const form = reactive<EnterpriseProfile>({
   qualificationFiles: [],
 })
 
-const isInstitution = computed(() => userStore.userInfo?.accountType === ACCOUNT_TYPE.institution)
+const enterpriseTags = computed(
+  () => userStore.userInfo?.enterpriseTags || userStore.userInfo?.enterpriseCapabilities || [],
+)
+const isProvider = computed(() => enterpriseTags.value.includes(ENTERPRISE_CAPABILITY.serviceProvider))
+const pageMode = computed(() => String(route.meta.pageMode || 'profile'))
+const pageTitle = computed(() => String(route.meta.pageTitle || route.meta.title || '企业资料'))
+const pageSubtitle = computed(
+  () =>
+    String(
+      route.meta.pageSubtitle ||
+        (isProvider.value
+          ? '统一维护企业主体、服务范围、资质附件与认证进度，不拆分独立后台。'
+          : '统一维护企业主体资料、联系人信息与基础经营信息。'),
+    ),
+)
 const capabilityText = computed(() => {
-  const capabilities = userStore.userInfo?.enterpriseCapabilities || []
-  if (!capabilities.length) return '-'
-  return capabilities.map((item) => ENTERPRISE_CAPABILITY_LABEL_MAP[item] || item).join(' / ')
+  if (!enterpriseTags.value.length) return '-'
+  return enterpriseTags.value.map((item) => ENTERPRISE_CAPABILITY_LABEL_MAP[item] || item).join(' / ')
 })
 
-const pageTitle = computed(() => (isInstitution.value ? '机构信息管理' : '企业信息管理'))
-const pageSubtitle = computed(() =>
-  isInstitution.value
-    ? '维护当前机构主体资料、服务范围、资质附件与账号安全信息。'
-    : '维护当前企业主体资料、服务范围、资质附件与账号安全信息。',
-)
-const summaryTitle = computed(() => (isInstitution.value ? '机构摘要' : '企业摘要'))
-const attachmentTitle = computed(() => (isInstitution.value ? '资质与附件' : '附件资料'))
+const showProfileForm = computed(() => pageMode.value !== 'qualification')
+const showServiceScope = computed(() => pageMode.value !== 'qualification' || isProvider.value)
+const showAttachmentSection = computed(() => pageMode.value !== 'service-capability')
+const actionPrimaryText = computed(() => {
+  if (pageMode.value === 'qualification') return '提交认证'
+  if (pageMode.value === 'service-capability') return '保存能力配置'
+  return '保存信息'
+})
+const actionSecondaryText = computed(() => {
+  if (pageMode.value === 'qualification') return '查看审核进度'
+  if (pageMode.value === 'service-capability') return '提交变更审核'
+  return '提交变更审核'
+})
 
 async function loadData() {
   loading.value = true
@@ -76,14 +96,14 @@ async function handleSave() {
     mobile: form.contactPhone || userStore.userInfo?.mobile,
     email: form.email,
   })
-  ElMessage.success(isInstitution.value ? '机构信息已保存' : '企业信息已保存')
+  ElMessage.success(`${actionPrimaryText.value}成功`)
 }
 
 async function handleSubmit() {
   submitLoading.value = true
   try {
     await submitEnterpriseProfile()
-    ElMessage.success('已提交变更审核')
+    ElMessage.success(`${actionSecondaryText.value}成功`)
   } finally {
     submitLoading.value = false
   }
@@ -96,12 +116,12 @@ loadData()
   <PageContainer :title="pageTitle" :subtitle="pageSubtitle">
     <el-row :gutter="16" v-loading="loading">
       <el-col :span="16">
-        <DetailSection title="基础信息">
+        <DetailSection v-if="showProfileForm" title="基础信息">
           <el-form label-width="130px" class="profile-form">
-            <el-form-item :label="isInstitution ? '机构名称' : '企业名称'">
+            <el-form-item label="企业名称">
               <el-input v-model="form.enterpriseName" />
             </el-form-item>
-            <el-form-item :label="isInstitution ? '主体类型' : '企业类型'">
+            <el-form-item label="主体类型">
               <el-input v-model="form.enterpriseType" />
             </el-form-item>
             <el-form-item label="统一社会信用代码">
@@ -122,34 +142,55 @@ loadData()
             <el-form-item label="联系地址">
               <el-input v-model="form.address" />
             </el-form-item>
-            <el-form-item label="服务范围">
+            <el-form-item v-if="showServiceScope" label="服务范围">
               <el-checkbox-group v-model="form.serviceTypes">
                 <el-checkbox
                   v-for="item in SERVICE_TYPE_OPTIONS"
                   :key="item.value"
-                  :label="item.value"
+                  :value="item.value"
                 >
                   {{ item.label }}
                 </el-checkbox>
               </el-checkbox-group>
             </el-form-item>
-            <el-form-item :label="isInstitution ? '机构简介' : '企业简介'">
+            <el-form-item label="主体简介">
               <el-input v-model="form.intro" type="textarea" :rows="4" />
             </el-form-item>
           </el-form>
+        </DetailSection>
+
+        <DetailSection v-if="showAttachmentSection" title="资质与附件" style="margin-top: 16px">
+          <div class="attachment-actions">
+            <el-button v-if="form.businessLicense" @click="openPreview([form.businessLicense])">
+              查看营业执照
+            </el-button>
+            <el-button
+              v-if="form.qualificationFiles?.length"
+              @click="openPreview(form.qualificationFiles || [])"
+            >
+              查看资质附件
+            </el-button>
+          </div>
+          <el-descriptions :column="1" border>
+            <el-descriptions-item label="营业执照">
+              {{ form.businessLicense?.name || '-' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="资质附件数量">
+              {{ form.qualificationFiles?.length || 0 }}
+            </el-descriptions-item>
+          </el-descriptions>
         </DetailSection>
       </el-col>
 
       <el-col :span="8">
         <div class="side-stack">
-          <DetailSection :title="summaryTitle">
+          <DetailSection title="主体摘要">
             <el-descriptions :column="1" border>
-              <el-descriptions-item :label="isInstitution ? '机构名称' : '企业名称'">
+              <el-descriptions-item label="企业名称">
                 {{ form.enterpriseName || '-' }}
               </el-descriptions-item>
-              <el-descriptions-item label="业务身份">{{ capabilityText }}</el-descriptions-item>
-              <el-descriptions-item label="登录主体">
-                {{ isInstitution ? '机构主体' : '企业主体' }}
+              <el-descriptions-item label="企业身份标签">
+                {{ capabilityText }}
               </el-descriptions-item>
               <el-descriptions-item label="最近登录">
                 {{ userStore.userInfo?.lastLoginTime || '-' }}
@@ -171,34 +212,14 @@ loadData()
             </el-descriptions>
           </DetailSection>
 
-          <DetailSection :title="attachmentTitle" style="margin-top: 16px">
-            <div class="attachment-actions">
-              <el-button v-if="form.businessLicense" @click="openPreview([form.businessLicense])">
-                查看营业执照
-              </el-button>
-              <el-button
-                v-if="form.qualificationFiles?.length"
-                @click="openPreview(form.qualificationFiles || [])"
-              >
-                查看资质附件
-              </el-button>
-            </div>
-            <el-descriptions :column="1" border>
-              <el-descriptions-item label="营业执照">
-                {{ form.businessLicense?.name || '-' }}
-              </el-descriptions-item>
-              <el-descriptions-item label="资质附件数量">
-                {{ form.qualificationFiles?.length || 0 }}
-              </el-descriptions-item>
-            </el-descriptions>
-          </DetailSection>
-
           <DetailSection title="操作" style="margin-top: 16px">
             <div class="action-list">
               <PermissionButton permission="enterprise:profile:edit" @click="handleSave">
-                保存信息
+                {{ actionPrimaryText }}
               </PermissionButton>
-              <el-button :loading="submitLoading" @click="handleSubmit">提交变更审核</el-button>
+              <el-button :loading="submitLoading" @click="handleSubmit">
+                {{ actionSecondaryText }}
+              </el-button>
               <el-button @click="passwordVisible = true">修改密码</el-button>
             </div>
           </DetailSection>
@@ -207,10 +228,7 @@ loadData()
     </el-row>
 
     <AttachmentPreview v-model:visible="previewVisible" :files="previewFiles" />
-    <ChangePasswordDialog
-      v-model:visible="passwordVisible"
-      :title="isInstitution ? '修改机构账号密码' : '修改企业账号密码'"
-    />
+    <ChangePasswordDialog v-model:visible="passwordVisible" :title="`${pageTitle}密码设置`" />
   </PageContainer>
 </template>
 

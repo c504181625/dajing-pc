@@ -219,8 +219,8 @@ onBeforeUnmount(() => {
   <AuthSimpleLayout
     title="质量创新中心平台"
     subtitle="统一身份认证与业务办理入口"
-    card-title="机构入驻"
-    card-description="按机构主体、联系人、业务信息、基础附件和资质证书顺序填写，审核通过后平台将向入驻联系人发放初始密码。"
+    card-title="机构 / 服务提供方入驻"
+    card-description="按主体信息、联系人、业务信息、基础附件和资质证书顺序填写，审核通过后平台将向入驻联系人发放初始密码。"
     max-width="1120px"
   >
     <el-form label-position="top" class="institution-form" @submit.prevent="handleSubmit">
@@ -523,10 +523,7 @@ onBeforeUnmount(() => {
         <el-button class="submit-button" type="primary" :loading="loading" @click="handleSubmit">
           提交机构入驻申请
         </el-button>
-        <el-link
-          type="primary"
-          underline="never"
-          @click="router.push('/login?subject=institution')"
+        <el-link type="primary" underline="never" @click="router.push('/login?subject=enterprise')"
           >返回登录</el-link
         >
       </div>

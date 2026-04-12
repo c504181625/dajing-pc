@@ -22,6 +22,12 @@ const emit = defineEmits<{
 }>()
 
 const formModel = props.modelValue
+const initialModel = Object.fromEntries(
+  Object.entries(props.modelValue).map(([key, value]) => [
+    key,
+    Array.isArray(value) ? [...value] : value,
+  ]),
+)
 
 function updateField(prop: string, value: unknown) {
   formModel[prop] = value
@@ -30,7 +36,8 @@ function updateField(prop: string, value: unknown) {
 
 function handleReset() {
   Object.keys(formModel).forEach((key) => {
-    formModel[key] = Array.isArray(formModel[key]) ? [] : ''
+    const initialValue = initialModel[key]
+    formModel[key] = Array.isArray(initialValue) ? [...initialValue] : initialValue
   })
   emit('update:modelValue', formModel)
   emit('reset')
@@ -39,8 +46,12 @@ function handleReset() {
 
 <template>
   <el-card shadow="never" class="app-card search-card">
-    <el-form class="search-form" label-width="88px">
-      <el-form-item v-for="field in fields" :key="field.prop" :label="field.label" class="search-item">
+    <el-form class="search-form" label-position="left">
+      <el-form-item v-for="field in fields" :key="field.prop" class="search-item">
+        <template #label>
+          <span class="search-label">{{ field.label }}：</span>
+        </template>
+
         <el-input
           v-if="!field.component || field.component === 'input'"
           :model-value="formModel[field.prop] as string"
@@ -96,30 +107,60 @@ function handleReset() {
 .search-form {
   display: flex;
   align-items: flex-end;
-  gap: 12px 16px;
+  gap: 10px 12px;
   flex-wrap: wrap;
 }
 
-.search-item {
-  margin-bottom: 0;
-}
-
+.search-item,
 .search-actions {
   margin-bottom: 0;
 }
 
+.search-item {
+  flex: 0 1 auto;
+}
+
+.search-item :deep(.el-form-item__label) {
+  padding-right: 6px;
+  justify-content: flex-start;
+  color: var(--dj-color-text-regular);
+  line-height: 32px;
+}
+
+.search-item :deep(.el-form-item__content) {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.search-label {
+  text-align: left;
+  white-space: nowrap;
+}
+
+.search-actions {
+  margin-left: auto;
+}
+
+.search-actions :deep(.el-form-item__content) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
 .search-control {
-  width: 240px;
+  width: 176px;
 }
 
 .search-control-date {
-  width: 320px;
+  width: 236px;
 }
 
 @media (max-width: 1280px) {
   .search-control,
   .search-control-date {
-    width: 220px;
+    width: 168px;
   }
 }
 
@@ -131,6 +172,12 @@ function handleReset() {
   .search-item,
   .search-actions {
     width: 100%;
+    margin-left: 0;
+  }
+
+  .search-item :deep(.el-form-item__content),
+  .search-actions :deep(.el-form-item__content) {
+    flex-wrap: wrap;
   }
 
   .search-control,

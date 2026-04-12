@@ -1,28 +1,38 @@
 <script setup lang="ts">
-import { ElMessage } from 'element-plus'
-import { reactive, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { computed, reactive, ref } from 'vue'
 
-import { assignDemand, getDemandDetail, getDemandList, replyDemand } from '@/api/modules/demand'
+import {
+  assignDemand,
+  deleteDemand,
+  getDemandDetail,
+  getDemandList,
+  replyDemand,
+} from '@/api/modules/demand'
 import PageContainer from '@/components/PageContainer.vue'
 import AttachmentPreview from '@/components-business/AttachmentPreview/index.vue'
 import DetailSection from '@/components-business/DetailSection/index.vue'
 import OperationTimeline from '@/components-business/OperationTimeline/index.vue'
 import PermissionButton from '@/components-business/PermissionButton/index.vue'
 import SearchForm from '@/components-business/SearchForm/index.vue'
+import StatsPanel from '@/components-business/StatsPanel/index.vue'
 import StatusTag from '@/components-business/StatusTag/index.vue'
 import TablePanel from '@/components-business/TablePanel/index.vue'
 import { DEMAND_STATUS_MAP, SERVICE_TYPE_OPTIONS } from '@/constants/dicts'
-import { PublishMode } from '@/enum/status'
+import { PERMISSION_CODE } from '@/enum/permission'
+import { DemandStatus, PublishMode } from '@/enum/status'
 import type { AttachmentItem, DemandDetail, DemandItem, DemandQuery } from '@/types/business'
 
 const loading = ref(false)
-const detailVisible = ref(false)
-const replyVisible = ref(false)
-const assignVisible = ref(false)
+const total = ref(0)
 const tableData = ref<DemandItem[]>([])
+const detailVisible = ref(false)
+const handleVisible = ref(false)
 const currentDetail = ref<DemandDetail | null>(null)
 const previewVisible = ref(false)
 const previewFiles = ref<AttachmentItem[]>([])
+const replyVisible = ref(false)
+const assignVisible = ref(false)
 const replyContent = ref('')
 const assignOrgName = ref('')
 
@@ -31,10 +41,22 @@ const queryForm = reactive<DemandQuery>({
   pageSize: 10,
   keyword: '',
   status: '',
+  serviceType: '',
 })
 
 const searchFields = [
-  { label: '关键字', prop: 'keyword', placeholder: '需求标题/企业名称/机构名称' },
+  {
+    label: '关键词',
+    prop: 'keyword',
+    placeholder: '需求标题/企业名称/机构名称',
+  },
+  {
+    label: '服务类型',
+    prop: 'serviceType',
+    component: 'select' as const,
+    placeholder: '请选择服务类型',
+    options: SERVICE_TYPE_OPTIONS,
+  },
   {
     label: '状态',
     prop: 'status',
@@ -44,19 +66,76 @@ const searchFields = [
   },
 ]
 
+const statCards = computed(() => [
+  {
+    title: '待分配',
+    value: tableData.value.filter(
+      (item) => !item.assignedOrg || item.status === DemandStatus.Pending,
+    ).length,
+  },
+  {
+    title: '处理中',
+    value: tableData.value.filter((item) => item.status === DemandStatus.Processing).length,
+  },
+  {
+    title: '自主选择',
+    value: tableData.value.filter((item) => item.publishMode === PublishMode.SelfSelect).length,
+  },
+  {
+    title: '超时',
+    value: tableData.value.filter((item) => item.status === DemandStatus.Pending).length,
+  },
+])
+
+const displayStatCards = computed(() => [
+  {
+    ...statCards.value[0],
+    hint: '等待平台分配服务机构或进入处理流程',
+  },
+  {
+    ...statCards.value[1],
+    hint: '已进入机构跟进与回复阶段的需求',
+  },
+  {
+    ...statCards.value[2],
+    hint: '企业选择自主对接服务机构的需求',
+  },
+  {
+    ...statCards.value[3],
+    hint: '当前仍在待处理区间的需求任务',
+  },
+])
+
 async function loadData() {
   loading.value = true
   try {
     const res = await getDemandList(queryForm)
     tableData.value = res.list
+    total.value = res.total
   } finally {
     loading.value = false
   }
 }
 
+function handleSearch() {
+  queryForm.pageNum = 1
+  loadData()
+}
+
+function handlePageChange() {
+  loadData()
+}
+
 async function openDetail(id: string) {
   currentDetail.value = await getDemandDetail(id)
   detailVisible.value = true
+  handleVisible.value = false
+}
+
+async function openHandle(id: string) {
+  currentDetail.value = await getDemandDetail(id)
+  handleVisible.value = true
+  detailVisible.value = false
 }
 
 function openPreview(files: AttachmentItem[]) {
@@ -64,42 +143,93 @@ function openPreview(files: AttachmentItem[]) {
   previewVisible.value = true
 }
 
+function getServiceTypeLabel(serviceType?: string) {
+  return (
+    SERVICE_TYPE_OPTIONS.find((item) => item.value === serviceType)?.label || serviceType || '-'
+  )
+}
+
 async function submitReply() {
   if (!currentDetail.value || !replyContent.value.trim()) {
-    ElMessage.warning('请输入回复内容')
+    ElMessage.warning('请输入处理意见')
     return
   }
+
   await replyDemand(currentDetail.value.id, replyContent.value)
-  ElMessage.success('回复成功')
+  ElMessage.success('处理完成')
   replyVisible.value = false
   replyContent.value = ''
+  currentDetail.value = await getDemandDetail(currentDetail.value.id)
+  await loadData()
 }
 
 async function submitAssign() {
   if (!currentDetail.value || !assignOrgName.value.trim()) {
-    ElMessage.warning('请输入机构名称')
+    ElMessage.warning('请选择分配机构')
     return
   }
+
   await assignDemand(currentDetail.value.id, assignOrgName.value)
-  ElMessage.success('分配成功')
+  ElMessage.success('分配完成')
   assignVisible.value = false
-  assignOrgName.value = ''
-  loadData()
+  currentDetail.value = await getDemandDetail(currentDetail.value.id)
+  await loadData()
+}
+
+async function handleDelete(row: DemandItem) {
+  try {
+    await ElMessageBox.confirm(`确认删除需求“${row.title}”吗？`, '删除确认', {
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
+
+  await deleteDemand(row.id)
+  ElMessage.success('需求已删除')
+  await loadData()
+
+  if (currentDetail.value?.id === row.id) {
+    detailVisible.value = false
+    handleVisible.value = false
+    currentDetail.value = null
+  }
 }
 
 loadData()
 </script>
 
 <template>
-  <PageContainer title="需求管理" subtitle="以列表 + 详情抽屉承载需求受理、回复和分配机构操作，一期先保证闭环可用。">
-    <SearchForm v-model="queryForm" :fields="searchFields" @search="loadData" @reset="loadData" />
+  <PageContainer
+    title="需求管理"
+    subtitle="以列表 + 详情抽屉承载需求受理、回复和分配机构操作，保持平台处理链路清晰。"
+  >
+    <StatsPanel :items="displayStatCards" />
 
-    <TablePanel title="需求列表">
+    <SearchForm
+      v-model="queryForm"
+      :fields="searchFields"
+      @search="handleSearch"
+      @reset="loadData"
+    />
+
+    <TablePanel
+      title="需求列表"
+      :total="total"
+      :page-num="queryForm.pageNum"
+      :page-size="queryForm.pageSize"
+      @update:page-num="queryForm.pageNum = $event"
+      @update:page-size="queryForm.pageSize = $event"
+      @pageChange="handlePageChange"
+    >
       <el-table v-loading="loading" :data="tableData" border>
         <el-table-column prop="title" label="需求标题" min-width="240" />
         <el-table-column label="服务类型" width="120">
           <template #default="{ row }">
-            {{ SERVICE_TYPE_OPTIONS.find((item) => item.value === row.serviceType)?.label || row.serviceType }}
+            {{
+              SERVICE_TYPE_OPTIONS.find((item) => item.value === row.serviceType)?.label ||
+              row.serviceType
+            }}
           </template>
         </el-table-column>
         <el-table-column prop="enterpriseName" label="需求企业" min-width="180" />
@@ -114,28 +244,115 @@ loadData()
             <StatusTag :status="row.status" :map="DEMAND_STATUS_MAP" />
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" min-width="220" fixed="right" align="center" header-align="center">
           <template #default="{ row }">
-            <el-button text type="primary" @click="openDetail(row.id)">查看详情</el-button>
-            <PermissionButton permission="demand:manage:view" text @click="openDetail(row.id)">处理</PermissionButton>
+            <el-space wrap>
+              <el-button text type="primary" @click="openDetail(row.id)">查看详情</el-button>
+              <PermissionButton
+                :permission="PERMISSION_CODE.operatorDemandAssign"
+                text
+                @click="openHandle(row.id)"
+              >
+                处理
+              </PermissionButton>
+              <PermissionButton
+                :permission="PERMISSION_CODE.operatorDemandAssign"
+                text
+                type="danger"
+                @click="handleDelete(row)"
+              >
+                删除
+              </PermissionButton>
+            </el-space>
           </template>
         </el-table-column>
       </el-table>
     </TablePanel>
 
-    <el-drawer v-model="detailVisible" title="需求详情" size="720px">
+    <el-drawer v-model="detailVisible" title="需求详情" size="760px">
       <template v-if="currentDetail">
         <DetailSection title="基础信息">
           <el-descriptions :column="1" border>
             <el-descriptions-item label="需求标题">{{ currentDetail.title }}</el-descriptions-item>
-            <el-descriptions-item label="需求内容">{{ currentDetail.content }}</el-descriptions-item>
-            <el-descriptions-item label="需求企业">{{ currentDetail.enterpriseName }}</el-descriptions-item>
-            <el-descriptions-item label="当前机构">{{ currentDetail.assignedOrg || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="需求企业">{{
+              currentDetail.enterpriseName
+            }}</el-descriptions-item>
+            <el-descriptions-item label="服务类型">
+              {{ getServiceTypeLabel(currentDetail?.serviceType) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="对接模式">
+              {{
+                currentDetail.publishMode === PublishMode.PlatformAssign ? '平台分配' : '自主选择'
+              }}
+            </el-descriptions-item>
+            <el-descriptions-item label="当前机构">{{
+              currentDetail.assignedOrg || '-'
+            }}</el-descriptions-item>
+            <el-descriptions-item label="联系人">{{
+              currentDetail.contactName
+            }}</el-descriptions-item>
+            <el-descriptions-item label="联系电话">{{
+              currentDetail.contactPhone
+            }}</el-descriptions-item>
+            <el-descriptions-item label="创建时间">{{
+              currentDetail.createdAt
+            }}</el-descriptions-item>
+            <el-descriptions-item label="需求内容">{{
+              currentDetail.content
+            }}</el-descriptions-item>
           </el-descriptions>
         </DetailSection>
 
         <DetailSection title="附件" style="margin-top: 16px">
-          <el-button type="primary" plain @click="openPreview(currentDetail.attachments)">查看附件</el-button>
+          <el-button
+            type="primary"
+            plain
+            @click="currentDetail && openPreview(currentDetail.attachments)"
+          >
+            查看附件
+          </el-button>
+        </DetailSection>
+
+        <DetailSection title="处理记录" style="margin-top: 16px">
+          <OperationTimeline :nodes="currentDetail.replyRecords" />
+        </DetailSection>
+      </template>
+    </el-drawer>
+
+    <el-drawer v-model="handleVisible" title="处理需求" size="760px">
+      <template v-if="currentDetail">
+        <DetailSection title="基础信息">
+          <el-descriptions :column="1" border>
+            <el-descriptions-item label="需求标题">{{ currentDetail.title }}</el-descriptions-item>
+            <el-descriptions-item label="需求企业">{{
+              currentDetail.enterpriseName
+            }}</el-descriptions-item>
+            <el-descriptions-item label="服务类型">
+              {{ getServiceTypeLabel(currentDetail?.serviceType) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="当前机构">{{
+              currentDetail.assignedOrg || '-'
+            }}</el-descriptions-item>
+            <el-descriptions-item label="联系人">{{
+              currentDetail.contactName
+            }}</el-descriptions-item>
+            <el-descriptions-item label="联系电话">{{
+              currentDetail.contactPhone
+            }}</el-descriptions-item>
+            <el-descriptions-item label="需求内容">{{
+              currentDetail.content
+            }}</el-descriptions-item>
+          </el-descriptions>
+        </DetailSection>
+
+        <DetailSection title="附件" style="margin-top: 16px">
+          <el-button
+            type="primary"
+            plain
+            @click="currentDetail && openPreview(currentDetail.attachments)"
+          >
+            查看附件
+          </el-button>
         </DetailSection>
 
         <DetailSection title="处理记录" style="margin-top: 16px">
@@ -143,19 +360,22 @@ loadData()
         </DetailSection>
 
         <div class="drawer-actions">
-          <PermissionButton permission="demand:manage:view" @click="replyVisible = true">回复</PermissionButton>
-          <PermissionButton permission="demand:manage:view" plain @click="assignVisible = true">分配机构</PermissionButton>
+          <PermissionButton
+            :permission="PERMISSION_CODE.operatorDemandAssign"
+            plain
+            @click="assignVisible = true"
+          >
+            分配机构
+          </PermissionButton>
+          <PermissionButton
+            :permission="PERMISSION_CODE.operatorDemandAssign"
+            @click="replyVisible = true"
+          >
+            回复
+          </PermissionButton>
         </div>
       </template>
     </el-drawer>
-
-    <el-dialog v-model="replyVisible" title="需求回复" width="520px">
-      <el-input v-model="replyContent" type="textarea" :rows="5" placeholder="请输入回复内容" />
-      <template #footer>
-        <el-button @click="replyVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitReply">提交回复</el-button>
-      </template>
-    </el-dialog>
 
     <el-dialog v-model="assignVisible" title="分配机构" width="520px">
       <el-input v-model="assignOrgName" placeholder="请输入机构名称" />
@@ -165,15 +385,23 @@ loadData()
       </template>
     </el-dialog>
 
+    <el-dialog v-model="replyVisible" title="处理需求" width="520px">
+      <el-input v-model="replyContent" type="textarea" :rows="5" placeholder="请输入处理意见" />
+      <template #footer>
+        <el-button @click="replyVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitReply">提交</el-button>
+      </template>
+    </el-dialog>
+
     <AttachmentPreview v-model:visible="previewVisible" :files="previewFiles" />
   </PageContainer>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .drawer-actions {
-  margin-top: 20px;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  margin-top: 20px;
 }
 </style>

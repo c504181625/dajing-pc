@@ -43,14 +43,34 @@ export const ACCOUNT_STATUS_MAP: Record<string, DictOption> = {
 }
 
 export const SERVICE_SHELF_STATUS_MAP: Record<string, DictOption> = {
-  [ServiceShelfStatus.Enabled]: { label: '已上架', value: ServiceShelfStatus.Enabled, tagType: 'success' },
-  [ServiceShelfStatus.Disabled]: { label: '已停用', value: ServiceShelfStatus.Disabled, tagType: 'info' },
+  [ServiceShelfStatus.Enabled]: {
+    label: '已上架',
+    value: ServiceShelfStatus.Enabled,
+    tagType: 'success',
+  },
+  [ServiceShelfStatus.Disabled]: {
+    label: '已停用',
+    value: ServiceShelfStatus.Disabled,
+    tagType: 'info',
+  },
 }
 
 export const COMMUNITY_STATUS_MAP: Record<string, DictOption> = {
-  [CommunityContentStatus.Draft]: { label: '草稿', value: CommunityContentStatus.Draft, tagType: 'info' },
-  [CommunityContentStatus.Published]: { label: '已发布', value: CommunityContentStatus.Published, tagType: 'success' },
-  [CommunityContentStatus.Offline]: { label: '已下线', value: CommunityContentStatus.Offline, tagType: 'danger' },
+  [CommunityContentStatus.Draft]: {
+    label: '草稿',
+    value: CommunityContentStatus.Draft,
+    tagType: 'info',
+  },
+  [CommunityContentStatus.Published]: {
+    label: '已发布',
+    value: CommunityContentStatus.Published,
+    tagType: 'success',
+  },
+  [CommunityContentStatus.Offline]: {
+    label: '已下线',
+    value: CommunityContentStatus.Offline,
+    tagType: 'danger',
+  },
 }
 
 export const GOODS_STATUS_MAP: Record<string, DictOption> = {
@@ -59,8 +79,16 @@ export const GOODS_STATUS_MAP: Record<string, DictOption> = {
 }
 
 export const WORKFLOW_TEMPLATE_STATUS_MAP: Record<string, DictOption> = {
-  [WorkflowTemplateStatus.Enabled]: { label: '启用', value: WorkflowTemplateStatus.Enabled, tagType: 'success' },
-  [WorkflowTemplateStatus.Disabled]: { label: '停用', value: WorkflowTemplateStatus.Disabled, tagType: 'info' },
+  [WorkflowTemplateStatus.Enabled]: {
+    label: '启用',
+    value: WorkflowTemplateStatus.Enabled,
+    tagType: 'success',
+  },
+  [WorkflowTemplateStatus.Disabled]: {
+    label: '停用',
+    value: WorkflowTemplateStatus.Disabled,
+    tagType: 'info',
+  },
 }
 
 export const WORKFLOW_NODE_TYPE_OPTIONS: DictOption[] = [
@@ -81,7 +109,11 @@ export const DEMAND_STATUS_MAP: Record<string, DictOption> = {
   [DemandStatus.Pending]: { label: '待受理', value: DemandStatus.Pending, tagType: 'warning' },
   [DemandStatus.Assigned]: { label: '已分配', value: DemandStatus.Assigned, tagType: 'primary' },
   [DemandStatus.Replied]: { label: '已回复', value: DemandStatus.Replied, tagType: 'info' },
-  [DemandStatus.Processing]: { label: '处理中', value: DemandStatus.Processing, tagType: 'primary' },
+  [DemandStatus.Processing]: {
+    label: '处理中',
+    value: DemandStatus.Processing,
+    tagType: 'primary',
+  },
   [DemandStatus.Completed]: { label: '已完成', value: DemandStatus.Completed, tagType: 'success' },
   [DemandStatus.Closed]: { label: '已关闭', value: DemandStatus.Closed, tagType: 'danger' },
 }
@@ -94,28 +126,60 @@ export const CONSULT_STATUS_MAP: Record<string, DictOption> = {
 
 export const ORDER_STATUS_MAP: Record<string, DictOption> = {
   [OrderStatus.Quoting]: { label: '报价中', value: OrderStatus.Quoting, tagType: 'warning' },
-  [OrderStatus.WaitingPayment]: { label: '待支付', value: OrderStatus.WaitingPayment, tagType: 'danger' },
-  [OrderStatus.WaitingSample]: { label: '待寄样', value: OrderStatus.WaitingSample, tagType: 'primary' },
+  [OrderStatus.WaitingPayment]: {
+    label: '待支付',
+    value: OrderStatus.WaitingPayment,
+    tagType: 'danger',
+  },
+  [OrderStatus.WaitingSample]: {
+    label: '待寄样',
+    value: OrderStatus.WaitingSample,
+    tagType: 'primary',
+  },
   [OrderStatus.Testing]: { label: '检测中', value: OrderStatus.Testing, tagType: 'warning' },
   [OrderStatus.Reporting]: { label: '报告编制中', value: OrderStatus.Reporting, tagType: 'info' },
   [OrderStatus.Finished]: { label: '已完成', value: OrderStatus.Finished, tagType: 'success' },
-  [OrderStatus.ForceClosed]: { label: '已强制关闭', value: OrderStatus.ForceClosed, tagType: 'danger' },
+  [OrderStatus.ForceClosed]: {
+    label: '已强制关闭',
+    value: OrderStatus.ForceClosed,
+    tagType: 'danger',
+  },
   [OrderStatus.Refunding]: { label: '退款中', value: OrderStatus.Refunding, tagType: 'warning' },
   [OrderStatus.Refunded]: { label: '已退款', value: OrderStatus.Refunded, tagType: 'info' },
 }
 
 export const PAYMENT_STATUS_MAP: Record<string, DictOption> = {
   [PaymentStatus.Unpaid]: { label: '未支付', value: PaymentStatus.Unpaid, tagType: 'danger' },
-  [PaymentStatus.PartPaid]: { label: '部分支付', value: PaymentStatus.PartPaid, tagType: 'warning' },
+  [PaymentStatus.PartPaid]: {
+    label: '部分支付',
+    value: PaymentStatus.PartPaid,
+    tagType: 'warning',
+  },
   [PaymentStatus.Paid]: { label: '已支付', value: PaymentStatus.Paid, tagType: 'success' },
-  [PaymentStatus.Refunding]: { label: '退款中', value: PaymentStatus.Refunding, tagType: 'warning' },
+  [PaymentStatus.Refunding]: {
+    label: '退款中',
+    value: PaymentStatus.Refunding,
+    tagType: 'warning',
+  },
   [PaymentStatus.Refunded]: { label: '已退款', value: PaymentStatus.Refunded, tagType: 'info' },
 }
 
 export const SAMPLE_RECEIVE_STATUS_MAP: Record<string, DictOption> = {
-  [SampleReceiveStatus.Pending]: { label: '待收样', value: SampleReceiveStatus.Pending, tagType: 'warning' },
-  [SampleReceiveStatus.Received]: { label: '已收样', value: SampleReceiveStatus.Received, tagType: 'success' },
-  [SampleReceiveStatus.Abnormal]: { label: '收样异常', value: SampleReceiveStatus.Abnormal, tagType: 'danger' },
+  [SampleReceiveStatus.Pending]: {
+    label: '待收样',
+    value: SampleReceiveStatus.Pending,
+    tagType: 'warning',
+  },
+  [SampleReceiveStatus.Received]: {
+    label: '已收样',
+    value: SampleReceiveStatus.Received,
+    tagType: 'success',
+  },
+  [SampleReceiveStatus.Abnormal]: {
+    label: '收样异常',
+    value: SampleReceiveStatus.Abnormal,
+    tagType: 'danger',
+  },
 }
 
 export const REPORT_STATUS_MAP: Record<string, DictOption> = {
@@ -139,7 +203,11 @@ export const MESSAGE_TYPE_OPTIONS: DictOption[] = [
 ]
 
 export const MESSAGE_READ_STATUS_MAP: Record<string, DictOption> = {
-  [MessageReadStatus.Unread]: { label: '未读', value: MessageReadStatus.Unread, tagType: 'warning' },
+  [MessageReadStatus.Unread]: {
+    label: '未读',
+    value: MessageReadStatus.Unread,
+    tagType: 'warning',
+  },
   [MessageReadStatus.Read]: { label: '已读', value: MessageReadStatus.Read, tagType: 'success' },
 }
 
@@ -161,7 +229,6 @@ export const ROLE_LABEL_MAP: Record<string, string> = {
   [ROLE_CODE.auditor]: '平台审核员',
   [ROLE_CODE.enterpriseDemander]: '服务需求方',
   [ROLE_CODE.enterpriseServiceProvider]: '服务提供方',
-  [ROLE_CODE.enterpriseLabProvider]: '检测机构方',
 }
 
 export const ACCOUNT_TYPE_LABEL_MAP: Record<string, string> = {
@@ -178,6 +245,5 @@ export const PLATFORM_ROLE_LABEL_MAP: Record<string, string> = {
 
 export const ENTERPRISE_CAPABILITY_LABEL_MAP: Record<string, string> = {
   [ENTERPRISE_CAPABILITY.demander]: '需求发布方',
-  [ENTERPRISE_CAPABILITY.serviceProvider]: '基础服务提供方',
-  [ENTERPRISE_CAPABILITY.labProvider]: '检测机构方',
+  [ENTERPRISE_CAPABILITY.serviceProvider]: '服务提供方 / 检测机构',
 }

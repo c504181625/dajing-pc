@@ -70,11 +70,15 @@ function filterConsultRecords(list: ConsultRecord[]) {
   const visible = new Set<ConsultRecord>()
 
   if (hasAnyEnterpriseCapability([ENTERPRISE_CAPABILITY.demander])) {
-    list.filter((item) => item.ownerEnterpriseId === enterpriseId).forEach((item) => visible.add(item))
+    list
+      .filter((item) => item.ownerEnterpriseId === enterpriseId)
+      .forEach((item) => visible.add(item))
   }
 
-  if (hasAnyEnterpriseCapability([ENTERPRISE_CAPABILITY.serviceProvider, ENTERPRISE_CAPABILITY.labProvider])) {
-    list.filter((item) => item.receiverEnterpriseId === enterpriseId).forEach((item) => visible.add(item))
+  if (hasAnyEnterpriseCapability([ENTERPRISE_CAPABILITY.serviceProvider])) {
+    list
+      .filter((item) => item.receiverEnterpriseId === enterpriseId)
+      .forEach((item) => visible.add(item))
   }
 
   return [...visible]
@@ -86,7 +90,9 @@ export function mockGetConsultList(params?: ConsultQuery) {
   const status = String(params?.status || '')
 
   if (keyword) {
-    list = list.filter((item) => [item.title, item.enterpriseName, item.contactName].some((field) => field.includes(keyword)))
+    list = list.filter((item) =>
+      [item.title, item.enterpriseName, item.contactName].some((field) => field.includes(keyword)),
+    )
   }
   if (status) list = list.filter((item) => item.status === status)
 
@@ -110,6 +116,14 @@ export function mockReplyConsult(id: string, content: string): Promise<boolean> 
       operator: getMockCurrentUser().enterpriseName || getMockCurrentUser().name,
       status: OperationStatus.Done,
     })
+  }
+  return mockPromise(true)
+}
+
+export function mockDeleteConsult(id: string): Promise<boolean> {
+  const index = consultRecords.findIndex((item) => item.id === id)
+  if (index >= 0) {
+    consultRecords.splice(index, 1)
   }
   return mockPromise(true)
 }

@@ -30,7 +30,7 @@ function formatSize(size?: number) {
       <el-table-column label="大小" width="120">
         <template #default="{ row }">{{ formatSize(row.size) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="160">
+      <el-table-column label="操作" width="160" align="center" header-align="center">
         <template #default="{ row }">
           <el-link type="primary" :href="row.url" target="_blank">新窗口打开</el-link>
         </template>

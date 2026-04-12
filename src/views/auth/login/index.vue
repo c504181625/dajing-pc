@@ -1,28 +1,22 @@
 <script setup lang="ts">
 import { Lock, OfficeBuilding, Phone, User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { onBeforeUnmount, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import {
-  enterpriseCodeLogin,
-  enterpriseUsernameLogin,
-  institutionCodeLogin,
-  institutionUsernameLogin,
-  loginByPassword,
-  personalPasswordLogin,
-  personalSmsLogin,
-  sendSmsCode,
-} from '@/api/modules/auth'
+import { loginByCreditCode, loginByMobile, loginByPassword, sendAuthCode } from '@/api/modules/auth'
 import AuthSplitLayout from '@/components-business/AuthSplitLayout/index.vue'
-import { LOGIN_TYPE_ENUM, LOGIN_TYPE_LABEL_MAP, MOBILE_PATTERN } from '@/enum/auth'
-import { ACCOUNT_TYPE, ACCOUNT_TYPE_LABEL_MAP } from '@/enum/role'
+import {
+  LOGIN_TYPE_DESCRIPTION_MAP,
+  LOGIN_TYPE_ENUM,
+  LOGIN_TYPE_LABEL_MAP,
+  MOBILE_PATTERN,
+} from '@/enum/auth'
+import { ACCOUNT_TYPE } from '@/enum/role'
 import { useMessageStore } from '@/store/modules/message'
 import { usePermissionStore } from '@/store/modules/permission'
 import { useUserStore } from '@/store/modules/user'
-import type { LoginType, PasswordLoginForm, SmsLoginForm } from '@/types/auth'
-
-type LoginSubject = 'personal' | 'enterprise' | 'institution' | 'platform_admin'
+import type { CreditCodeLoginForm, LoginType, PasswordLoginForm, SmsLoginForm } from '@/types/auth'
 
 const route = useRoute()
 const router = useRouter()
@@ -30,6 +24,7 @@ const userStore = useUserStore()
 const permissionStore = usePermissionStore()
 const messageStore = useMessageStore()
 
+const activeTab = ref<LoginType>(LOGIN_TYPE_ENUM.password)
 const loading = ref(false)
 const smsLoading = ref(false)
 const countdown = ref(0)
@@ -45,113 +40,34 @@ const smsForm = reactive<SmsLoginForm>({
   smsCode: '',
 })
 
-const accountType = ref<LoginSubject>('platform_admin')
-const loginType = ref<LoginType>(LOGIN_TYPE_ENUM.personalPassword)
-
-const subjectOptions = [
-  { label: '个人登录', value: 'personal' },
-  { label: '企业登录', value: 'enterprise' },
-  { label: '机构登录', value: 'institution' },
-] satisfies Array<{ label: string; value: Exclude<LoginSubject, 'platform_admin'> }>
-
-const modeOptions = computed(() => {
-  switch (accountType.value) {
-    case 'personal':
-      return [LOGIN_TYPE_ENUM.personalPassword, LOGIN_TYPE_ENUM.personalSms]
-    case 'enterprise':
-      return [LOGIN_TYPE_ENUM.enterpriseUsernamePassword, LOGIN_TYPE_ENUM.enterpriseCodePassword]
-    case 'institution':
-      return [LOGIN_TYPE_ENUM.institutionUsernamePassword, LOGIN_TYPE_ENUM.institutionCodePassword]
-    default:
-      return [LOGIN_TYPE_ENUM.personalPassword]
-  }
+const creditCodeForm = reactive<CreditCodeLoginForm>({
+  unifiedSocialCreditCode: '',
+  password: '',
+  mobile: '',
+  code: '',
 })
 
-const currentTitle = computed(() => {
-  if (accountType.value === 'platform_admin') return '平台运营方登录'
-  return ACCOUNT_TYPE_LABEL_MAP[accountType.value]
-})
+const loginTabs = [
+  LOGIN_TYPE_ENUM.password,
+  LOGIN_TYPE_ENUM.mobile,
+  LOGIN_TYPE_ENUM.creditCode,
+] as const
 
-const accountLabel = computed(() => {
-  switch (loginType.value) {
-    case LOGIN_TYPE_ENUM.enterpriseCodePassword:
-    case LOGIN_TYPE_ENUM.institutionCodePassword:
-      return '统一社会信用代码'
-    case LOGIN_TYPE_ENUM.personalPassword:
-      return '账号 / 手机号'
-    default:
-      return '账号'
+function resetCountdown() {
+  if (timer) {
+    window.clearInterval(timer)
+    timer = null
   }
-})
-
-const accountPlaceholder = computed(() => {
-  switch (loginType.value) {
-    case LOGIN_TYPE_ENUM.enterpriseUsernamePassword:
-      return '请输入企业用户名'
-    case LOGIN_TYPE_ENUM.enterpriseCodePassword:
-      return '请输入统一社会信用代码'
-    case LOGIN_TYPE_ENUM.institutionUsernamePassword:
-      return '请输入机构账户名'
-    case LOGIN_TYPE_ENUM.institutionCodePassword:
-      return '请输入统一社会信用代码'
-    default:
-      return '请输入账号或手机号'
-  }
-})
-
-function setDefaultMode(subject: LoginSubject) {
-  accountType.value = subject
-  switch (subject) {
-    case 'personal':
-      loginType.value = LOGIN_TYPE_ENUM.personalPassword
-      break
-    case 'enterprise':
-      loginType.value = LOGIN_TYPE_ENUM.enterpriseUsernamePassword
-      break
-    case 'institution':
-      loginType.value = LOGIN_TYPE_ENUM.institutionUsernamePassword
-      break
-    default:
-      loginType.value = LOGIN_TYPE_ENUM.personalPassword
-      break
-  }
-}
-
-function syncFromQuery() {
-  const querySubject = String(route.query.subject || '').trim() as LoginSubject
-  const allowedSubject: LoginSubject[] = ['personal', 'enterprise', 'institution', 'platform_admin']
-  const subject = allowedSubject.includes(querySubject) ? querySubject : 'platform_admin'
-  setDefaultMode(subject)
-
-  const queryMode = String(route.query.mode || '').trim() as LoginType
-  const currentModes = modeOptions.value as LoginType[]
-  if (currentModes.includes(queryMode)) {
-    loginType.value = queryMode
-  }
-}
-
-watch(() => route.query, syncFromQuery, { immediate: true })
-
-function resetForms() {
-  passwordForm.account = ''
-  passwordForm.password = ''
-  smsForm.mobile = ''
-  smsForm.smsCode = ''
-}
-
-function switchSubject(subject: LoginSubject) {
-  setDefaultMode(subject)
-  resetForms()
+  countdown.value = 0
 }
 
 function startCountdown() {
+  resetCountdown()
   countdown.value = 60
-  if (timer) window.clearInterval(timer)
   timer = window.setInterval(() => {
     countdown.value -= 1
-    if (countdown.value <= 0 && timer) {
-      window.clearInterval(timer)
-      timer = null
+    if (countdown.value <= 0) {
+      resetCountdown()
     }
   }, 1000)
 }
@@ -164,9 +80,10 @@ async function handleSendCode() {
 
   smsLoading.value = true
   try {
-    await sendSmsCode({
-      mobile: smsForm.mobile,
-      scene: 'personal_login',
+    await sendAuthCode({
+      channel: 'mobile',
+      target: smsForm.mobile,
+      scene: 'login_mobile',
     })
     ElMessage.success('验证码已发送，请注意查收')
     startCountdown()
@@ -177,54 +94,50 @@ async function handleSendCode() {
 
 async function enterSystem(redirect?: string) {
   if (!userStore.userInfo) return
-
   permissionStore.mountRoutes(router, userStore.userInfo)
-
   await messageStore.refreshStats()
-  await router.replace(redirect || userStore.landingPath)
+
+  const fallbackTarget = userStore.userInfo.homeRoute || userStore.landingPath
+  const expectedTarget = redirect || fallbackTarget
+  const resolvedTarget = router.resolve(expectedTarget)
+  const isNotFoundTarget = resolvedTarget.name === 'NotFound'
+  const finalTarget = isNotFoundTarget ? fallbackTarget : expectedTarget
+
+  await router.replace(finalTarget)
 }
 
 async function handleLogin() {
-  if (loginType.value === LOGIN_TYPE_ENUM.personalSms) {
-    if (!smsForm.mobile || !smsForm.smsCode) {
-      ElMessage.warning('请先填写手机号和验证码')
-      return
-    }
-  } else if (!passwordForm.account || !passwordForm.password) {
-    ElMessage.warning('请先填写账号和密码')
-    return
-  }
-
   loading.value = true
   try {
     let response
 
-    if (accountType.value === 'platform_admin') {
-      response = await loginByPassword(passwordForm)
-    } else {
-      switch (loginType.value) {
-        case LOGIN_TYPE_ENUM.personalPassword:
-          response = await personalPasswordLogin(passwordForm)
-          break
-        case LOGIN_TYPE_ENUM.personalSms:
-          response = await personalSmsLogin(smsForm)
-          break
-        case LOGIN_TYPE_ENUM.enterpriseUsernamePassword:
-          response = await enterpriseUsernameLogin(passwordForm)
-          break
-        case LOGIN_TYPE_ENUM.enterpriseCodePassword:
-          response = await enterpriseCodeLogin(passwordForm)
-          break
-        case LOGIN_TYPE_ENUM.institutionUsernamePassword:
-          response = await institutionUsernameLogin(passwordForm)
-          break
-        case LOGIN_TYPE_ENUM.institutionCodePassword:
-          response = await institutionCodeLogin(passwordForm)
-          break
+    if (activeTab.value === LOGIN_TYPE_ENUM.password) {
+      if (!passwordForm.account || !passwordForm.password) {
+        ElMessage.warning('请填写账号和密码')
+        return
       }
+      response = await loginByPassword(passwordForm)
+    } else if (activeTab.value === LOGIN_TYPE_ENUM.mobile) {
+      if (!smsForm.mobile || !smsForm.smsCode) {
+        ElMessage.warning('请填写手机号和验证码')
+        return
+      }
+      response = await loginByMobile({
+        mobile: smsForm.mobile,
+        code: smsForm.smsCode,
+      })
+    } else {
+      if (!creditCodeForm.unifiedSocialCreditCode || !creditCodeForm.password) {
+        ElMessage.warning('请填写统一社会信用代码和密码')
+        return
+      }
+
+      response = await loginByCreditCode({
+        unifiedSocialCreditCode: creditCodeForm.unifiedSocialCreditCode,
+        password: creditCodeForm.password,
+      })
     }
 
-    if (!response) return
     userStore.applyLoginResult(response)
 
     if (response.needResetPassword) {
@@ -235,22 +148,18 @@ async function handleLogin() {
       return
     }
 
-    if (response.accountType === ACCOUNT_TYPE.personal && String(route.query.showAuthResult) === '1') {
-      router.replace({
-        path: '/auth-result',
-        query: {
-          status: 'approved',
-          title: '登录成功',
-          description:
-            '个人账号认证已完成，PC 端业务入口当前为预留状态，请优先使用移动端继续办理。',
-        },
-      })
-      return
-    }
-
     permissionStore.resetRoutes(router)
-    await enterSystem(String(route.query.redirect || ''))
-    ElMessage.success('登录成功')
+    await enterSystem()
+
+    const accountType = userStore.userInfo?.accountType
+    const successText =
+      accountType === ACCOUNT_TYPE.operator
+        ? '已进入平台运营后台'
+        : accountType === ACCOUNT_TYPE.enterprise
+          ? '已进入企业后台'
+          : '已进入个人后台'
+
+    ElMessage.success(successText)
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '登录失败，请稍后重试')
   } finally {
@@ -259,76 +168,56 @@ async function handleLogin() {
 }
 
 onBeforeUnmount(() => {
-  if (timer) window.clearInterval(timer)
+  resetCountdown()
 })
 </script>
 
 <template>
   <AuthSplitLayout
     title="质量创新中心平台"
-    subtitle="面向个人、企业、检测机构与平台运营方的统一认证入口。企业注册与机构入驻提交后，由平台审核并发放初始密码。"
-    card-title="统一登录"
-    card-description="支持个人、企业、机构与平台运营方登录，收到初始密码的账号首次登录后需完成密码修改。"
+    subtitle="统一登录后由系统自动识别个人、企业与平台运营身份，并加载对应菜单与权限。"
+    :single-column="true"
   >
-    <template #aside>
-      <div class="aside-intro">
-        <div class="intro-title">统一身份认证与角色访问入口</div>
+    <div class="login-brand-head">
+      <div class="login-brand-mark">
+        <img
+          src="/logo.png"
+          alt="质量创新中心平台"
+          class="login-brand-mark__image"
+          width="88"
+          height="88"
+        />
       </div>
-      <div class="intro-points">
-        <div class="intro-point">
-          <div class="point-name">企业注册</div>
-          <div class="point-desc">提交主体资料后进入待审核，审核通过后平台发送初始密码。</div>
-        </div>
-        <div class="intro-point">
-          <div class="point-name">机构入驻</div>
-          <div class="point-desc">一屏完成机构申请，适用于检测机构入驻与后续后台登录。</div>
-        </div>
+      <div class="login-brand-copy">
+        <!-- <div class="login-brand-eyebrow">Quality Innovation Center</div> -->
+        <h2>质量创新中心平台</h2>
       </div>
-    </template>
-
-    <div class="subject-row">
-      <button
-        v-for="item in subjectOptions"
-        :key="item.value"
-        type="button"
-        class="subject-pill"
-        :class="{ active: accountType === item.value }"
-        @click="switchSubject(item.value)"
-      >
-        {{ item.label }}
-      </button>
-      <button
-        type="button"
-        class="platform-pill"
-        :class="{ active: accountType === 'platform_admin' }"
-        @click="switchSubject('platform_admin')"
-      >
-        平台运营方登录
-      </button>
     </div>
 
-    <div v-if="accountType !== 'platform_admin'" class="mode-row">
+    <div class="login-tabs">
       <button
-        v-for="item in modeOptions"
+        v-for="item in loginTabs"
         :key="item"
         type="button"
-        class="mode-pill"
-        :class="{ active: loginType === item }"
-        @click="loginType = item"
+        class="tab-pill"
+        :class="{ active: activeTab === item }"
+        @click="activeTab = item"
       >
         {{ LOGIN_TYPE_LABEL_MAP[item] }}
       </button>
     </div>
 
+    <div class="tab-desc">
+      {{ LOGIN_TYPE_DESCRIPTION_MAP[activeTab] }}
+    </div>
+
     <el-form label-position="top" class="login-form" @submit.prevent="handleLogin">
-      <template v-if="loginType !== LOGIN_TYPE_ENUM.personalSms">
-        <el-form-item :label="accountType === 'platform_admin' ? '运营账号' : accountLabel">
+      <template v-if="activeTab === LOGIN_TYPE_ENUM.password">
+        <el-form-item label="账号 / 用户名 / 手机号">
           <el-input
             v-model="passwordForm.account"
-            :placeholder="
-              accountType === 'platform_admin' ? '请输入平台运营账号' : accountPlaceholder
-            "
-            :prefix-icon="accountType === 'platform_admin' ? OfficeBuilding : User"
+            placeholder="请输入账号、用户名或手机号"
+            :prefix-icon="User"
             size="large"
           />
         </el-form-item>
@@ -338,14 +227,14 @@ onBeforeUnmount(() => {
             v-model="passwordForm.password"
             type="password"
             show-password
-            placeholder="请输入密码"
+            placeholder="请输入登录密码"
             :prefix-icon="Lock"
             size="large"
           />
         </el-form-item>
       </template>
 
-      <template v-else>
+      <template v-else-if="activeTab === LOGIN_TYPE_ENUM.mobile">
         <el-form-item label="手机号">
           <el-input
             v-model="smsForm.mobile"
@@ -359,15 +248,36 @@ onBeforeUnmount(() => {
           <div class="sms-row">
             <el-input v-model="smsForm.smsCode" placeholder="请输入验证码" size="large" />
             <el-button
-              class="sms-button"
-              size="large"
+              class="sms-row__button"
               :loading="smsLoading"
               :disabled="countdown > 0"
               @click="handleSendCode"
             >
-              {{ countdown > 0 ? `${countdown}s 后重发` : '发送验证码' }}
+              {{ countdown > 0 ? `${countdown}s` : '获取验证码' }}
             </el-button>
           </div>
+        </el-form-item>
+      </template>
+
+      <template v-else>
+        <el-form-item label="统一社会信用代码">
+          <el-input
+            v-model="creditCodeForm.unifiedSocialCreditCode"
+            placeholder="请输入统一社会信用代码"
+            :prefix-icon="OfficeBuilding"
+            size="large"
+          />
+        </el-form-item>
+
+        <el-form-item label="密码">
+          <el-input
+            v-model="creditCodeForm.password"
+            type="password"
+            show-password
+            placeholder="请输入登录密码"
+            :prefix-icon="Lock"
+            size="large"
+          />
         </el-form-item>
       </template>
 
@@ -382,168 +292,125 @@ onBeforeUnmount(() => {
       </el-button>
     </el-form>
 
-    <div class="auth-links">
-      <el-link type="primary" underline="never" @click="router.push('/register/personal')"
-        >个人注册</el-link
-      >
-      <el-link type="primary" underline="never" @click="router.push('/register/enterprise')"
-        >企业注册</el-link
-      >
-      <el-link type="primary" underline="never" @click="router.push('/apply/institution')"
-        >机构入驻</el-link
-      >
-      <el-link type="primary" underline="never" @click="router.push('/forgot-password')"
-        >忘记密码</el-link
-      >
-    </div>
-
-    <div class="auth-note">
-      <span
-        >{{ currentTitle }}通过统一认证通道进入系统；企业与机构使用初始密码登录后需立即改密。</span
-      >
+    <div class="entry-links">
+      <el-link type="primary" underline="never" @click="router.push('/register/personal')">
+        个人注册
+      </el-link>
+      <el-link type="primary" underline="never" @click="router.push('/register/enterprise')">
+        企业入驻
+      </el-link>
+      <el-link type="primary" underline="never" @click="router.push('/apply/institution')">
+        机构认证
+      </el-link>
+      <el-link type="primary" underline="never" @click="router.push('/forgot-password')">
+        忘记密码
+      </el-link>
     </div>
   </AuthSplitLayout>
 </template>
 
 <style scoped lang="scss">
-.aside-intro,
-.intro-points {
-  border-radius: 22px;
-  border: 1px solid rgb(255 255 255 / 68%);
-  background: rgb(255 255 255 / 58%);
-  box-shadow: 0 16px 34px rgb(31 94 255 / 6%);
-}
-
-.aside-intro {
-  padding: 20px 22px;
-}
-
-.intro-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1a2843;
-}
-
-.aside-intro p {
-  margin: 8px 0 0;
-  font-size: 14px;
-  line-height: 1.8;
-  color: #627492;
-}
-
-.intro-points {
-  padding: 10px 0;
-}
-
-.intro-point {
-  padding: 12px 22px;
-}
-
-.intro-point + .intro-point {
-  border-top: 1px solid rgb(15 23 42 / 6%);
-}
-
-.point-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: #1b2a45;
-}
-
-.point-desc {
-  margin-top: 6px;
-  font-size: 13px;
-  line-height: 1.7;
-  color: #687b99;
-}
-
-.subject-row,
-.mode-row {
+.login-brand-head {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: fit-content;
+  margin: 0 auto 26px;
+}
+
+.login-brand-mark {
+  width: 120px;
+  height: 86px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.login-brand-mark__image {
+  display: block;
+  width: 88px !important;
+  height: 88px !important;
+  max-width: 88px !important;
+  max-height: 88px !important;
+  object-fit: contain;
+}
+
+.login-brand-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+  text-align: center;
+}
+
+.login-brand-eyebrow {
+  margin-bottom: 6px;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: #6a7ca4;
+}
+
+.login-brand-copy h2 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.18;
+  color: #18243d;
+}
+
+.login-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+  margin-bottom: 12px;
 }
 
-.mode-row {
-  margin-top: 18px;
-  margin-bottom: 22px;
-}
-
-.subject-pill,
-.platform-pill,
-.mode-pill {
-  height: 42px;
-  padding: 0 18px;
-  border-radius: 14px;
-  border: 1px solid rgb(31 94 255 / 14%);
-  background: rgb(246 249 255 / 84%);
-  color: #566889;
-  font-size: 14px;
+.tab-pill {
+  min-height: 50px;
+  padding: 0 12px;
+  border: 1px solid rgb(15 23 42 / 8%);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+  color: var(--dj-color-text-secondary);
   cursor: pointer;
   transition:
     border-color 0.2s ease,
-    background-color 0.2s ease,
-    color 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
-.subject-pill:hover,
-.platform-pill:hover,
-.mode-pill:hover {
-  border-color: rgb(31 94 255 / 22%);
-  background: rgb(255 255 255 / 94%);
+.tab-pill.active {
+  border-color: rgb(31 94 255 / 20%);
+  color: var(--dj-color-text-primary);
+  box-shadow: 0 12px 24px rgb(31 94 255 / 10%);
+  transform: translateY(-1px);
 }
 
-.subject-pill.active,
-.platform-pill.active,
-.mode-pill.active {
-  color: var(--dj-color-primary);
-  border-color: rgb(31 94 255 / 24%);
-  background: #fff;
-  box-shadow: 0 10px 24px rgb(31 94 255 / 10%);
-}
-
-.platform-pill {
-  margin-left: auto;
+.tab-desc {
+  margin-bottom: 18px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #f5f8ff;
+  color: var(--dj-color-text-regular);
+  font-size: 13px;
+  line-height: 1.7;
 }
 
 .login-form {
-  margin-top: 20px;
-}
-
-.sms-row {
-  width: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 144px;
-  gap: 12px;
-}
-
-.sms-button,
-.submit-button {
-  border-radius: 14px;
+  gap: 4px;
 }
 
 .submit-button {
   width: 100%;
-  margin-top: 12px;
-  height: 46px;
-  font-size: 16px;
-}
-
-.auth-links {
-  margin-top: 18px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-}
-
-.auth-note {
-  margin-top: 18px;
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-  font-size: 13px;
-  line-height: 1.7;
-  color: #677998;
+  height: 50px;
+  margin-top: 6px;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #2f7cf6 0%, #4ea0ff 100%);
+  box-shadow: 0 16px 32px rgb(47 124 246 / 22%);
 }
 
 :deep(.el-input__wrapper) {
@@ -552,9 +419,90 @@ onBeforeUnmount(() => {
   box-shadow: 0 0 0 1px rgb(31 94 255 / 10%) inset;
 }
 
+.sms-row {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) 144px;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.sms-row :deep(.el-input) {
+  width: 100%;
+}
+
+.sms-row :deep(.el-input__wrapper) {
+  min-height: 46px;
+}
+
+.sms-row__button {
+  width: 100%;
+  height: 46px;
+  margin: 0;
+  border-radius: 14px;
+  border-color: rgb(31 94 255 / 16%);
+  background: linear-gradient(180deg, #f7faff 0%, #eef4ff 100%);
+  box-shadow: none;
+  color: var(--dj-color-primary);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.sms-row__button :deep(span) {
+  color: inherit;
+}
+
+.sms-row__button:hover {
+  border-color: rgb(31 94 255 / 24%);
+  background: linear-gradient(180deg, #fff 0%, #f4f8ff 100%);
+  color: #1f5eff;
+}
+
+.sms-row__button:disabled,
+.sms-row__button.is-disabled {
+  color: #8ba0c5;
+  border-color: rgb(148 163 184 / 24%);
+  background: linear-gradient(135deg, #c8d7f6 0%, #dce6fb 100%);
+  box-shadow: none;
+}
+
+.entry-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+@media (max-width: 960px) {
+  .login-tabs {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
-  .platform-pill {
-    margin-left: 0;
+  .entry-links {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .login-brand-head {
+    gap: 12px;
+  }
+
+  .login-brand-mark {
+    width: 86px;
+    height: 64px;
+  }
+
+  .login-brand-mark__image {
+    width: 64px !important;
+    height: 64px !important;
+    max-width: 64px !important;
+    max-height: 64px !important;
+  }
+
+  .login-brand-copy h2 {
+    font-size: 20px;
   }
 
   .sms-row {

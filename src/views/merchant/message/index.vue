@@ -107,7 +107,7 @@ Promise.all([loadData(), messageStore.refreshStats()])
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="时间" min-width="130" />
-        <el-table-column label="操作" width="240">
+        <el-table-column label="操作" min-width="180" align="center" header-align="center">
           <template #default="{ row }">
             <el-button text type="primary" @click="openDetail(row)">查看</el-button>
             <el-button text type="primary" @click="handleRead(row.id)">已读</el-button>

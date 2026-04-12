@@ -58,12 +58,36 @@ const enterpriseAuditDetailMap: Record<string, EnterpriseAuditDetail> = {
       size: 520 * 1024,
     },
     qualificationFiles: [
-      { id: 'file-qual-001', name: 'CMA资质证书.pdf', url: '/mock/cma.pdf', fileType: 'pdf', size: 860 * 1024 },
-      { id: 'file-qual-002', name: 'CNAS认可证书.pdf', url: '/mock/cnas.pdf', fileType: 'pdf', size: 910 * 1024 },
+      {
+        id: 'file-qual-001',
+        name: 'CMA资质证书.pdf',
+        url: '/mock/cma.pdf',
+        fileType: 'pdf',
+        size: 860 * 1024,
+      },
+      {
+        id: 'file-qual-002',
+        name: 'CNAS认可证书.pdf',
+        url: '/mock/cnas.pdf',
+        fileType: 'pdf',
+        size: 910 * 1024,
+      },
     ],
     qualifications: [
-      { id: 'qual-001', name: 'CMA检验检测机构资质认定', number: 'CMA20261234', validUntil: '2028-12-31', status: 'valid' },
-      { id: 'qual-002', name: 'CNAS实验室认可', number: 'CNAS-L23456', validUntil: '2027-08-30', status: 'expiring' },
+      {
+        id: 'qual-001',
+        name: 'CMA检验检测机构资质认定',
+        number: 'CMA20261234',
+        validUntil: '2028-12-31',
+        status: 'valid',
+      },
+      {
+        id: 'qual-002',
+        name: 'CNAS实验室认可',
+        number: 'CNAS-L23456',
+        validUntil: '2027-08-30',
+        status: 'expiring',
+      },
     ],
     auditRecords: [
       {
@@ -110,10 +134,22 @@ const enterpriseAuditDetailMap: Record<string, EnterpriseAuditDetail> = {
       size: 508 * 1024,
     },
     qualificationFiles: [
-      { id: 'file-qual-003', name: '咨询服务资质.pdf', url: '/mock/consult.pdf', fileType: 'pdf', size: 662 * 1024 },
+      {
+        id: 'file-qual-003',
+        name: '咨询服务资质.pdf',
+        url: '/mock/consult.pdf',
+        fileType: 'pdf',
+        size: 662 * 1024,
+      },
     ],
     qualifications: [
-      { id: 'qual-003', name: '质量诊断咨询资质', number: 'QD-20260218', validUntil: '2028-02-18', status: 'valid' },
+      {
+        id: 'qual-003',
+        name: '质量诊断咨询资质',
+        number: 'QD-20260218',
+        validUntil: '2028-02-18',
+        status: 'valid',
+      },
     ],
     auditRecords: [
       {
@@ -159,8 +195,15 @@ const enterpriseProfiles: Record<string, EnterpriseProfile> = {
     address: '江苏省苏州市高新区科创路88号',
     intro: '主营汽车电子模组研发与制造，当前重点开展可靠性测试与质量体系提升。',
     serviceTypes: [ServiceType.Inspection, ServiceType.Diagnosis],
-    businessLicense: { id: 'ent100-license', name: '启航营业执照.pdf', url: '/mock/qihang-license.pdf', fileType: 'pdf' },
-    qualificationFiles: [{ id: 'ent100-cert', name: 'IATF16949.pdf', url: '/mock/iatf.pdf', fileType: 'pdf' }],
+    businessLicense: {
+      id: 'ent100-license',
+      name: '启航营业执照.pdf',
+      url: '/mock/qihang-license.pdf',
+      fileType: 'pdf',
+    },
+    qualificationFiles: [
+      { id: 'ent100-cert', name: 'IATF16949.pdf', url: '/mock/iatf.pdf', fileType: 'pdf' },
+    ],
   },
   'ent-200': {
     enterpriseId: 'ent-200',
@@ -175,14 +218,21 @@ const enterpriseProfiles: Record<string, EnterpriseProfile> = {
     address: '浙江省杭州市上城区钱江路566号',
     intro: '提供质量诊断、培训、标准化辅导等企业基础服务。',
     serviceTypes: [ServiceType.Standard, ServiceType.Diagnosis, ServiceType.Training],
-    businessLicense: { id: 'ent200-license', name: '工研营业执照.pdf', url: '/mock/hangquality-license.pdf', fileType: 'pdf' },
-    qualificationFiles: [{ id: 'ent200-cert', name: '咨询资质.pdf', url: '/mock/service-cert.pdf', fileType: 'pdf' }],
+    businessLicense: {
+      id: 'ent200-license',
+      name: '工研营业执照.pdf',
+      url: '/mock/hangquality-license.pdf',
+      fileType: 'pdf',
+    },
+    qualificationFiles: [
+      { id: 'ent200-cert', name: '咨询资质.pdf', url: '/mock/service-cert.pdf', fileType: 'pdf' },
+    ],
   },
   'ent-001': {
     enterpriseId: 'ent-001',
     enterpriseName: '苏州智造检测有限公司',
     enterpriseType: '企业主体',
-    capabilities: [ENTERPRISE_CAPABILITY.labProvider],
+    capabilities: [ENTERPRISE_CAPABILITY.serviceProvider],
     socialCreditCode: '91320594MA1Q2A0X1Y',
     legalPerson: '陈海涛',
     contactName: '陈捷',
@@ -191,7 +241,12 @@ const enterpriseProfiles: Record<string, EnterpriseProfile> = {
     address: '江苏省苏州市工业园区星湖街28号',
     intro: '提供电子元器件、材料与工业品检验检测服务，具备 CMA/CNAS 资质。',
     serviceTypes: [ServiceType.Inspection, ServiceType.Metrology, ServiceType.Standard],
-    businessLicense: { id: 'ent001-license', name: '智造营业执照.pdf', url: '/mock/smartlab-license.pdf', fileType: 'pdf' },
+    businessLicense: {
+      id: 'ent001-license',
+      name: '智造营业执照.pdf',
+      url: '/mock/smartlab-license.pdf',
+      fileType: 'pdf',
+    },
     qualificationFiles: [
       { id: 'ent001-cert-1', name: 'CMA资质证书.pdf', url: '/mock/cma.pdf', fileType: 'pdf' },
       { id: 'ent001-cert-2', name: 'CNAS认可证书.pdf', url: '/mock/cnas.pdf', fileType: 'pdf' },
@@ -215,7 +270,7 @@ const enterpriseProfiles: Record<string, EnterpriseProfile> = {
     enterpriseId: 'ent-500',
     enterpriseName: '上海联测质量科技有限公司',
     enterpriseType: '企业主体',
-    capabilities: [ENTERPRISE_CAPABILITY.demander, ENTERPRISE_CAPABILITY.labProvider],
+    capabilities: [ENTERPRISE_CAPABILITY.demander, ENTERPRISE_CAPABILITY.serviceProvider],
     socialCreditCode: '91310100MA2LAB5001',
     legalPerson: '徐航',
     contactName: '沈哲',
@@ -239,7 +294,8 @@ export function mockGetEnterpriseAuditList(params?: EnterpriseAuditQuery) {
     )
   }
   if (status) list = list.filter((item) => item.status === status)
-  if (serviceType) list = list.filter((item) => item.serviceTypes.includes(serviceType as ServiceType))
+  if (serviceType)
+    list = list.filter((item) => item.serviceTypes.includes(serviceType as ServiceType))
 
   return mockPromise(createPageResult(list))
 }
@@ -288,7 +344,9 @@ export function mockGetEnterpriseProfile(enterpriseId?: string): Promise<Enterpr
   return mockPromise(enterpriseProfiles[currentEnterpriseId] ?? enterpriseProfiles['ent-001']!)
 }
 
-export function mockGetEnterpriseCapabilities(enterpriseId?: string): Promise<EnterpriseCapabilityProfile> {
+export function mockGetEnterpriseCapabilities(
+  enterpriseId?: string,
+): Promise<EnterpriseCapabilityProfile> {
   const profile =
     enterpriseProfiles[enterpriseId || getCurrentEnterpriseId() || 'ent-001'] ??
     enterpriseProfiles['ent-001']!

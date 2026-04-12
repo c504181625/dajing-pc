@@ -2,10 +2,11 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { RouteRecordRaw, Router } from 'vue-router'
 
+import { normalizeEnterpriseTags } from '@/enum/role'
 import type { CurrentUser } from '@/types/auth'
 import { asyncRoutes } from '@/router/routes'
 
-type RouteAccessTarget = Pick<RouteRecordRaw, 'meta'>
+type RouteAccessTarget = Pick<RouteRecordRaw, 'meta' | 'children'>
 
 function hasAccountTypeAccess(route: RouteAccessTarget, user: CurrentUser) {
   if (!route.meta?.accountTypes?.length) return true
@@ -17,10 +18,12 @@ function hasPlatformRoleAccess(route: RouteAccessTarget, user: CurrentUser) {
   return !!user.platformRole && route.meta.platformRoles.includes(user.platformRole)
 }
 
-function hasCapabilityAccess(route: RouteAccessTarget, user: CurrentUser) {
-  if (!route.meta?.enterpriseCapabilities?.length) return true
-  const capabilities = user.enterpriseCapabilities || []
-  return route.meta.enterpriseCapabilities.some((item) => capabilities.includes(item))
+function hasEnterpriseTagAccess(route: RouteAccessTarget, user: CurrentUser) {
+  const requiredTags = route.meta?.enterpriseTags || route.meta?.enterpriseCapabilities
+  if (!requiredTags?.length) return true
+  const enterpriseTags = user.enterpriseTags || []
+  const normalizedRequiredTags = normalizeEnterpriseTags(requiredTags)
+  return normalizedRequiredTags.some((item) => enterpriseTags.includes(item))
 }
 
 function hasPermissionAccess(route: RouteAccessTarget, user: CurrentUser) {
@@ -30,18 +33,23 @@ function hasPermissionAccess(route: RouteAccessTarget, user: CurrentUser) {
   )
 }
 
+function hasMenuCodeAccess(route: RouteAccessTarget, user: CurrentUser) {
+  if (!route.meta?.menuCode) return true
+  return user.menuCodes.includes(route.meta.menuCode)
+}
+
 export function canAccessRoute(route: RouteAccessTarget, user: CurrentUser) {
   return (
     hasAccountTypeAccess(route, user) &&
     hasPlatformRoleAccess(route, user) &&
-    hasCapabilityAccess(route, user) &&
-    hasPermissionAccess(route, user)
+    hasEnterpriseTagAccess(route, user) &&
+    hasPermissionAccess(route, user) &&
+    hasMenuCodeAccess(route, user)
   )
 }
 
 function filterAsyncRoutes(routes: RouteRecordRaw[], user: CurrentUser) {
   return routes
-    .filter((route) => canAccessRoute(route, user))
     .map((route) => {
       const current: RouteRecordRaw = { ...route }
       if (current.children?.length) {
@@ -50,10 +58,24 @@ function filterAsyncRoutes(routes: RouteRecordRaw[], user: CurrentUser) {
       return current
     })
     .filter((route) => {
+      const selfAccessible = canAccessRoute(route, user)
+      const hasVisibleChildren = !!route.children?.length
+
+      if (selfAccessible && hasVisibleChildren) return true
+      if (selfAccessible && !route.children?.length) return true
+      if (!selfAccessible && hasVisibleChildren) return true
+      return false
+    })
+    .filter((route) => {
       if (route.children && route.children.length === 0 && !route.component && !route.redirect) {
         return false
       }
-      return !(route.children && route.children.length === 0 && !route.meta?.hidden && route.name?.toString().endsWith('Group'))
+      return !(
+        route.children &&
+        route.children.length === 0 &&
+        !route.meta?.hidden &&
+        route.name?.toString().endsWith('Group')
+      )
     })
 }
 

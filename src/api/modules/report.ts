@@ -2,7 +2,13 @@ import type { PageResult } from '@/types/api'
 import type { ReportDetail, ReportItem, ReportQuery } from '@/types/business'
 import { http } from '@/utils/request'
 import { isUseMock } from '../helper'
-import { mockGetReportDetail, mockGetReportList, mockInvalidateReport, mockToggleReportHidden } from '@/mock/modules/report'
+import {
+  mockDeleteReport,
+  mockGetReportDetail,
+  mockGetReportList,
+  mockInvalidateReport,
+  mockToggleReportHidden,
+} from '@/mock/modules/report'
 
 export function getReportList(params?: ReportQuery): Promise<PageResult<ReportItem>> {
   if (isUseMock()) return mockGetReportList(params)
@@ -22,4 +28,9 @@ export function invalidateReport(id: string, reason: string): Promise<boolean> {
 export function toggleReportHidden(id: string): Promise<boolean> {
   if (isUseMock()) return mockToggleReportHidden(id)
   return http<boolean>({ url: `/report/${id}/toggle-hidden`, method: 'post' })
+}
+
+export function deleteReport(id: string): Promise<boolean> {
+  if (isUseMock()) return mockDeleteReport(id)
+  return http<boolean>({ url: `/report/${id}`, method: 'delete' })
 }

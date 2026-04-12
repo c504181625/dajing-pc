@@ -26,8 +26,7 @@ export function isPlatformMockUser() {
 }
 
 export function isMerchantMockUser() {
-  const accountType = getMockCurrentUser().accountType
-  return accountType === ACCOUNT_TYPE.enterprise || accountType === ACCOUNT_TYPE.institution
+  return getMockCurrentUser().accountType === ACCOUNT_TYPE.enterprise
 }
 
 export function isDemanderMockUser() {
@@ -36,8 +35,4 @@ export function isDemanderMockUser() {
 
 export function isServiceProviderMockUser() {
   return hasEnterpriseCapability(ENTERPRISE_CAPABILITY.serviceProvider)
-}
-
-export function isLabProviderMockUser() {
-  return hasEnterpriseCapability(ENTERPRISE_CAPABILITY.labProvider)
 }

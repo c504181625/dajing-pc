@@ -1,59 +1,169 @@
 <script setup lang="ts">
-import { ElMessage } from 'element-plus'
-import { reactive, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-import { deleteExpert, getExpertList } from '@/api/modules/content'
+import { deleteExpert, getCommunityExpertList } from '@/api/modules/content'
 import PageContainer from '@/components/PageContainer.vue'
 import PermissionButton from '@/components-business/PermissionButton/index.vue'
 import SearchForm from '@/components-business/SearchForm/index.vue'
-import StatusTag from '@/components-business/StatusTag/index.vue'
 import TablePanel from '@/components-business/TablePanel/index.vue'
-import { ACCOUNT_STATUS_MAP } from '@/constants/dicts'
-import type { CommunityQuery, ExpertItem } from '@/types/business'
+import { ExpertServiceStatus } from '@/enum/content'
+import type { DictOption } from '@/types/business'
+import type { ContentExpertForm, ExpertOnlineItem, ExpertQuery } from '@/types/content'
 
+const router = useRouter()
 const loading = ref(false)
-const tableData = ref<ExpertItem[]>([])
-const queryForm = reactive<CommunityQuery>({ pageNum: 1, pageSize: 10, keyword: '' })
+const total = ref(0)
+const tableData = ref<ExpertOnlineItem[]>([])
+
+const serviceStatusMap: Record<string, DictOption> = {
+  [ExpertServiceStatus.Online]: {
+    label: '在线',
+    value: ExpertServiceStatus.Online,
+    tagType: 'success',
+  },
+  [ExpertServiceStatus.Busy]: {
+    label: '忙碌',
+    value: ExpertServiceStatus.Busy,
+    tagType: 'warning',
+  },
+  [ExpertServiceStatus.Offline]: {
+    label: '离线',
+    value: ExpertServiceStatus.Offline,
+    tagType: 'info',
+  },
+}
+
+const queryForm = reactive<ExpertQuery>({
+  pageNum: 1,
+  pageSize: 10,
+  keyword: '',
+  serviceStatus: '',
+})
+
+const searchFields = [
+  {
+    label: '关键词',
+    prop: 'keyword',
+    placeholder: '专家姓名 / 所属机构 / 专长领域',
+  },
+  {
+    label: '服务状态',
+    prop: 'serviceStatus',
+    component: 'select' as const,
+    placeholder: '请选择服务状态',
+    options: Object.values(serviceStatusMap),
+  },
+]
 
 async function loadData() {
   loading.value = true
   try {
-    const res = await getExpertList(queryForm)
+    const res = await getCommunityExpertList(queryForm)
     tableData.value = res.list
+    total.value = res.total
   } finally {
     loading.value = false
   }
 }
 
-async function handleDelete(id: string) {
-  await deleteExpert(id)
-  ElMessage.success('专家信息已删除')
-  loadData()
+function handleSearch() {
+  queryForm.pageNum = 1
+  void loadData()
 }
 
-loadData()
+function handlePageChange() {
+  void loadData()
+}
+
+function goDetail(row: ExpertOnlineItem) {
+  router.push(`/operator/community/experts/detail/${row.id}`)
+}
+
+function openCreate() {
+  router.push('/operator/community/experts/detail/create?mode=create')
+}
+
+function openEdit(row: ExpertOnlineItem) {
+  router.push(`/operator/community/experts/detail/${row.id}?mode=edit`)
+}
+
+async function handleDelete(row: ExpertOnlineItem) {
+  try {
+    await ElMessageBox.confirm(`确认删除专家“${row.name}”吗？`, '删除确认', {
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
+
+  await deleteExpert(row.id)
+  ElMessage.success('专家信息已删除')
+  await loadData()
+}
+
+onMounted(() => {
+  void loadData()
+})
 </script>
 
 <template>
-  <PageContainer title="专家信息管理" subtitle="维护专家基本信息、机构归属和专长标签。">
-    <SearchForm v-model="queryForm" :fields="[{ label: '关键词', prop: 'keyword', placeholder: '专家姓名/机构' }]" @search="loadData" @reset="loadData" />
-    <TablePanel title="专家列表">
+  <PageContainer title="专家在线" subtitle="统一维护专家信息、服务状态与咨询资料。">
+    <SearchForm
+      v-model="queryForm"
+      :fields="searchFields"
+      @search="handleSearch"
+      @reset="loadData"
+    />
+
+    <TablePanel
+      title="专家列表"
+      description="支持新增专家、查看详情、编辑资料与删除。"
+      :total="total"
+      :page-num="queryForm.pageNum"
+      :page-size="queryForm.pageSize"
+      @update:page-num="queryForm.pageNum = $event"
+      @update:page-size="queryForm.pageSize = $event"
+      @pageChange="handlePageChange"
+    >
+      <template #toolbar>
+        <PermissionButton permission="content:manage:view" @click="openCreate">
+          新增专家
+        </PermissionButton>
+      </template>
+
       <el-table v-loading="loading" :data="tableData" border>
-        <el-table-column prop="name" label="专家姓名" width="120" />
-        <el-table-column prop="title" label="职称" width="140" />
+        <el-table-column prop="name" label="专家姓名" width="140" />
+        <el-table-column prop="title" label="职称" width="160" />
         <el-table-column prop="organization" label="所属机构" min-width="220" />
         <el-table-column label="专长领域" min-width="220">
           <template #default="{ row }">{{ row.specialties.join(' / ') }}</template>
         </el-table-column>
-        <el-table-column label="状态" width="100">
+        <el-table-column label="服务状态" width="120">
           <template #default="{ row }">
-            <StatusTag :status="row.status" :map="ACCOUNT_STATUS_MAP" />
+            <el-tag :type="serviceStatusMap[row.serviceStatus]?.tagType" effect="light">
+              {{ serviceStatusMap[row.serviceStatus]?.label || row.serviceStatus }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="updatedAt" label="更新时间" min-width="160" />
-        <el-table-column label="操作" width="140">
+        <el-table-column prop="publishTime" label="发布时间" min-width="170" />
+        <el-table-column label="操作" min-width="220" fixed="right" align="center" header-align="center">
           <template #default="{ row }">
-            <PermissionButton permission="content:manage:view" text type="danger" @click="handleDelete(row.id)">删除</PermissionButton>
+            <el-space wrap>
+              <el-button text type="primary" @click="goDetail(row)">查看详情</el-button>
+              <PermissionButton permission="content:manage:view" text @click="openEdit(row)">
+                编辑
+              </PermissionButton>
+              <PermissionButton
+                permission="content:manage:view"
+                text
+                type="danger"
+                @click="handleDelete(row)"
+              >
+                删除
+              </PermissionButton>
+            </el-space>
           </template>
         </el-table-column>
       </el-table>

@@ -7,6 +7,7 @@ import type {
   FirstLoginResetPasswordForm,
   ForgotPasswordForm,
   InstitutionApplyForm,
+  LoginCreditCodeCommand,
   LoginEmailCommand,
   LoginMobileCommand,
   LoginPasswordCommand,
@@ -28,6 +29,7 @@ import {
   changePassword as mockChangePassword,
   enterpriseRegister as mockEnterpriseRegister,
   enterpriseUsernameLogin as mockEnterpriseUsernameLogin,
+  loginByCreditCode as mockLoginByCreditCode,
   firstLoginResetPassword as mockFirstLoginResetPassword,
   forgotPassword as mockForgotPassword,
   getAuthResult as mockGetAuthResult,
@@ -82,6 +84,11 @@ export function enterpriseUsernameLogin(payload: PasswordLoginForm): Promise<Aut
 export function enterpriseCodeLogin(payload: PasswordLoginForm): Promise<AuthLoginResponse> {
   if (isUseMock()) return mockEnterpriseCodeLogin(payload)
   return http<AuthLoginResponse>({ url: '/auth/login/enterprise/code', method: 'post', data: payload })
+}
+
+export function loginByCreditCode(payload: LoginCreditCodeCommand): Promise<LoginResponse> {
+  if (isUseMock()) return mockLoginByCreditCode(payload)
+  return http<LoginResponse>({ url: '/auth/login/credit-code', method: 'post', data: payload })
 }
 
 export function institutionUsernameLogin(payload: PasswordLoginForm): Promise<AuthLoginResponse> {

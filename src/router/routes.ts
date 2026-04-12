@@ -1,15 +1,66 @@
 import type { RouteRecordRaw } from 'vue-router'
 
+import { communityRoutes } from './modules/community'
 import { enterpriseRoutes } from './modules/enterprise'
+import { operatorRoutes } from './modules/platform'
 import { personalRoutes } from './modules/personal'
-import { platformRoutes } from './modules/platform'
-import { systemRoutes } from './modules/system'
+
+function normalizeLegacyPath(pathMatch?: string | string[]) {
+  if (!pathMatch) return ''
+  return Array.isArray(pathMatch) ? pathMatch.join('/') : pathMatch
+}
+
+function mapLegacyPlatformPath(pathMatch?: string | string[]) {
+  const normalized = normalizeLegacyPath(pathMatch).replace(/^\/+/, '')
+  const [first = '', ...rest] = normalized.split('/').filter(Boolean)
+  const suffix = rest.length ? `/${rest.join('/')}` : ''
+
+  if (!first) {
+    return '/operator/dashboard'
+  }
+
+  const businessMap: Record<string, string> = {
+    user: '/operator/business/user',
+    'enterprise-audit': '/operator/business/enterprise-audit',
+    demand: '/operator/business/demand',
+    consult: '/operator/business/consult',
+    order: '/operator/business/order',
+    report: '/operator/business/report',
+    comment: '/operator/business/comment',
+    message: '/operator/business/message',
+  }
+
+  if (first in businessMap) {
+    return `${businessMap[first]}${suffix}`
+  }
+
+  if (first === 'profile') {
+    return '/operator/profile'
+  }
+
+  if (first === 'community') {
+    const [communityModule = 'news', ...communityRest] = rest
+    const communityMap: Record<string, string> = {
+      article: 'news',
+      question: 'qa',
+      expert: 'experts',
+      news: 'news',
+      qa: 'qa',
+      experts: 'experts',
+    }
+    const normalizedModule = communityMap[communityModule] || 'news'
+    const normalizedSuffix = communityRest.length ? `/${communityRest.join('/')}` : ''
+    return `/operator/community/${normalizedModule}${normalizedSuffix}`
+  }
+
+  return `/operator/${normalized}`
+}
 
 export const constantRoutes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'RootRedirect',
-    component: () => import('@/views/common/RedirectHome.vue'),
+    redirect: '/login',
     meta: {
       hidden: true,
     },
@@ -20,7 +71,31 @@ export const constantRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/auth/login/index.vue'),
     meta: {
       hidden: true,
-      title: '登录',
+      title: '统一登录',
+    },
+  },
+  {
+    path: '/platform/:pathMatch(.*)*',
+    name: 'LegacyPlatformRedirect',
+    redirect: (to) => mapLegacyPlatformPath(to.params.pathMatch as string | string[] | undefined),
+    meta: {
+      hidden: true,
+    },
+  },
+  {
+    path: '/system/:pathMatch(.*)*',
+    name: 'LegacySystemRedirect',
+    redirect: (to) => {
+      const normalized = normalizeLegacyPath(
+        to.params.pathMatch as string | string[] | undefined,
+      ).replace(
+        /^\/+/,
+        '',
+      )
+      return `/operator/system/${normalized || 'role'}`
+    },
+    meta: {
+      hidden: true,
     },
   },
   {
@@ -47,7 +122,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/auth/apply-institution/index.vue'),
     meta: {
       hidden: true,
-      title: '机构入驻',
+      title: '企业入驻/机构认证',
     },
   },
   {
@@ -97,4 +172,9 @@ export const constantRoutes: RouteRecordRaw[] = [
   },
 ]
 
-export const asyncRoutes: RouteRecordRaw[] = [platformRoutes, systemRoutes, enterpriseRoutes, personalRoutes]
+export const asyncRoutes: RouteRecordRaw[] = [
+  operatorRoutes,
+  enterpriseRoutes,
+  personalRoutes,
+  communityRoutes,
+]

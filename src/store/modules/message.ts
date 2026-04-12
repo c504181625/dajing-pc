@@ -11,6 +11,9 @@ const defaultStats: MessageStats = {
   demand: 0,
   consult: 0,
   order: 0,
+  audit: 0,
+  orderNotice: 0,
+  alert: 0,
 }
 
 export const useMessageStore = defineStore('message', () => {

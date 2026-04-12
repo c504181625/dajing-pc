@@ -1,11 +1,7 @@
 import { ENTERPRISE_CAPABILITY } from '@/enum/role'
 import { CommentStatus } from '@/enum/status'
 import type { CommentItem, CommentQuery } from '@/types/business'
-import {
-  getCurrentEnterpriseId,
-  hasAnyEnterpriseCapability,
-  isPlatformMockUser,
-} from '../context'
+import { getCurrentEnterpriseId, hasAnyEnterpriseCapability, isPlatformMockUser } from '../context'
 import { createPageResult, mockPromise } from '../helper'
 
 type CommentRecord = CommentItem & {
@@ -22,6 +18,8 @@ const commentRecords: CommentRecord[] = [
     score: 5,
     content: '服务响应及时，检测进度透明。',
     status: CommentStatus.Normal,
+    appealStatus: 'none',
+    violated: false,
     createdAt: '2026-04-16 11:00:00',
     authorEnterpriseId: 'ent-100',
     targetEnterpriseId: 'ent-001',
@@ -31,9 +29,11 @@ const commentRecords: CommentRecord[] = [
     orderNo: 'QI202604070014',
     enterpriseName: '无锡锐科装备有限公司',
     projectName: '计量校准服务',
-    score: 4,
-    content: '收样沟通顺畅，报告交付较快。',
+    score: 2,
+    content: '沟通响应偏慢，希望加快处理效率。',
     status: CommentStatus.Normal,
+    appealStatus: 'pending',
+    violated: false,
     createdAt: '2026-04-12 10:00:00',
     authorEnterpriseId: 'ent-300',
     targetEnterpriseId: 'ent-001',
@@ -46,8 +46,24 @@ const commentRecords: CommentRecord[] = [
     score: 5,
     content: '诊断建议很有针对性，服务老师沟通顺畅。',
     status: CommentStatus.Normal,
+    appealStatus: 'resolved',
+    violated: false,
     createdAt: '2026-04-11 09:20:00',
     authorEnterpriseId: 'ent-100',
+    targetEnterpriseId: 'ent-200',
+  },
+  {
+    id: 'comment-004',
+    orderNo: 'QI202604050010',
+    enterpriseName: '杭州工研质量技术服务有限公司',
+    projectName: '标准化咨询服务',
+    score: 1,
+    content: '评价内容含攻击性表述，已进入违规复核。',
+    status: CommentStatus.Deleted,
+    appealStatus: 'processing',
+    violated: true,
+    createdAt: '2026-04-10 15:10:00',
+    authorEnterpriseId: 'ent-300',
     targetEnterpriseId: 'ent-200',
   },
 ]
@@ -59,11 +75,15 @@ function filterCommentRecords(list: CommentRecord[]) {
   const visible = new Set<CommentRecord>()
 
   if (hasAnyEnterpriseCapability([ENTERPRISE_CAPABILITY.demander])) {
-    list.filter((item) => item.authorEnterpriseId === enterpriseId).forEach((item) => visible.add(item))
+    list
+      .filter((item) => item.authorEnterpriseId === enterpriseId)
+      .forEach((item) => visible.add(item))
   }
 
-  if (hasAnyEnterpriseCapability([ENTERPRISE_CAPABILITY.serviceProvider, ENTERPRISE_CAPABILITY.labProvider])) {
-    list.filter((item) => item.targetEnterpriseId === enterpriseId).forEach((item) => visible.add(item))
+  if (hasAnyEnterpriseCapability([ENTERPRISE_CAPABILITY.serviceProvider])) {
+    list
+      .filter((item) => item.targetEnterpriseId === enterpriseId)
+      .forEach((item) => visible.add(item))
   }
 
   return [...visible]
@@ -73,13 +93,21 @@ export function mockGetCommentList(params?: CommentQuery) {
   let list = filterCommentRecords([...commentRecords])
   const keyword = String(params?.keyword || '').trim()
   const score = String(params?.score || '')
+  const appealStatus = String(params?.appealStatus || '')
+  const pageNum = Number(params?.pageNum || 1)
+  const pageSize = Number(params?.pageSize || 10)
 
   if (keyword) {
-    list = list.filter((item) => [item.orderNo, item.enterpriseName, item.projectName, item.content].some((field) => field.includes(keyword)))
+    list = list.filter((item) =>
+      [item.orderNo, item.enterpriseName, item.projectName, item.content].some((field) =>
+        field.includes(keyword),
+      ),
+    )
   }
   if (score) list = list.filter((item) => String(item.score) === score)
+  if (appealStatus) list = list.filter((item) => item.appealStatus === appealStatus)
 
-  return mockPromise(createPageResult(list))
+  return mockPromise(createPageResult(list, pageNum, pageSize))
 }
 
 export function mockDeleteComment(id: string): Promise<boolean> {

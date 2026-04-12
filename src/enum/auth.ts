@@ -9,12 +9,9 @@ export const AUTH_STATUS_ENUM = {
 } as const
 
 export const LOGIN_TYPE_ENUM = {
-  personalPassword: 'personal-password',
-  personalSms: 'personal-sms',
-  enterpriseUsernamePassword: 'enterprise-username-password',
-  enterpriseCodePassword: 'enterprise-code-password',
-  institutionUsernamePassword: 'institution-username-password',
-  institutionCodePassword: 'institution-code-password',
+  password: 'password',
+  mobile: 'mobile',
+  creditCode: 'credit-code',
 } as const
 
 export const AUTH_STATUS_LABEL_MAP: Record<AuthStatus, string> = {
@@ -26,12 +23,15 @@ export const AUTH_STATUS_LABEL_MAP: Record<AuthStatus, string> = {
 }
 
 export const LOGIN_TYPE_LABEL_MAP: Record<LoginType, string> = {
-  [LOGIN_TYPE_ENUM.personalPassword]: '账号密码登录',
-  [LOGIN_TYPE_ENUM.personalSms]: '手机验证码登录',
-  [LOGIN_TYPE_ENUM.enterpriseUsernamePassword]: '用户名 + 密码',
-  [LOGIN_TYPE_ENUM.enterpriseCodePassword]: '统一社会信用代码 + 密码',
-  [LOGIN_TYPE_ENUM.institutionUsernamePassword]: '账户名 + 密码',
-  [LOGIN_TYPE_ENUM.institutionCodePassword]: '统一社会信用代码 + 密码',
+  [LOGIN_TYPE_ENUM.password]: '账号密码登录',
+  [LOGIN_TYPE_ENUM.mobile]: '手机验证码登录',
+  [LOGIN_TYPE_ENUM.creditCode]: '统一社会信用代码登录',
+}
+
+export const LOGIN_TYPE_DESCRIPTION_MAP: Record<LoginType, string> = {
+  [LOGIN_TYPE_ENUM.password]: '适用于个人账号、企业账号、平台运营方',
+  [LOGIN_TYPE_ENUM.mobile]: '适用于个人账号 / 已绑定手机号账号',
+  [LOGIN_TYPE_ENUM.creditCode]: '适用于企业账号',
 }
 
 export const AUTH_RESULT_MAP: Record<AuthStatus, AuthResultInfo> = {
@@ -44,7 +44,7 @@ export const AUTH_RESULT_MAP: Record<AuthStatus, AuthResultInfo> = {
   [AUTH_STATUS_ENUM.reviewing]: {
     status: AUTH_STATUS_ENUM.reviewing,
     title: '审核中',
-    description: '资料正在审核，平台正在核验主体信息与附件材料，请耐心等待',
+    description: '资料正在审核，平台正在核验主体信息与附件材料，请耐心等待。',
     nextAction: '查看登录页',
   },
   [AUTH_STATUS_ENUM.approved]: {

@@ -95,7 +95,7 @@ loadData()
           </template>
         </el-table-column>
         <el-table-column prop="publishAt" label="发布时间" min-width="160" />
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column label="操作" min-width="140" fixed="right" align="center" header-align="center">
           <template #default="{ row }">
             <el-button text type="primary" @click="openDetail(row.id)">查看详情</el-button>
           </template>

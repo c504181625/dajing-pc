@@ -26,7 +26,9 @@ const previewVisible = ref(false)
 const previewFiles = ref<AttachmentItem[]>([])
 
 const canOperate = computed(() => {
-  return detail.value?.status === AuditStatus.Pending || detail.value?.status === AuditStatus.Supplement
+  return (
+    detail.value?.status === AuditStatus.Pending || detail.value?.status === AuditStatus.Supplement
+  )
 })
 
 const attachmentGroups = computed(() => {
@@ -37,6 +39,31 @@ const attachmentGroups = computed(() => {
       title: '资质附件',
       file,
     })),
+  ]
+})
+
+const verifyItems = computed(() => {
+  if (!detail.value) return []
+  return [
+    {
+      label: '营业执照',
+      value: '主体信息已提交',
+      status: 'success',
+    },
+    {
+      label: '资质附件',
+      value: `${detail.value.qualificationFiles.length} 份待核验`,
+      status: detail.value.qualificationFiles.length ? 'warning' : 'danger',
+    },
+    {
+      label: '证书有效期',
+      value: detail.value.qualifications.some((item) => item.status === 'expiring')
+        ? '存在临期证书'
+        : '状态正常',
+      status: detail.value.qualifications.some((item) => item.status === 'expiring')
+        ? 'warning'
+        : 'success',
+    },
   ]
 })
 
@@ -85,7 +112,11 @@ loadDetail()
 <template>
   <PageContainer
     title="机构审核详情"
-    :subtitle="detail ? `${detail.enterpriseName} · 请重点核验企业基础资料、服务范围和资质附件。` : '加载审核详情中...'"
+    :subtitle="
+      detail
+        ? `${detail.enterpriseName} · 请重点核验企业基础资料、服务范围和资质附件。`
+        : '加载审核详情中...'
+    "
   >
     <template #extra>
       <el-button @click="router.back()">返回列表</el-button>
@@ -100,12 +131,23 @@ loadDetail()
 
     <div v-else v-loading="loading" class="detail-grid-2">
       <div class="left-column">
-        <SectionCard title="企业信息摘要" description="用于快速确认企业主体、联系人和地址等基础信息。">
+        <SectionCard
+          title="企业信息摘要"
+          description="用于快速确认企业主体、联系人和地址等基础信息。"
+        >
           <el-descriptions v-if="detail" :column="2" border>
-            <el-descriptions-item label="企业名称">{{ detail.enterpriseName }}</el-descriptions-item>
-            <el-descriptions-item label="企业类型">{{ detail.enterpriseType }}</el-descriptions-item>
-            <el-descriptions-item label="统一社会信用代码">{{ detail.socialCreditCode }}</el-descriptions-item>
-            <el-descriptions-item label="注册资本">{{ detail.registeredCapital }}</el-descriptions-item>
+            <el-descriptions-item label="企业名称">{{
+              detail.enterpriseName
+            }}</el-descriptions-item>
+            <el-descriptions-item label="企业类型">{{
+              detail.enterpriseType
+            }}</el-descriptions-item>
+            <el-descriptions-item label="统一社会信用代码">{{
+              detail.socialCreditCode
+            }}</el-descriptions-item>
+            <el-descriptions-item label="注册资本">{{
+              detail.registeredCapital
+            }}</el-descriptions-item>
             <el-descriptions-item label="公司性质">{{ detail.companyType }}</el-descriptions-item>
             <el-descriptions-item label="法定代表人">{{ detail.legalPerson }}</el-descriptions-item>
             <el-descriptions-item label="联系人">{{ detail.contactName }}</el-descriptions-item>
@@ -118,7 +160,10 @@ loadDetail()
           </el-descriptions>
         </SectionCard>
 
-        <DetailSection title="服务范围与附件" description="集中展示机构申请的服务范围以及营业执照、资质材料。">
+        <DetailSection
+          title="服务范围与附件"
+          description="集中展示机构申请的服务范围以及营业执照、资质材料。"
+        >
           <div v-if="detail" class="service-tags">
             <el-tag v-for="service in detail.serviceTypes" :key="service" effect="plain">
               {{ getServiceLabel(service) }}
@@ -144,16 +189,55 @@ loadDetail()
           </div>
         </DetailSection>
 
+        <DetailSection
+          title="证照核验摘要"
+          description="把审核最关心的证照与附件核验结论前置展示。"
+        >
+          <div class="verify-grid">
+            <article v-for="item in verifyItems" :key="item.label" class="verify-card">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+              <el-tag :type="item.status" effect="light">
+                {{
+                  item.status === 'success'
+                    ? '已就绪'
+                    : item.status === 'warning'
+                      ? '需重点核验'
+                      : '待补充'
+                }}
+              </el-tag>
+            </article>
+          </div>
+        </DetailSection>
+
         <DetailSection title="资质证书" description="重点关注证书有效期、编号和适用服务范围。">
           <div v-if="detail?.qualifications.length" class="qualification-list">
-            <div v-for="qualification in detail.qualifications" :key="qualification.id" class="qualification-item">
+            <div
+              v-for="qualification in detail.qualifications"
+              :key="qualification.id"
+              class="qualification-item"
+            >
               <div>
                 <div class="qualification-name">{{ qualification.name }}</div>
                 <div class="qualification-no">证书编号：{{ qualification.number }}</div>
               </div>
               <div class="qualification-meta">
-                <el-tag :type="qualification.status === 'valid' ? 'success' : qualification.status === 'expiring' ? 'warning' : 'danger'">
-                  {{ qualification.status === 'valid' ? '有效' : qualification.status === 'expiring' ? '即将到期' : '已过期' }}
+                <el-tag
+                  :type="
+                    qualification.status === 'valid'
+                      ? 'success'
+                      : qualification.status === 'expiring'
+                        ? 'warning'
+                        : 'danger'
+                  "
+                >
+                  {{
+                    qualification.status === 'valid'
+                      ? '有效'
+                      : qualification.status === 'expiring'
+                        ? '即将到期'
+                        : '已过期'
+                  }}
                 </el-tag>
                 <span>有效期至 {{ qualification.validUntil }}</span>
               </div>
@@ -168,21 +252,32 @@ loadDetail()
       </div>
 
       <div class="right-column">
-        <AuditActionBar :loading="actionLoading" :disabled="!canOperate" @submit="handleSubmit" />
+        <div class="sticky-panel">
+          <AuditActionBar :loading="actionLoading" :disabled="!canOperate" @submit="handleSubmit" />
 
-        <SectionCard title="审核说明" description="审核状态、审核人和补充意见会集中展示在右侧，便于连续处理。">
-          <el-descriptions v-if="detail" :column="1" border>
-            <el-descriptions-item label="当前状态">
-              <StatusTag :status="detail.status" :map="AUDIT_STATUS_MAP" />
-            </el-descriptions-item>
-            <el-descriptions-item label="当前审核人">{{ detail.reviewerName || '未分配' }}</el-descriptions-item>
-            <el-descriptions-item label="最新备注">{{ detail.remark || '暂无备注' }}</el-descriptions-item>
-          </el-descriptions>
-        </SectionCard>
-
-        <DetailSection title="审核记录" description="时间线记录每次提交、分配、补充材料和最终审核动作。">
-          <OperationTimeline v-if="detail" :nodes="detail.auditRecords" />
-        </DetailSection>
+          <SectionCard
+            title="审核说明"
+            description="审核状态、审核人和补充意见会集中展示在右侧，便于连续处理。"
+          >
+            <el-descriptions v-if="detail" :column="1" border>
+              <el-descriptions-item label="当前状态">
+                <StatusTag :status="detail.status" :map="AUDIT_STATUS_MAP" />
+              </el-descriptions-item>
+              <el-descriptions-item label="当前审核人">{{
+                detail.reviewerName || '未分配'
+              }}</el-descriptions-item>
+              <el-descriptions-item label="最新备注">{{
+                detail.remark || '暂无备注'
+              }}</el-descriptions-item>
+            </el-descriptions>
+          </SectionCard>
+          <DetailSection
+            title="审核记录"
+            description="时间线记录每次提交、分配、补充材料和最终审核动作。"
+          >
+            <OperationTimeline v-if="detail" :nodes="detail.auditRecords" />
+          </DetailSection>
+        </div>
       </div>
     </div>
 
@@ -193,6 +288,16 @@ loadDetail()
 <style scoped lang="scss">
 .left-column,
 .right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sticky-panel {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -271,6 +376,31 @@ loadDetail()
   gap: 12px;
 }
 
+.verify-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.verify-card {
+  padding: 16px;
+  border: 1px solid var(--dj-color-border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fff 0%, #fbfcff 100%);
+}
+
+.verify-card span {
+  font-size: 12px;
+  color: var(--dj-color-text-secondary);
+}
+
+.verify-card strong {
+  display: block;
+  margin: 10px 0;
+  font-size: 16px;
+  color: var(--dj-color-text-primary);
+}
+
 .qualification-item {
   display: flex;
   align-items: center;
@@ -304,6 +434,14 @@ loadDetail()
 @media (max-width: 1280px) {
   .attachment-grid {
     grid-template-columns: 1fr;
+  }
+
+  .verify-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sticky-panel {
+    position: static;
   }
 }
 </style>

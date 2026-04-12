@@ -1,6 +1,7 @@
 import { ENTERPRISE_CAPABILITY } from '@/enum/role'
 import { DemandStatus, OperationStatus, PublishMode, ServiceType } from '@/enum/status'
 import type { DemandDetail, DemandForm, DemandQuery } from '@/types/business'
+
 import {
   getCurrentEnterpriseId,
   getMockCurrentUser,
@@ -11,10 +12,36 @@ import { createPageResult, mockPromise } from '../helper'
 
 type DemandRecord = DemandDetail & {
   ownerEnterpriseId: string
+  ownerAccountId?: string
   assignedOrgId?: string
 }
 
 const demandRecords: DemandRecord[] = [
+  {
+    id: 'demand-000',
+    title: '质量培训课程定制需求',
+    serviceType: ServiceType.Training,
+    enterpriseName: '个人用户演示账号',
+    publishMode: PublishMode.PlatformAssign,
+    status: DemandStatus.Pending,
+    createdAt: '2026-04-09 10:18:00',
+    contactName: '个人用户',
+    contactPhone: '13800001001',
+    content: '希望围绕现场质量管理和过程改进安排一场企业内训，请平台协助匹配合适机构。',
+    attachments: [],
+    replyRecords: [
+      {
+        id: 'reply-000',
+        title: '需求已提交',
+        time: '2026-04-09 10:18:00',
+        description: '个人用户已提交培训需求，等待平台受理。',
+        operator: '个人用户演示账号',
+        status: OperationStatus.Waiting,
+      },
+    ],
+    ownerEnterpriseId: '',
+    ownerAccountId: 'acc-person_demo',
+  },
   {
     id: 'demand-001',
     title: '电子元器件可靠性检测需求',
@@ -27,13 +54,15 @@ const demandRecords: DemandRecord[] = [
     contactName: '刘工',
     contactPhone: '13800008888',
     content: '需要进行电子元器件可靠性测试，包含高低温循环和振动试验。',
-    attachments: [{ id: 'demand-file-001', name: '需求说明书.pdf', url: '/mock/demand-1.pdf', fileType: 'pdf' }],
+    attachments: [
+      { id: 'demand-file-001', name: '需求说明书.pdf', url: '/mock/demand-1.pdf', fileType: 'pdf' },
+    ],
     replyRecords: [
       {
         id: 'reply-001',
         title: '平台受理需求',
         time: '2026-04-08 09:30:00',
-        description: '需求已进入平台分配池',
+        description: '需求已进入平台分配池。',
         operator: '平台运营',
         status: OperationStatus.Done,
       },
@@ -41,12 +70,13 @@ const demandRecords: DemandRecord[] = [
         id: 'reply-002',
         title: '已分配机构',
         time: '2026-04-08 10:00:00',
-        description: '分配给苏州智造检测有限公司',
+        description: '已分配给苏州智造检测有限公司。',
         operator: '平台运营',
         status: OperationStatus.Done,
       },
     ],
     ownerEnterpriseId: 'ent-100',
+    ownerAccountId: 'acc-qihang_admin',
     assignedOrgId: 'ent-001',
   },
   {
@@ -61,18 +91,21 @@ const demandRecords: DemandRecord[] = [
     contactName: '许经理',
     contactPhone: '13800007777',
     content: '希望由专业机构协助开展质量诊断和内审辅导。',
-    attachments: [{ id: 'demand-file-002', name: '诊断需求.docx', url: '/mock/demand-2.docx', fileType: 'docx' }],
+    attachments: [
+      { id: 'demand-file-002', name: '诊断需求.docx', url: '/mock/demand-2.docx', fileType: 'docx' },
+    ],
     replyRecords: [
       {
         id: 'reply-101',
         title: '机构已接单',
         time: '2026-04-07 18:20:00',
-        description: '服务机构已联系企业确认上门诊断时间',
+        description: '服务机构已联系企业确认上门诊断时间。',
         operator: '杭州工研质量技术服务有限公司',
         status: OperationStatus.Done,
       },
     ],
     ownerEnterpriseId: 'ent-100',
+    ownerAccountId: 'acc-qihang_admin',
     assignedOrgId: 'ent-200',
   },
   {
@@ -92,12 +125,13 @@ const demandRecords: DemandRecord[] = [
         id: 'reply-201',
         title: '需求已提交',
         time: '2026-04-06 14:10:00',
-        description: '等待平台分配服务机构',
+        description: '等待平台分配服务机构。',
         operator: '苏州启航电子股份有限公司',
         status: OperationStatus.Waiting,
       },
     ],
     ownerEnterpriseId: 'ent-100',
+    ownerAccountId: 'acc-qihang_admin',
   },
   {
     id: 'demand-004',
@@ -117,12 +151,13 @@ const demandRecords: DemandRecord[] = [
         id: 'reply-301',
         title: '已分配服务机构',
         time: '2026-04-05 11:00:00',
-        description: '平台分配给杭州工研质量技术服务有限公司',
+        description: '平台分配给杭州工研质量技术服务有限公司。',
         operator: '平台运营',
         status: OperationStatus.Done,
       },
     ],
     ownerEnterpriseId: 'ent-300',
+    ownerAccountId: 'acc-mix_service_admin',
     assignedOrgId: 'ent-200',
   },
 ]
@@ -130,14 +165,23 @@ const demandRecords: DemandRecord[] = [
 function filterDemandRecords(list: DemandRecord[]) {
   if (isPlatformMockUser()) return list
 
+  const currentUser = getMockCurrentUser()
   const enterpriseId = getCurrentEnterpriseId()
   const visible = new Set<DemandRecord>()
 
-  if (hasAnyEnterpriseCapability([ENTERPRISE_CAPABILITY.demander])) {
-    list.filter((item) => item.ownerEnterpriseId === enterpriseId).forEach((item) => visible.add(item))
+  if (currentUser.accountType === 'personal') {
+    list
+      .filter((item) => item.ownerAccountId === currentUser.accountId)
+      .forEach((item) => visible.add(item))
   }
 
-  if (hasAnyEnterpriseCapability([ENTERPRISE_CAPABILITY.serviceProvider, ENTERPRISE_CAPABILITY.labProvider])) {
+  if (hasAnyEnterpriseCapability([ENTERPRISE_CAPABILITY.demander])) {
+    list
+      .filter((item) => item.ownerEnterpriseId === enterpriseId)
+      .forEach((item) => visible.add(item))
+  }
+
+  if (hasAnyEnterpriseCapability([ENTERPRISE_CAPABILITY.serviceProvider])) {
     list.filter((item) => item.assignedOrgId === enterpriseId).forEach((item) => visible.add(item))
   }
 
@@ -149,14 +193,20 @@ export function mockGetDemandList(params?: DemandQuery) {
   const keyword = String(params?.keyword || '').trim()
   const status = String(params?.status || '')
   const serviceType = String(params?.serviceType || '')
+  const pageNum = Number(params?.pageNum || 1)
+  const pageSize = Number(params?.pageSize || 10)
 
   if (keyword) {
-    list = list.filter((item) => [item.title, item.enterpriseName, item.assignedOrg].some((field) => String(field || '').includes(keyword)))
+    list = list.filter((item) =>
+      [item.title, item.enterpriseName, item.assignedOrg, item.contactName].some((field) =>
+        String(field || '').includes(keyword),
+      ),
+    )
   }
   if (status) list = list.filter((item) => item.status === status)
   if (serviceType) list = list.filter((item) => item.serviceType === serviceType)
 
-  return mockPromise(createPageResult(list))
+  return mockPromise(createPageResult(list, pageNum, pageSize))
 }
 
 export function mockGetDemandDetail(id: string): Promise<DemandDetail> {
@@ -170,7 +220,7 @@ export function mockReplyDemand(id: string, content: string): Promise<boolean> {
     row.status = DemandStatus.Replied
     row.replyRecords.unshift({
       id: `reply-${Date.now()}`,
-      title: '机构回复需求',
+      title: '服务机构回复需求',
       time: new Date().toLocaleString('zh-CN', { hour12: false }),
       description: content,
       operator: getMockCurrentUser().enterpriseName || getMockCurrentUser().name,
@@ -190,7 +240,7 @@ export function mockAssignDemand(id: string, orgName: string): Promise<boolean> 
       id: `reply-${Date.now()}`,
       title: '平台重新分配机构',
       time: new Date().toLocaleString('zh-CN', { hour12: false }),
-      description: `分配给 ${orgName}`,
+      description: `已分配给 ${orgName}`,
       operator: '平台运营',
       status: OperationStatus.Done,
     })
@@ -199,11 +249,12 @@ export function mockAssignDemand(id: string, orgName: string): Promise<boolean> 
 }
 
 export function mockCreateDemand(payload: DemandForm): Promise<boolean> {
+  const currentUser = getMockCurrentUser()
   demandRecords.unshift({
     id: `demand-${Date.now()}`,
     title: payload.title,
     serviceType: payload.serviceType,
-    enterpriseName: getMockCurrentUser().enterpriseName || '当前企业',
+    enterpriseName: currentUser.enterpriseName || currentUser.name || '当前主体',
     publishMode: payload.publishMode,
     status: DemandStatus.Pending,
     createdAt: new Date().toLocaleString('zh-CN', { hour12: false }),
@@ -216,12 +267,37 @@ export function mockCreateDemand(payload: DemandForm): Promise<boolean> {
         id: `reply-${Date.now()}`,
         title: '需求已提交',
         time: new Date().toLocaleString('zh-CN', { hour12: false }),
-        description: '企业已创建需求，等待平台受理或机构跟进。',
-        operator: getMockCurrentUser().enterpriseName || getMockCurrentUser().name,
+        description: '需求已提交成功，等待平台受理或服务机构跟进。',
+        operator: currentUser.enterpriseName || currentUser.name,
         status: OperationStatus.Done,
       },
     ],
     ownerEnterpriseId: getCurrentEnterpriseId(),
+    ownerAccountId: currentUser.accountId,
   })
+  return mockPromise(true)
+}
+
+export function mockAcceptDemand(id: string): Promise<boolean> {
+  const row = demandRecords.find((item) => item.id === id)
+  if (row) {
+    row.status = DemandStatus.Processing
+    row.replyRecords.unshift({
+      id: `reply-${Date.now()}`,
+      title: '服务机构已接单',
+      time: new Date().toLocaleString('zh-CN', { hour12: false }),
+      description: '服务机构已确认承接需求，正在安排后续沟通与执行计划。',
+      operator: getMockCurrentUser().enterpriseName || getMockCurrentUser().name,
+      status: OperationStatus.Processing,
+    })
+  }
+  return mockPromise(true)
+}
+
+export function mockDeleteDemand(id: string): Promise<boolean> {
+  const index = demandRecords.findIndex((item) => item.id === id)
+  if (index >= 0) {
+    demandRecords.splice(index, 1)
+  }
   return mockPromise(true)
 }

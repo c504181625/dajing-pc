@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>质量创新中心 - 运营后台工作台线稿</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --line: #cfd4dc;
+      --line-dark: #9aa3af;
+      --text: #222;
+      --muted: #6b7280;
+      --soft: #eef1f4;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 248px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: #fafafa;
+      border-right: 2px solid var(--line);
+      padding: 18px 14px;
+    }
+
+    .logo {
+      height: 54px;
+      border: 2px solid var(--line-dark);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 18px;
+      background: repeating-linear-gradient(
+        -45deg,
+        #fff,
+        #fff 8px,
+        #f3f4f6 8px,
+        #f3f4f6 16px
+      );
+    }
+
+    .nav-group-title {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 16px 8px 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .nav-item {
+      height: 42px;
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      justify-content: space-between;
+      background: #fff;
+      font-size: 14px;
+    }
+
+    .nav-item.active {
+      border-style: solid;
+      border-color: #444;
+      font-weight: 700;
+      background: var(--soft);
+    }
+
+    .main {
+      padding: 18px;
+    }
+
+    .topbar {
+      height: 70px;
+      border: 2px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      margin-bottom: 18px;
+    }
+
+    .crumb {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .top-pill, .avatar-box {
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .avatar-box { min-width: 170px; justify-content: space-between; }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 2px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      min-height: 144px;
+      position: relative;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border: 1px dashed #dde2e8;
+      border-radius: 12px;
+      pointer-events: none;
+    }
+
+    .metric-title {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .tag {
+      border: 1.5px solid var(--line-dark);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      color: #444;
+      white-space: nowrap;
+    }
+
+    .metric-value {
+      font-size: 34px;
+      font-weight: 800;
+      position: relative;
+      z-index: 1;
+    }
+
+    .metric-sub {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-link {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 7px 12px;
+      border: 1.5px solid var(--line-dark);
+      border-radius: 9px;
+      font-size: 12px;
+      color: #444;
+      position: relative;
+      z-index: 1;
+      background: #fff;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.7fr 1fr;
+      gap: 16px;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 2px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .section-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .queue-list, .risk-list, .shortcut-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .queue-item, .risk-item, .shortcut-item {
+      border: 1.8px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+      display: grid;
+      gap: 8px;
+    }
+
+    .queue-item {
+      grid-template-columns: 1fr auto;
+      align-items: center;
+    }
+
+    .queue-main {
+      display: grid;
+      gap: 4px;
+    }
+
+    .queue-title {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .queue-meta, .risk-meta, .shortcut-meta {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .queue-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .ghost-btn {
+      border: 1.5px solid var(--line-dark);
+      border-radius: 10px;
+      height: 34px;
+      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      font-size: 12px;
+      color: #444;
+      background: #fff;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .flow-step {
+      border: 1.8px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+      position: relative;
+      min-height: 110px;
+    }
+
+    .flow-step:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: -10px;
+      top: 45%;
+      transform: translateY(-50%);
+      color: var(--line-dark);
+      font-size: 22px;
+      background: var(--bg);
+      padding: 0 3px;
+    }
+
+    .step-num {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .step-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .step-stats {
+      font-size: 12px;
+      color: var(--muted);
+      display: grid;
+      gap: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      background: #fff;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1.5px solid var(--line);
+    }
+
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 12px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      background: #fafafa;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .risk-item {
+      grid-template-columns: 1fr auto;
+      align-items: center;
+    }
+
+    .shortcut-item {
+      grid-template-columns: 1fr auto;
+      align-items: center;
+    }
+
+    .wire-box {
+      width: 44px;
+      height: 44px;
+      border: 2px solid var(--line-dark);
+      border-radius: 12px;
+      background: repeating-linear-gradient(
+        -45deg,
+        #fff,
+        #fff 6px,
+        #f4f4f5 6px,
+        #f4f4f5 12px
+      );
+    }
+
+    .footer-note {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 1280px) {
+      .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .main-grid { grid-template-columns: 1fr; }
+      .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .flow-step:not(:last-child)::after { display: none; }
+    }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .grid-4, .flow { grid-template-columns: 1fr; }
+      .topbar { height: auto; padding: 14px; align-items: flex-start; gap: 12px; flex-direction: column; }
+      .top-actions { width: 100%; flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo">质量创新中心</div>
+
+      <div class="nav-group-title">平台运营后台</div>
+      <div class="nav-item active"><span>工作台</span><span>▢</span></div>
+      <div class="nav-item"><span>用户管理</span><span>▢</span></div>
+      <div class="nav-item"><span>机构审核</span><span>▢</span></div>
+      <div class="nav-item"><span>需求管理</span><span>▢</span></div>
+      <div class="nav-item"><span>咨询管理</span><span>▢</span></div>
+      <div class="nav-item"><span>订单管理</span><span>▢</span></div>
+      <div class="nav-item"><span>报告管理</span><span>▢</span></div>
+      <div class="nav-item"><span>评价管理</span><span>▢</span></div>
+      <div class="nav-item"><span>消息中心</span><span>▢</span></div>
+
+      <div class="nav-group-title">系统配置</div>
+      <div class="nav-item"><span>角色权限</span><span>▢</span></div>
+      <div class="nav-item"><span>流程规则</span><span>▢</span></div>
+      <div class="nav-item"><span>基础配置</span><span>▢</span></div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <div class="crumb">平台运营后台 / 工作台</div>
+          <div class="footer-note">线稿页面：用于梳理模块优先级、信息层级、关键操作入口</div>
+        </div>
+        <div class="top-actions">
+          <div class="top-pill">消息中心｜未读 3</div>
+          <div class="top-pill">今日日期｜2026-04-09</div>
+          <div class="avatar-box"><span>平台超级管理员</span><span>▾</span></div>
+        </div>
+      </div>
+
+      <section class="grid-4">
+        <div class="card">
+          <div class="metric-title">
+            <span>待审核机构</span>
+            <span class="tag">高优先</span>
+          </div>
+          <div class="metric-value">28</div>
+          <div class="metric-sub">
+            <span>今日新增：5</span>
+            <span>超时未处理：6</span>
+          </div>
+          <span class="btn-link">去处理</span>
+        </div>
+
+        <div class="card">
+          <div class="metric-title">
+            <span>待处理需求</span>
+            <span class="tag">需分配</span>
+          </div>
+          <div class="metric-value">17</div>
+          <div class="metric-sub">
+            <span>今日新增：6</span>
+            <span>超时未分配：4</span>
+          </div>
+          <span class="btn-link">立即分配</span>
+        </div>
+
+        <div class="card">
+          <div class="metric-title">
+            <span>待跟进订单</span>
+            <span class="tag">处理中</span>
+          </div>
+          <div class="metric-value">35</div>
+          <div class="metric-sub">
+            <span>异常订单：3</span>
+            <span>即将超时：8</span>
+          </div>
+          <span class="btn-link">进入跟进</span>
+        </div>
+
+        <div class="card">
+          <div class="metric-title">
+            <span>待抽查报告</span>
+            <span class="tag">质控</span>
+          </div>
+          <div class="metric-value">11</div>
+          <div class="metric-sub">
+            <span>今日待抽查：4</span>
+            <span>高风险报告：2</span>
+          </div>
+          <span class="btn-link">进入抽查</span>
+        </div>
+      </section>
+
+      <div class="main-grid">
+        <div>
+          <section class="section">
+            <div class="section-head">
+              <div>
+                <div class="section-title">待办优先队列</div>
+                <div class="section-sub">把运营最需要先处理的事项直接前置，不做纯展示</div>
+              </div>
+              <span class="ghost-btn">查看全部待办</span>
+            </div>
+            <div class="queue-list">
+              <div class="queue-item">
+                <div class="queue-main">
+                  <div class="queue-title">机构审核超时 6 条</div>
+                  <div class="queue-meta">近 24 小时内未完成审核，影响机构入驻转化与服务供给。</div>
+                </div>
+                <div class="queue-actions">
+                  <span class="tag">P1</span>
+                  <span class="ghost-btn">立即处理</span>
+                </div>
+              </div>
+
+              <div class="queue-item">
+                <div class="queue-main">
+                  <div class="queue-title">需求待分配 4 条</div>
+                  <div class="queue-meta">需求已超过分配时限，可能影响客户响应时效。</div>
+                </div>
+                <div class="queue-actions">
+                  <span class="tag">P1</span>
+                  <span class="ghost-btn">去分配</span>
+                </div>
+              </div>
+
+              <div class="queue-item">
+                <div class="queue-main">
+                  <div class="queue-title">订单异常 3 条</div>
+                  <div class="queue-meta">涉及样品异常、机构退回、客户催单等情况，需要人工介入。</div>
+                </div>
+                <div class="queue-actions">
+                  <span class="tag">P2</span>
+                  <span class="ghost-btn">去跟进</span>
+                </div>
+              </div>
+
+              <div class="queue-item">
+                <div class="queue-main">
+                  <div class="queue-title">报告高风险抽查 2 条</div>
+                  <div class="queue-meta">命中抽查规则，建议优先复核报告合规性与完整性。</div>
+                </div>
+                <div class="queue-actions">
+                  <span class="tag">P2</span>
+                  <span class="ghost-btn">去抽查</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section">
+            <div class="section-head">
+              <div>
+                <div class="section-title">业务流转看板</div>
+                <div class="section-sub">体现平台核心闭环：需求 → 机构 → 订单 → 报告</div>
+              </div>
+            </div>
+            <div class="flow">
+              <div class="flow-step">
+                <div class="step-num">STEP 01</div>
+                <div class="step-title">需求池</div>
+                <div class="step-stats">
+                  <span>待处理：17</span>
+                  <span>已分配：23</span>
+                  <span>异常：1</span>
+                </div>
+              </div>
+
+              <div class="flow-step">
+                <div class="step-num">STEP 02</div>
+                <div class="step-title">机构承接</div>
+                <div class="step-stats">
+                  <span>待审核机构：28</span>
+                  <span>待响应：9</span>
+                  <span>超时：6</span>
+                </div>
+              </div>
+
+              <div class="flow-step">
+                <div class="step-num">STEP 03</div>
+                <div class="step-title">订单执行</div>
+                <div class="step-stats">
+                  <span>跟进中：35</span>
+                  <span>已完成：126</span>
+                  <span>异常：3</span>
+                </div>
+              </div>
+
+              <div class="flow-step">
+                <div class="step-num">STEP 04</div>
+                <div class="step-title">报告质控</div>
+                <div class="step-stats">
+                  <span>待抽查：11</span>
+                  <span>已通过：52</span>
+                  <span>退回：2</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section">
+            <div class="section-head">
+              <div>
+                <div class="section-title">最近关键动态</div>
+                <div class="section-sub">保留运营价值，不做纯日志堆叠</div>
+              </div>
+              <span class="ghost-btn">导出记录</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 22%;">类型</th>
+                  <th>动态说明</th>
+                  <th style="width: 18%;">操作人</th>
+                  <th style="width: 18%;">时间</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>机构审核</td>
+                  <td>苏州智造检测有限公司已完成入驻审核，并进入正式服务名单。</td>
+                  <td>平台运营组</td>
+                  <td>2026-04-09 09:20</td>
+                </tr>
+                <tr>
+                  <td>需求分配</td>
+                  <td>电子元器件可靠性检测需求已分配给杭州某质量技术服务机构。</td>
+                  <td>平台运营组</td>
+                  <td>2026-04-09 08:55</td>
+                </tr>
+                <tr>
+                  <td>报告抽查</td>
+                  <td>报告 BG20260408018 已发起完整性抽查，当前等待复核结果。</td>
+                  <td>平台运营组</td>
+                  <td>2026-04-09 08:10</td>
+                </tr>
+                <tr>
+                  <td>订单异常</td>
+                  <td>某委托订单因样品信息不完整被退回，需运营协助客户补齐资料。</td>
+                  <td>平台客服组</td>
+                  <td>2026-04-08 18:30</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+
+        <div>
+          <section class="section">
+            <div class="section-head">
+              <div>
+                <div class="section-title">风险提醒</div>
+                <div class="section-sub">首页必须前置异常，而不是只放普通菜单</div>
+              </div>
+            </div>
+            <div class="risk-list">
+              <div class="risk-item">
+                <div>
+                  <div class="queue-title">订单超时风险</div>
+                  <div class="risk-meta">6 个订单已接近 SLA 时限，建议优先处理。</div>
+                </div>
+                <span class="ghost-btn">查看</span>
+              </div>
+              <div class="risk-item">
+                <div>
+                  <div class="queue-title">报告抽查异常</div>
+                  <div class="risk-meta">2 份报告命中高风险规则，需人工复核。</div>
+                </div>
+                <span class="ghost-btn">查看</span>
+              </div>
+              <div class="risk-item">
+                <div>
+                  <div class="queue-title">机构审核积压</div>
+                  <div class="risk-meta">3 个机构审核已超过 48 小时未处理。</div>
+                </div>
+                <span class="ghost-btn">查看</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="section">
+            <div class="section-head">
+              <div>
+                <div class="section-title">快速入口</div>
+                <div class="section-sub">保留运营高频动作，不把首页做成菜单复刻</div>
+              </div>
+            </div>
+            <div class="shortcut-list">
+              <div class="shortcut-item">
+                <div>
+                  <div class="queue-title">审核机构</div>
+                  <div class="shortcut-meta">待审核 28，优先处理超时机构与补资料流转。</div>
+                </div>
+                <div class="wire-box"></div>
+              </div>
+              <div class="shortcut-item">
+                <div>
+                  <div class="queue-title">分配需求</div>
+                  <div class="shortcut-meta">把新需求快速分配至合适机构，提高响应效率。</div>
+                </div>
+                <div class="wire-box"></div>
+              </div>
+              <div class="shortcut-item">
+                <div>
+                  <div class="queue-title">跟进订单</div>
+                  <div class="shortcut-meta">处理异常订单、催单订单、样品问题与进度协调。</div>
+                </div>
+                <div class="wire-box"></div>
+              </div>
+              <div class="shortcut-item">
+                <div>
+                  <div class="queue-title">抽查报告</div>
+                  <div class="shortcut-meta">按规则抽查报告完整性、合规性与结果可信度。</div>
+                </div>
+                <div class="wire-box"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section">
+            <div class="section-head">
+              <div>
+                <div class="section-title">今日运营概览</div>
+                <div class="section-sub">给管理层快速判断平台运行状态</div>
+              </div>
+            </div>
+            <div class="queue-list">
+              <div class="queue-item">
+                <div class="queue-main">
+                  <div class="queue-title">新增需求</div>
+                  <div class="queue-meta">今日新增 12 条，较昨日上升 20%</div>
+                </div>
+                <div class="metric-value" style="font-size:24px;">12</div>
+              </div>
+              <div class="queue-item">
+                <div class="queue-main">
+                  <div class="queue-title">完成订单</div>
+                  <div class="queue-meta">今日完成 9 条，报告回传率正常</div>
+                </div>
+                <div class="metric-value" style="font-size:24px;">9</div>
+              </div>
+              <div class="queue-item">
+                <div class="queue-main">
+                  <div class="queue-title">新增机构</div>
+                  <div class="queue-meta">新增入驻申请 3 家，其中 1 家待补材料</div>
+                </div>
+                <div class="metric-value" style="font-size:24px;">3</div>
+              </div>
+              <div class="queue-item">
+                <div class="queue-main">
+                  <div class="queue-title">投诉工单</div>
+                  <div class="queue-meta">当前投诉 1 条，需关注响应时限</div>
+                </div>
+                <div class="metric-value" style="font-size:24px;">1</div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -3,10 +3,10 @@ defineOptions({
   name: 'AppTopbar',
 })
 
-import { Bell } from '@element-plus/icons-vue'
+import { ArrowLeft, Bell } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import MessageBadge from '@/components/MessageBadge.vue'
 import {
@@ -21,10 +21,22 @@ import { useUserStore } from '@/store/modules/user'
 import AppBreadcrumb from './Breadcrumb.vue'
 import UserDropdown from './UserDropdown.vue'
 
+const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const permissionStore = usePermissionStore()
 const messageStore = useMessageStore()
+
+const routeDepth = computed(() => route.path.split('/').filter(Boolean).length)
+const shouldShowBack = computed(() => routeDepth.value >= 4)
+
+const fallbackPath = computed(() => {
+  const candidates = route.matched
+    .map((record) => record.path)
+    .filter((path) => path && path !== route.path)
+
+  return candidates.at(-1) || '/'
+})
 
 const userIdentityText = computed(() => {
   const user = userStore.userInfo
@@ -36,15 +48,15 @@ const userIdentityText = computed(() => {
       : ACCOUNT_TYPE_LABEL_MAP[user.accountType]
   }
 
-  const capabilities = user.enterpriseCapabilities || []
+  const capabilities = user.enterpriseTags || user.enterpriseCapabilities || []
   if (!capabilities.length) return ACCOUNT_TYPE_LABEL_MAP[user.accountType]
   return capabilities.map((item) => ENTERPRISE_CAPABILITY_LABEL_MAP[item] || item).join(' / ')
 })
 
 const messagePath = computed(() => {
   const accountType = userStore.userInfo?.accountType
-  if (userStore.isPlatformUser) return '/platform/message'
-  if (accountType === 'personal') return '/personal/dashboard'
+  if (userStore.isPlatformUser) return '/operator/business/message'
+  if (accountType === 'personal') return '/personal/message'
   return '/enterprise/message'
 })
 
@@ -64,13 +76,22 @@ function goMessageCenter() {
   router.push(messagePath.value)
 }
 
+function handleBack() {
+  if (window.history.length > 1) {
+    router.back()
+    return
+  }
+
+  router.push(fallbackPath.value)
+}
+
 function handleUserCommand(command: 'profile' | 'logout') {
   if (command === 'profile') {
     const target = userStore.isPlatformUser
-      ? '/platform/profile'
+      ? '/operator/profile'
       : userStore.userInfo?.accountType === 'personal'
         ? '/personal/profile'
-        : '/enterprise/enterprise'
+        : '/enterprise/account-settings'
     router.push(target)
     return
   }
@@ -90,6 +111,11 @@ function handleUserCommand(command: 'profile' | 'logout') {
     </div>
 
     <div class="topbar-right">
+      <el-button v-if="shouldShowBack" plain class="topbar-back" @click="handleBack">
+        <el-icon><ArrowLeft /></el-icon>
+        <span>返回上一级</span>
+      </el-button>
+
       <button class="message-entry" type="button" @click="goMessageCenter">
         <MessageBadge :value="messageStore.unreadCount">
           <div class="message-icon">
@@ -135,6 +161,26 @@ function handleUserCommand(command: 'profile' | 'logout') {
   display: flex;
   align-items: center;
   gap: 14px;
+}
+
+.topbar-back {
+  min-width: 148px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border-color: rgb(84 135 255 / 28%);
+  background: linear-gradient(180deg, #fff 0%, #f4f8ff 100%);
+  color: var(--dj-color-primary);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 8px 18px rgb(31 94 255 / 8%);
+}
+
+.topbar-back:hover,
+.topbar-back:focus-visible {
+  border-color: rgb(84 135 255 / 28%);
+  background: linear-gradient(180deg, #fff 0%, #f4f8ff 100%);
+  color: var(--dj-color-primary);
 }
 
 .message-entry {

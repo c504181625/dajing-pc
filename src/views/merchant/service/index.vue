@@ -172,7 +172,7 @@ loadData()
           </template>
         </el-table-column>
         <el-table-column prop="updatedAt" label="更新时间" min-width="160" />
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column label="操作" min-width="180" fixed="right" align="center" header-align="center">
           <template #default="{ row }">
             <PermissionButton
               permission="enterprise:service:manage"

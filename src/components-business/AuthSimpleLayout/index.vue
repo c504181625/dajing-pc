@@ -136,6 +136,7 @@ withDefaults(
 
 .form-card__head {
   margin-bottom: 22px;
+  text-align: center;
 }
 
 .form-card__head h2 {

@@ -1,5 +1,5 @@
 import { AUTH_RESULT_MAP, AUTH_STATUS_ENUM, MOBILE_PATTERN } from '@/enum/auth'
-import { PERMISSION_CODE, ROOT_PERMISSION } from '@/enum/permission'
+import { MENU_CODE, PERMISSION_CODE, ROOT_PERMISSION } from '@/enum/permission'
 import { ACCOUNT_TYPE, ENTERPRISE_CAPABILITY, PLATFORM_ROLE } from '@/enum/role'
 import type {
   AuthLoginResponse,
@@ -7,10 +7,12 @@ import type {
   AuthSubmitResponse,
   CurrentUser,
   EnterpriseCapability,
+  EnterpriseTag,
   EnterpriseRegisterForm,
   FirstLoginResetPasswordForm,
   ForgotPasswordForm,
   InstitutionApplyForm,
+  LoginCreditCodeCommand,
   LoginResponse,
   PasswordLoginForm,
   PersonalRegisterForm,
@@ -25,7 +27,51 @@ import { getAccessToken } from '@/utils/auth'
 
 import { mockPromise } from '../helper'
 
-const DATA_SCOPE_NOTE = '真实环境由后端返回最终 permissionCodes 和 dataScope，前端只负责显示与交互控制。'
+const DATA_SCOPE_NOTE =
+  '真实环境由后端返回最终 permissionCodes 和 dataScope，前端只负责显示与交互控制。'
+
+const operatorMenuCodes = [
+  MENU_CODE.operatorDashboard,
+  MENU_CODE.operatorBusiness,
+  MENU_CODE.operatorUser,
+  MENU_CODE.operatorEnterpriseAudit,
+  MENU_CODE.operatorDemand,
+  MENU_CODE.operatorConsult,
+  MENU_CODE.operatorOrder,
+  MENU_CODE.operatorReport,
+  MENU_CODE.operatorComment,
+  MENU_CODE.operatorMessage,
+  MENU_CODE.operatorSystem,
+  MENU_CODE.operatorRole,
+  MENU_CODE.operatorWorkflow,
+  MENU_CODE.operatorBaseConfig,
+]
+
+const enterpriseBaseMenuCodes = [
+  MENU_CODE.enterpriseDashboard,
+  MENU_CODE.enterpriseProfile,
+  MENU_CODE.enterpriseDemand,
+  MENU_CODE.enterpriseOrder,
+  MENU_CODE.enterpriseReport,
+  MENU_CODE.enterpriseMessage,
+  MENU_CODE.enterpriseAccountSettings,
+]
+
+const enterpriseProviderMenuCodes = [
+  MENU_CODE.enterpriseServiceCapability,
+  MENU_CODE.enterpriseServiceProject,
+  MENU_CODE.enterpriseOrderReceive,
+  MENU_CODE.enterpriseQualification,
+]
+
+const personalMenuCodes = [
+  MENU_CODE.personalDashboard,
+  MENU_CODE.personalDemand,
+  MENU_CODE.personalOrder,
+  MENU_CODE.personalMessage,
+  MENU_CODE.personalProfile,
+  MENU_CODE.personalEnterpriseUpgrade,
+]
 
 const platformRolePermissions: Record<PlatformRole, string[]> = {
   [PLATFORM_ROLE.superAdmin]: [
@@ -73,33 +119,63 @@ const platformRolePermissions: Record<PlatformRole, string[]> = {
 
 const enterpriseCommonPermissions = [
   PERMISSION_CODE.enterpriseDashboardView,
+  PERMISSION_CODE.enterpriseProfileView,
   PERMISSION_CODE.enterpriseProfileEdit,
   PERMISSION_CODE.enterpriseDemandView,
   PERMISSION_CODE.enterpriseOrderView,
   PERMISSION_CODE.enterpriseReportView,
   PERMISSION_CODE.enterpriseMessageView,
+  PERMISSION_CODE.enterpriseAccountSettingsView,
+]
+
+const personalPermissions = [
+  PERMISSION_CODE.personalDashboardView,
+  PERMISSION_CODE.personalDemandView,
+  PERMISSION_CODE.personalDemandPublish,
+  PERMISSION_CODE.personalOrderView,
+  PERMISSION_CODE.personalMessageView,
+  PERMISSION_CODE.personalProfileView,
+  PERMISSION_CODE.personalProfileEdit,
+  PERMISSION_CODE.personalEnterpriseUpgradeView,
+  PERMISSION_CODE.personalEnterpriseUpgradeSubmit,
 ]
 
 const capabilityPermissions: Record<EnterpriseCapability, string[]> = {
   [ENTERPRISE_CAPABILITY.demander]: [
     PERMISSION_CODE.enterpriseDemandPublish,
-    PERMISSION_CODE.enterpriseCommentView,
+    PERMISSION_CODE.enterpriseDemandEdit,
   ],
   [ENTERPRISE_CAPABILITY.serviceProvider]: [
-    PERMISSION_CODE.enterpriseDemandHallView,
-    PERMISSION_CODE.enterpriseDemandHandle,
-    PERMISSION_CODE.enterpriseConsultView,
-    PERMISSION_CODE.enterpriseConsultHandle,
-    PERMISSION_CODE.enterpriseServiceView,
-    PERMISSION_CODE.enterpriseServiceManage,
-    PERMISSION_CODE.enterpriseCommentManage,
-  ],
-  [ENTERPRISE_CAPABILITY.labProvider]: [
+    PERMISSION_CODE.enterpriseDemandPublish,
+    PERMISSION_CODE.enterpriseDemandEdit,
+    PERMISSION_CODE.enterpriseServiceCapabilityView,
+    PERMISSION_CODE.enterpriseServiceCapabilityEdit,
+    PERMISSION_CODE.enterpriseServiceProjectView,
+    PERMISSION_CODE.enterpriseServiceProjectManage,
     PERMISSION_CODE.enterpriseOrderReceive,
     PERMISSION_CODE.enterpriseOrderHandle,
     PERMISSION_CODE.enterpriseReportHandle,
-    PERMISSION_CODE.enterpriseTestingProgressView,
-    PERMISSION_CODE.enterpriseDataReportView,
+    PERMISSION_CODE.enterpriseQualificationView,
+    PERMISSION_CODE.enterpriseQualificationSubmit,
+    PERMISSION_CODE.enterpriseProviderQualificationSubmit,
+    PERMISSION_CODE.enterpriseServiceShelf,
+    PERMISSION_CODE.enterpriseDemandHandle,
+  ],
+  service_provider: [
+    PERMISSION_CODE.enterpriseDemandPublish,
+    PERMISSION_CODE.enterpriseDemandEdit,
+    PERMISSION_CODE.enterpriseServiceCapabilityView,
+    PERMISSION_CODE.enterpriseServiceCapabilityEdit,
+    PERMISSION_CODE.enterpriseServiceProjectView,
+    PERMISSION_CODE.enterpriseServiceProjectManage,
+    PERMISSION_CODE.enterpriseOrderReceive,
+    PERMISSION_CODE.enterpriseOrderHandle,
+    PERMISSION_CODE.enterpriseReportHandle,
+    PERMISSION_CODE.enterpriseQualificationView,
+    PERMISSION_CODE.enterpriseQualificationSubmit,
+    PERMISSION_CODE.enterpriseProviderQualificationSubmit,
+    PERMISSION_CODE.enterpriseServiceShelf,
+    PERMISSION_CODE.enterpriseDemandHandle,
   ],
 }
 
@@ -122,13 +198,22 @@ function buildPlatformUser(
   const permissions = platformRolePermissions[platformRole]
   return {
     id: `u-${key}`,
+    accountId: `acc-${key}`,
+    username: key,
     name,
     mobile,
     email,
-    accountType: ACCOUNT_TYPE.platformAdmin,
+    accountType: ACCOUNT_TYPE.operator,
+    currentIdentity: 'operator',
+    availableIdentities: ['operator'],
     platformRole,
+    enterpriseTags: [],
+    enterpriseCapabilities: [],
     roles: [platformRole],
     permissionCodes: permissions,
+    menuCodes: operatorMenuCodes,
+    homeRoute: '/operator/dashboard',
+    dataScope: { type: 'all', note: DATA_SCOPE_NOTE },
     permissions,
     dataScopes: [{ type: 'all', note: DATA_SCOPE_NOTE }],
     deptName: '平台运营中心',
@@ -144,15 +229,39 @@ function buildPersonalUser(params: {
 }): CurrentUser {
   return {
     id: `u-${params.key}`,
+    accountId: `acc-${params.key}`,
+    username: params.key,
     name: params.name,
     mobile: params.mobile,
     email: params.email,
     accountType: ACCOUNT_TYPE.personal,
-    permissionCodes: [],
-    permissions: [],
+    currentIdentity: 'personal',
+    availableIdentities: ['personal'],
+    enterpriseTags: [],
+    enterpriseCapabilities: [],
+    permissionCodes: personalPermissions,
+    menuCodes: personalMenuCodes,
+    homeRoute: '/personal/dashboard',
+    dataScope: { type: 'self', note: DATA_SCOPE_NOTE },
+    permissions: personalPermissions,
     dataScopes: [{ type: 'self', note: DATA_SCOPE_NOTE }],
     lastLoginTime: '2026-04-09 08:30:00',
   }
+}
+
+function buildEnterpriseIdentities(capabilities: EnterpriseCapability[]) {
+  const identities = new Set<
+    'enterprise' | 'enterprise_demander' | 'enterprise_provider' | 'enterprise_service_provider'
+  >(['enterprise'])
+
+  if (capabilities.includes(ENTERPRISE_CAPABILITY.demander)) {
+    identities.add('enterprise_demander')
+  }
+  if (capabilities.includes(ENTERPRISE_CAPABILITY.serviceProvider)) {
+    identities.add('enterprise_provider')
+  }
+
+  return [...identities]
 }
 
 function buildBusinessUser(params: {
@@ -160,24 +269,45 @@ function buildBusinessUser(params: {
   name: string
   mobile: string
   email: string
-  accountType: 'enterprise' | 'institution'
   enterpriseId: string
   enterpriseName: string
   capabilities: EnterpriseCapability[]
   deptName?: string
 }): CurrentUser {
   const permissions = buildEnterprisePermissions(params.capabilities)
+  const availableIdentities = buildEnterpriseIdentities(params.capabilities)
+  const currentIdentity = availableIdentities.find((item) => item !== 'enterprise') || 'enterprise'
+  const enterpriseTags = Array.from(new Set(params.capabilities)) as EnterpriseTag[]
+  const menuCodes = [
+    ...enterpriseBaseMenuCodes,
+    ...(enterpriseTags.includes(ENTERPRISE_CAPABILITY.serviceProvider)
+      ? enterpriseProviderMenuCodes
+      : []),
+  ]
+
   return {
     id: `u-${params.key}`,
+    accountId: `acc-${params.key}`,
+    username: params.key,
     name: params.name,
     mobile: params.mobile,
     email: params.email,
-    accountType: params.accountType,
+    accountType: ACCOUNT_TYPE.enterprise,
+    currentIdentity,
+    availableIdentities,
     enterpriseId: params.enterpriseId,
     enterpriseName: params.enterpriseName,
+    enterpriseTags,
     enterpriseCapabilities: params.capabilities,
     roles: [...params.capabilities],
     permissionCodes: permissions,
+    menuCodes,
+    homeRoute: '/enterprise/dashboard',
+    dataScope: {
+      type: 'enterprise_self',
+      enterpriseIds: [params.enterpriseId],
+      note: DATA_SCOPE_NOTE,
+    },
     permissions,
     dataScopes: [
       {
@@ -192,8 +322,20 @@ function buildBusinessUser(params: {
 }
 
 export const mockUsersByToken: Record<string, CurrentUser> = {
-  admin: buildPlatformUser('admin', '平台超级管理员', PLATFORM_ROLE.superAdmin, '13800000001', 'admin@dajing.cn'),
-  auditor: buildPlatformUser('auditor', '平台审核员', PLATFORM_ROLE.auditor, '13800000002', 'auditor@dajing.cn'),
+  admin: buildPlatformUser(
+    'admin',
+    '平台超级管理员',
+    PLATFORM_ROLE.superAdmin,
+    '13800000001',
+    'admin@dajing.cn',
+  ),
+  auditor: buildPlatformUser(
+    'auditor',
+    '平台审核员',
+    PLATFORM_ROLE.auditor,
+    '13800000002',
+    'auditor@dajing.cn',
+  ),
   personal: buildPersonalUser({
     key: 'personal',
     name: '个人用户演示账号',
@@ -205,7 +347,6 @@ export const mockUsersByToken: Record<string, CurrentUser> = {
     name: '企业管理员',
     mobile: '13800000011',
     email: 'owner@qihang.cn',
-    accountType: ACCOUNT_TYPE.enterprise,
     enterpriseId: 'ent-100',
     enterpriseName: '苏州启航电子股份有限公司',
     capabilities: [ENTERPRISE_CAPABILITY.demander],
@@ -216,7 +357,6 @@ export const mockUsersByToken: Record<string, CurrentUser> = {
     name: '服务机构管理员',
     mobile: '13800000012',
     email: 'service@hangquality.cn',
-    accountType: ACCOUNT_TYPE.enterprise,
     enterpriseId: 'ent-200',
     enterpriseName: '杭州工研质量技术服务有限公司',
     capabilities: [ENTERPRISE_CAPABILITY.serviceProvider],
@@ -227,10 +367,9 @@ export const mockUsersByToken: Record<string, CurrentUser> = {
     name: '检测机构管理员',
     mobile: '13800000013',
     email: 'lab@smartlab.cn',
-    accountType: ACCOUNT_TYPE.institution,
     enterpriseId: 'ent-001',
     enterpriseName: '苏州智造检测有限公司',
-    capabilities: [ENTERPRISE_CAPABILITY.labProvider],
+    capabilities: [ENTERPRISE_CAPABILITY.serviceProvider],
     deptName: '检测中心',
   }),
   'mix-service': buildBusinessUser({
@@ -238,7 +377,6 @@ export const mockUsersByToken: Record<string, CurrentUser> = {
     name: '复合身份企业管理员',
     mobile: '13800000014',
     email: 'mix@duoquality.cn',
-    accountType: ACCOUNT_TYPE.enterprise,
     enterpriseId: 'ent-400',
     enterpriseName: '宁波协同质量科技有限公司',
     capabilities: [ENTERPRISE_CAPABILITY.demander, ENTERPRISE_CAPABILITY.serviceProvider],
@@ -249,10 +387,9 @@ export const mockUsersByToken: Record<string, CurrentUser> = {
     name: '复合检测企业管理员',
     mobile: '13800000015',
     email: 'labmix@duolab.cn',
-    accountType: ACCOUNT_TYPE.enterprise,
     enterpriseId: 'ent-500',
     enterpriseName: '上海联测质量科技有限公司',
-    capabilities: [ENTERPRISE_CAPABILITY.demander, ENTERPRISE_CAPABILITY.labProvider],
+    capabilities: [ENTERPRISE_CAPABILITY.demander, ENTERPRISE_CAPABILITY.serviceProvider],
     deptName: '检测运营部',
   }),
 }
@@ -326,8 +463,14 @@ const authAccounts: AuthRecord[] = [
 ]
 
 const authResultMap = new Map<string, AuthResultInfo>([
-  ['enterprise-demo-reviewing', { ...AUTH_RESULT_MAP[AUTH_STATUS_ENUM.reviewing], id: 'enterprise-demo-reviewing' }],
-  ['institution-demo-password', { ...AUTH_RESULT_MAP[AUTH_STATUS_ENUM.passwordSent], id: 'institution-demo-password' }],
+  [
+    'enterprise-demo-reviewing',
+    { ...AUTH_RESULT_MAP[AUTH_STATUS_ENUM.reviewing], id: 'enterprise-demo-reviewing' },
+  ],
+  [
+    'institution-demo-password',
+    { ...AUTH_RESULT_MAP[AUTH_STATUS_ENUM.passwordSent], id: 'institution-demo-password' },
+  ],
 ])
 
 function createAuthResult(status: AuthResultInfo['status'], description?: string) {
@@ -353,7 +496,12 @@ function buildLoginResponse(account: AuthRecord): AuthLoginResponse {
     refreshToken: `refresh-token-${account.tokenKey}`,
     expiresIn: 7200,
     needResetPassword: !!account.needResetPassword,
+    accountId: profile.accountId,
     accountType: profile.accountType,
+    enterpriseTags: profile.enterpriseTags,
+    permissionCodes: profile.permissionCodes,
+    menuCodes: profile.menuCodes,
+    homeRoute: profile.homeRoute,
     profile,
   }
 }
@@ -376,10 +524,13 @@ export function sendSmsCode(params: SmsCodeParams): Promise<SmsCodeResponse> {
   if (!MOBILE_PATTERN.test(params.mobile)) {
     return Promise.reject(new Error('请输入正确的手机号'))
   }
-  return mockPromise({
-    success: true,
-    expireSeconds: 60,
-  }, 260)
+  return mockPromise(
+    {
+      success: true,
+      expireSeconds: 60,
+    },
+    260,
+  )
 }
 
 export function personalRegister(data: PersonalRegisterForm): Promise<AuthSubmitResponse> {
@@ -396,7 +547,13 @@ export function personalRegister(data: PersonalRegisterForm): Promise<AuthSubmit
     mobile: data.mobile,
     password: data.password,
   })
-  return mockPromise(createAuthResult(AUTH_STATUS_ENUM.approved, '个人账号已创建成功，可直接返回登录页使用账号密码或短信登录。'), 320)
+  return mockPromise(
+    createAuthResult(
+      AUTH_STATUS_ENUM.approved,
+      '个人账号已创建成功，可直接返回登录页使用账号密码或短信登录。',
+    ),
+    320,
+  )
 }
 
 export function enterpriseRegister(data: EnterpriseRegisterForm): Promise<AuthSubmitResponse> {
@@ -406,7 +563,6 @@ export function enterpriseRegister(data: EnterpriseRegisterForm): Promise<AuthSu
     name: data.contactName,
     mobile: data.mobile,
     email: `${data.username}@enterprise.mock.cn`,
-    accountType: ACCOUNT_TYPE.enterprise,
     enterpriseId: `ent-${Date.now()}`,
     enterpriseName: data.enterpriseName,
     capabilities: [ENTERPRISE_CAPABILITY.demander],
@@ -436,10 +592,9 @@ export function institutionApply(data: InstitutionApplyForm): Promise<AuthSubmit
     name: data.contactName,
     mobile: data.contactMobile,
     email: `${data.loginAccount}@institution.mock.cn`,
-    accountType: ACCOUNT_TYPE.institution,
     enterpriseId: `inst-${Date.now()}`,
     enterpriseName: data.institutionName,
-    capabilities: [ENTERPRISE_CAPABILITY.labProvider],
+    capabilities: [ENTERPRISE_CAPABILITY.serviceProvider],
     deptName: '机构联系人',
   })
   authAccounts.push({
@@ -493,7 +648,7 @@ export function enterpriseCodeLogin(data: PasswordLoginForm): Promise<AuthLoginR
 
 export function institutionUsernameLogin(data: PasswordLoginForm): Promise<AuthLoginResponse> {
   const account = findAccountBy('username', data.account)
-  if (!account || mockUsersByToken[account.tokenKey]?.accountType !== ACCOUNT_TYPE.institution) {
+  if (!account || mockUsersByToken[account.tokenKey]?.accountType !== ACCOUNT_TYPE.enterprise) {
     return Promise.reject(new Error('机构账号不存在'))
   }
   return mockPromise(buildLoginResponse(ensurePasswordMatch(data, account)), 260)
@@ -501,14 +656,17 @@ export function institutionUsernameLogin(data: PasswordLoginForm): Promise<AuthL
 
 export function institutionCodeLogin(data: PasswordLoginForm): Promise<AuthLoginResponse> {
   const account = findAccountBy('unifiedSocialCode', data.account)
-  if (!account || mockUsersByToken[account.tokenKey]?.accountType !== ACCOUNT_TYPE.institution) {
+  if (!account || mockUsersByToken[account.tokenKey]?.accountType !== ACCOUNT_TYPE.enterprise) {
     return Promise.reject(new Error('机构账号不存在'))
   }
   return mockPromise(buildLoginResponse(ensurePasswordMatch(data, account)), 260)
 }
 
 export function getAuthResult(id: string): Promise<AuthResultInfo> {
-  return mockPromise(authResultMap.get(id) || { ...AUTH_RESULT_MAP[AUTH_STATUS_ENUM.reviewing], id }, 180)
+  return mockPromise(
+    authResultMap.get(id) || { ...AUTH_RESULT_MAP[AUTH_STATUS_ENUM.reviewing], id },
+    180,
+  )
 }
 
 export function forgotPassword(data: ForgotPasswordForm): Promise<AuthSubmitResponse> {
@@ -580,6 +738,32 @@ export function mockRegister(payload: RegisterCommand): Promise<boolean> {
     remark: payload.inviteCode,
     businessLicense: [],
   }).then(() => true)
+}
+
+export function loginByCreditCode(data: LoginCreditCodeCommand): Promise<LoginResponse> {
+  const account = findAccountBy('unifiedSocialCode', data.unifiedSocialCreditCode)
+  if (!account || mockUsersByToken[account.tokenKey]?.accountType !== ACCOUNT_TYPE.enterprise) {
+    return Promise.reject(new Error('企业账号不存在'))
+  }
+
+  if (data.password) {
+    return mockPromise(
+      withLegacyUser(
+        buildLoginResponse(
+          ensurePasswordMatch(
+            {
+              account: data.unifiedSocialCreditCode,
+              password: data.password,
+            },
+            account,
+          ),
+        ),
+      ),
+      260,
+    )
+  }
+
+  return mockPromise(withLegacyUser(buildLoginResponse(account)), 260)
 }
 
 export function mockLogin(source: string): Promise<LoginResponse> {

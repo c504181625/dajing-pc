@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { computed, useSlots } from 'vue'
-
 withDefaults(
   defineProps<{
     title?: string
@@ -13,17 +11,10 @@ withDefaults(
     compactHeader: false,
   },
 )
-
-const slots = useSlots()
-const hasExtra = computed(() => !!slots.extra)
 </script>
 
 <template>
   <section class="page-container">
-    <div v-if="hasExtra" class="page-toolbar">
-      <slot name="extra" />
-    </div>
-
     <div class="page-content">
       <slot />
     </div>

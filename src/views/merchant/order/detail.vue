@@ -26,9 +26,7 @@ const detail = ref<OrderDetail | null>(null)
 const previewVisible = ref(false)
 const previewFiles = ref<AttachmentItem[]>([])
 
-const canHandleOrder = computed(() =>
-  userStore.hasEnterpriseCapability(['service_provider', 'lab_provider']),
-)
+const canHandleOrder = computed(() => userStore.hasEnterpriseCapability(['service_provider']))
 
 async function loadDetail() {
   detail.value = await getOrderDetail(String(route.params.id))
@@ -58,7 +56,9 @@ loadDetail()
           <el-descriptions :column="2" border>
             <el-descriptions-item label="订单号">{{ detail.orderNo }}</el-descriptions-item>
             <el-descriptions-item label="项目名称">{{ detail.projectName }}</el-descriptions-item>
-            <el-descriptions-item label="需求企业">{{ detail.enterpriseName }}</el-descriptions-item>
+            <el-descriptions-item label="需求企业">{{
+              detail.enterpriseName
+            }}</el-descriptions-item>
             <el-descriptions-item label="服务机构">{{ detail.orgName }}</el-descriptions-item>
             <el-descriptions-item label="支付状态">
               <StatusTag :status="detail.paymentStatus" :map="PAYMENT_STATUS_MAP" />
@@ -89,9 +89,13 @@ loadDetail()
         <DetailSection title="寄样 / 收样信息" style="margin-top: 16px">
           <el-descriptions :column="2" border>
             <el-descriptions-item label="送样方式">{{ detail.sampleMode }}</el-descriptions-item>
-            <el-descriptions-item label="收样联系人">{{ detail.receiverName }}</el-descriptions-item>
+            <el-descriptions-item label="收样联系人">{{
+              detail.receiverName
+            }}</el-descriptions-item>
             <el-descriptions-item label="联系电话">{{ detail.receiverPhone }}</el-descriptions-item>
-            <el-descriptions-item label="收样地址">{{ detail.receiverAddress }}</el-descriptions-item>
+            <el-descriptions-item label="收样地址">{{
+              detail.receiverAddress
+            }}</el-descriptions-item>
           </el-descriptions>
         </DetailSection>
 
@@ -104,13 +108,17 @@ loadDetail()
             <el-button
               text
               type="primary"
-              @click="openPreview(detail.reportInfo.reportFile ? [detail.reportInfo.reportFile] : [])"
+              @click="
+                openPreview(detail.reportInfo.reportFile ? [detail.reportInfo.reportFile] : [])
+              "
             >
               预览报告
             </el-button>
           </template>
           <el-descriptions :column="2" border>
-            <el-descriptions-item label="报告编号">{{ detail.reportInfo.reportNo || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="报告编号">{{
+              detail.reportInfo.reportNo || '-'
+            }}</el-descriptions-item>
             <el-descriptions-item label="报告状态">
               <StatusTag :status="detail.reportInfo.reportStatus" :map="REPORT_STATUS_MAP" />
             </el-descriptions-item>
@@ -119,9 +127,15 @@ loadDetail()
 
         <DetailSection title="评价信息" style="margin-top: 16px">
           <el-descriptions :column="1" border>
-            <el-descriptions-item label="评分">{{ detail.commentInfo?.score || '-' }}</el-descriptions-item>
-            <el-descriptions-item label="评价内容">{{ detail.commentInfo?.content || '-' }}</el-descriptions-item>
-            <el-descriptions-item label="评价时间">{{ detail.commentInfo?.createdAt || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="评分">{{
+              detail.commentInfo?.score || '-'
+            }}</el-descriptions-item>
+            <el-descriptions-item label="评价内容">{{
+              detail.commentInfo?.content || '-'
+            }}</el-descriptions-item>
+            <el-descriptions-item label="评价时间">{{
+              detail.commentInfo?.createdAt || '-'
+            }}</el-descriptions-item>
           </el-descriptions>
         </DetailSection>
       </el-col>

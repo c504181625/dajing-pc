@@ -21,7 +21,7 @@ const emit = defineEmits<{
     <el-table :data="files" border>
       <el-table-column prop="name" label="文件名" min-width="220" />
       <el-table-column prop="fileType" label="格式" width="120" />
-      <el-table-column label="操作" width="160">
+      <el-table-column label="操作" width="160" align="center" header-align="center">
         <template #default="{ row }">
           <el-link type="primary" :href="row.url" target="_blank">新窗口打开</el-link>
         </template>

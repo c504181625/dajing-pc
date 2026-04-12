@@ -109,7 +109,7 @@ loadData()
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="提交时间" min-width="160" />
-        <el-table-column label="操作" width="200">
+        <el-table-column label="操作" min-width="160" align="center" header-align="center">
           <template #default="{ row }">
             <el-button text type="primary" @click="openDetail(row.id)">查看详情</el-button>
             <PermissionButton

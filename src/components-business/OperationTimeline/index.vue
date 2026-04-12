@@ -35,19 +35,36 @@ function resolveType(status: OperationStatus) {
 <style scoped lang="scss">
 .timeline {
   margin-top: 4px;
+  width: 100%;
+}
+
+.timeline :deep(.el-timeline-item__wrapper),
+.timeline :deep(.el-timeline-item__content) {
+  min-width: 0;
+}
+
+.timeline :deep(.el-timeline-item__timestamp) {
+  display: block;
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .timeline-card {
+  width: 100%;
+  max-width: 100%;
   padding: 14px 16px;
   border: 1px solid var(--dj-color-border);
   border-radius: 14px;
   background: linear-gradient(180deg, #fff 0%, #fbfcff 100%);
+  overflow: hidden;
 }
 
 .timeline-title {
   font-size: 14px;
   font-weight: 700;
   color: var(--dj-color-text-primary);
+  word-break: break-word;
 }
 
 .timeline-desc,
@@ -56,5 +73,6 @@ function resolveType(status: OperationStatus) {
   font-size: 13px;
   line-height: 1.6;
   color: var(--dj-color-text-regular);
+  word-break: break-word;
 }
 </style>

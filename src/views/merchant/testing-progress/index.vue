@@ -79,7 +79,7 @@ loadData()
           </template>
         </el-table-column>
         <el-table-column prop="reportNo" label="关联报告" min-width="160" />
-        <el-table-column label="操作" width="120">
+        <el-table-column label="操作" min-width="120" align="center" header-align="center">
           <template #default="{ row }">
             <el-button text type="primary" @click="goDetail(row.id)">查看详情</el-button>
           </template>

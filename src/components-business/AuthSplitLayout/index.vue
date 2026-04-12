@@ -5,11 +5,13 @@ withDefaults(
     subtitle?: string
     cardTitle?: string
     cardDescription?: string
+    singleColumn?: boolean
   }>(),
   {
     subtitle: '',
     cardTitle: '',
     cardDescription: '',
+    singleColumn: false,
   },
 )
 </script>
@@ -18,8 +20,11 @@ withDefaults(
   <div class="auth-split-layout">
     <div class="auth-split-layout__backdrop" />
 
-    <div class="auth-split-layout__container">
-      <aside class="auth-split-layout__aside">
+    <div
+      class="auth-split-layout__container"
+      :class="{ 'auth-split-layout__container--single': singleColumn }"
+    >
+      <aside v-if="!singleColumn" class="auth-split-layout__aside">
         <div class="brand-panel">
           <div class="brand-mark">
             <img src="/logo.png" alt="logo" />
@@ -77,6 +82,11 @@ withDefaults(
   grid-template-columns: minmax(320px, 1fr) minmax(440px, 520px);
   align-items: center;
   gap: 40px;
+}
+
+.auth-split-layout__container--single {
+  grid-template-columns: minmax(440px, 560px);
+  justify-content: center;
 }
 
 .auth-split-layout__aside {

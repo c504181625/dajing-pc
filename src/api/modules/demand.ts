@@ -4,7 +4,9 @@ import { http } from '@/utils/request'
 import { isUseMock } from '../helper'
 import {
   mockAssignDemand,
+  mockAcceptDemand,
   mockCreateDemand,
+  mockDeleteDemand,
   mockGetDemandDetail,
   mockGetDemandList,
   mockReplyDemand,
@@ -33,4 +35,14 @@ export function assignDemand(id: string, orgName: string): Promise<boolean> {
 export function createDemand(payload: DemandForm): Promise<boolean> {
   if (isUseMock()) return mockCreateDemand(payload)
   return http<boolean>({ url: '/demand', method: 'post', data: payload })
+}
+
+export function acceptDemand(id: string): Promise<boolean> {
+  if (isUseMock()) return mockAcceptDemand(id)
+  return http<boolean>({ url: `/demand/${id}/accept`, method: 'post' })
+}
+
+export function deleteDemand(id: string): Promise<boolean> {
+  if (isUseMock()) return mockDeleteDemand(id)
+  return http<boolean>({ url: `/demand/${id}`, method: 'delete' })
 }

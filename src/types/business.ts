@@ -1,5 +1,5 @@
 import type { ListQuery } from './api'
-import type { EnterpriseCapability } from './auth'
+import type { AccountType, CurrentIdentity, EnterpriseCapability } from './auth'
 import type {
   AccountStatus,
   AuditAction,
@@ -63,11 +63,17 @@ export interface AuditRecord extends OperationTimelineNode {
 export interface UserItem {
   id: string
   userType: UserType
+  accountType?: AccountType
+  currentIdentity?: CurrentIdentity
   name: string
   mobile: string
   email?: string
   enterpriseName?: string
   socialCreditCode?: string
+  enterpriseCapabilities?: EnterpriseCapability[]
+  certificationStatus?: 'not_started' | 'reviewing' | 'approved' | 'rejected'
+  sourceLabel?: string
+  riskLabel?: string
   roleNames: string[]
   status: AccountStatus
   createdAt: string
@@ -269,6 +275,15 @@ export interface OrderDetail extends OrderItem {
   refundRecords: OrderRefundRecord[]
 }
 
+export interface OrderUpdatePayload {
+  orgName: string
+  projectName: string
+  amount: number
+  receiverName: string
+  receiverPhone: string
+  receiverAddress: string
+}
+
 export interface ReportItem {
   id: string
   reportNo: string
@@ -276,6 +291,7 @@ export interface ReportItem {
   orderNo: string
   projectName: string
   status: ReportStatus
+  sealStatus?: 'pending' | 'sealed' | 'rejected'
   publishAt: string
 }
 
@@ -285,7 +301,10 @@ export interface ReportDetail extends ReportItem {
   extractRecords: OperationTimelineNode[]
 }
 
-export type ReportQuery = ListQuery
+export interface ReportQuery extends ListQuery {
+  status?: ReportStatus | ''
+  sealStatus?: 'pending' | 'sealed' | 'rejected' | ''
+}
 
 export interface CommentItem {
   id: string
@@ -295,17 +314,22 @@ export interface CommentItem {
   score: number
   content: string
   status: CommentStatus
+  appealStatus?: 'none' | 'pending' | 'processing' | 'resolved'
+  violated?: boolean
   createdAt: string
 }
 
 export interface CommentQuery extends ListQuery {
   score?: string
+  appealStatus?: 'none' | 'pending' | 'processing' | 'resolved' | ''
 }
 
 export interface MessageItem {
   id: string
   title: string
   type: MessageType
+  priority?: 'high' | 'medium' | 'low'
+  category?: 'audit' | 'order' | 'alert' | 'other'
   readStatus: MessageReadStatus
   content: string
   createdAt: string
@@ -314,6 +338,7 @@ export interface MessageItem {
 export interface MessageQuery extends ListQuery {
   type?: MessageType | ''
   readStatus?: MessageReadStatus | ''
+  priority?: 'high' | 'medium' | 'low' | ''
 }
 
 export interface MessageStats {
@@ -323,6 +348,9 @@ export interface MessageStats {
   demand: number
   consult: number
   order: number
+  audit: number
+  orderNotice: number
+  alert: number
 }
 
 export interface ServiceItem {
@@ -520,6 +548,17 @@ export interface DashboardMetric {
   type?: 'primary' | 'success' | 'warning' | 'danger' | 'info'
 }
 
+export interface DashboardOverviewMetric {
+  key: string
+  label: string
+  value: number
+  unit?: string
+  highlight?: string
+  description?: string
+  level?: 'primary' | 'success' | 'warning' | 'danger' | 'info'
+  path?: string
+}
+
 export interface QuickEntryItem {
   title: string
   path: string
@@ -542,10 +581,42 @@ export interface RecentOperationItem {
   createdAt: string
 }
 
+export interface WorkbenchQueueItem {
+  id: string
+  title: string
+  description: string
+  businessType: string
+  priority: 'p1' | 'p2' | 'p3'
+  owner?: string
+  deadlineText?: string
+  statusText: string
+  path: string
+}
+
+export interface WorkbenchFlowBoardItem {
+  id: string
+  label: string
+  value: number
+  highlight?: string
+  path?: string
+}
+
+export interface WorkbenchRiskAlertItem {
+  id: string
+  title: string
+  description: string
+  level: 'warning' | 'danger' | 'info'
+  path: string
+}
+
 export interface PlatformWorkbenchData {
   todos: DashboardTodoItem[]
   recentOperations: RecentOperationItem[]
   quickEntries: QuickEntryItem[]
+  overviewMetrics?: DashboardOverviewMetric[]
+  priorityQueue?: WorkbenchQueueItem[]
+  flowBoard?: WorkbenchFlowBoardItem[]
+  riskAlerts?: WorkbenchRiskAlertItem[]
 }
 
 export type MerchantWorkbenchData = PlatformWorkbenchData

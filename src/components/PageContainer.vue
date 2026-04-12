@@ -1,8 +1,5 @@
 <template>
-  <BusinessPageContainer :title="title" :subtitle="subtitle">
-    <template #extra>
-      <slot name="extra" />
-    </template>
+  <BusinessPageContainer :show-back="showBack" :list-mode="listMode">
     <slot />
   </BusinessPageContainer>
 </template>
@@ -11,7 +8,9 @@
 import BusinessPageContainer from '@/components-business/PageContainer/index.vue'
 
 defineProps<{
-  title: string
+  title?: string
   subtitle?: string
+  showBack?: boolean
+  listMode?: boolean
 }>()
 </script>
