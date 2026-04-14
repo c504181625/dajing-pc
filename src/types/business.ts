@@ -122,6 +122,7 @@ export interface EnterpriseAuditDetail extends EnterpriseAuditItem {
 
 export interface EnterpriseAuditQuery extends ListQuery {
   serviceType?: string
+  enterpriseType?: string | number
 }
 
 export interface EnterpriseProfile {
@@ -139,6 +140,27 @@ export interface EnterpriseProfile {
   serviceTypes: ServiceType[]
   businessLicense?: AttachmentItem
   qualificationFiles?: AttachmentItem[]
+}
+
+export interface EnterpriseCertificate {
+  id?: string
+  certType: string
+  certNo: string
+  certName: string
+  certFile: string
+  expireDate?: string
+  raw?: Record<string, unknown>
+}
+
+export interface EnterpriseBusinessLicenseOcrResult {
+  enterpriseName?: string
+  socialCreditCode?: string
+  legalPerson?: string
+  registeredAddress?: string
+  address?: string
+  businessScope?: string
+  imageUrl?: string
+  raw?: Record<string, unknown>
 }
 
 export interface EnterpriseCapabilityProfile {

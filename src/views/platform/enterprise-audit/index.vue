@@ -27,10 +27,15 @@ const queryForm = reactive<EnterpriseAuditQuery>({
   pageSize: 10,
   keyword: '',
   status: '',
-  serviceType: '',
+  enterpriseType: '',
   startDate: '',
   endDate: '',
 })
+
+const enterpriseTypeOptions = [
+  { label: '检测机构', value: '1' },
+  { label: '基础服务机构', value: '2' },
+]
 
 const searchFields = [
   {
@@ -47,10 +52,10 @@ const searchFields = [
   },
   {
     label: '服务类型',
-    prop: 'serviceType',
+    prop: 'enterpriseType',
     component: 'select' as const,
-    placeholder: '请选择服务类型',
-    options: SERVICE_TYPE_OPTIONS,
+    placeholder: '请选择企业类型',
+    options: enterpriseTypeOptions,
   },
 ]
 

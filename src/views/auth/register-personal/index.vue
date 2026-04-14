@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 import { onBeforeUnmount, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { personalPasswordLogin, personalRegister, sendSmsCode } from '@/api/modules/auth'
+import { loginByPassword, personalRegister, sendSmsCode } from '@/api/modules/auth'
 import AuthSimpleLayout from '@/components-business/AuthSimpleLayout/index.vue'
 import RegionSelect from '@/components-business/RegionSelect/index.vue'
 import { MOBILE_PATTERN, PASSWORD_STRENGTH_PATTERN, USERNAME_PATTERN } from '@/enum/auth'
@@ -93,8 +93,8 @@ async function handleSubmit() {
   loading.value = true
   try {
     await personalRegister(form)
-    const loginRes = await personalPasswordLogin({
-      account: form.username,
+    const loginRes = await loginByPassword({
+      account: form.mobile,
       password: form.password,
     })
 

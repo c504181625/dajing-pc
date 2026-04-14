@@ -3,6 +3,7 @@ import ElementPlus from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 
 import App from './App.vue'
+import PermissionButton from './components-business/PermissionButton/index.vue'
 import router from './router'
 import pinia from './store'
 import { setupPermissionDirective } from './directives/permission'
@@ -19,5 +20,6 @@ app.use(ElementPlus, {
 })
 app.use(router)
 setupPermissionDirective(app)
+app.component('PermissionButton', PermissionButton)
 
 app.mount('#app')
