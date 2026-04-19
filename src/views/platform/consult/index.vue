@@ -165,6 +165,6 @@ loadData()
 .table-stat {
   color: var(--dj-color-text-primary);
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
 }
 </style>

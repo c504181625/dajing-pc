@@ -182,7 +182,7 @@ onMounted(() => {
       @pageChange="handlePageChange"
     >
       <template #stats>
-        <span v-for="item in messageStats" :key="item.key" class="stats-text">
+        <span v-for="item in messageStats" :key="item.key" class="table-stat">
           {{ item.label }}（{{ item.value }}）
         </span>
       </template>
@@ -241,11 +241,3 @@ onMounted(() => {
     </el-drawer>
   </PageContainer>
 </template>
-
-<style scoped lang="scss">
-.stats-text {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--dj-color-text-secondary);
-}
-</style>

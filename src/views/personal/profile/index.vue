@@ -6,8 +6,8 @@ import { useRoute } from 'vue-router'
 import { getEnterpriseUpgradeSummary, submitEnterpriseUpgrade } from '@/api/modules/user'
 import PageContainer from '@/components/PageContainer.vue'
 import DetailSection from '@/components-business/DetailSection/index.vue'
-import { ACCOUNT_TYPE_LABEL_MAP, ENTERPRISE_CAPABILITY_LABEL_MAP } from '@/enum/role'
-import { ENTERPRISE_CAPABILITY } from '@/enum/role'
+import UploadCard from '@/components-business/UploadCard/index.vue'
+import { ENTERPRISE_CAPABILITY, ACCOUNT_TYPE_LABEL_MAP, ENTERPRISE_CAPABILITY_LABEL_MAP } from '@/enum/role'
 import { useUserStore } from '@/store/modules/user'
 import type { EnterpriseUpgradeForm, EnterpriseUpgradeSummary } from '@/types/auth'
 
@@ -48,20 +48,49 @@ watch(
 
 const pageTitle = computed(() => String(route.meta.title || '企业升级'))
 const pageSubtitle = computed(
-  () => '复用企业认证资料页结构，个人账号提交企业主体申请后即可按审核进度逐步升级为企业账号。',
+  () => '个人账号可在这里提交企业主体资料。提交后会进入平台审核，审核通过后即可切换为企业身份。',
 )
+
+const statusText = computed(() => {
+  if (upgradeSummary.value.currentStatus === 'not_started') return '未发起'
+  if (upgradeSummary.value.currentStatus === 'reviewing') return '审核中'
+  if (upgradeSummary.value.currentStatus === 'approved') return '已通过'
+  if (upgradeSummary.value.currentStatus === 'rejected') return '已驳回'
+  return '待处理'
+})
 
 async function loadUpgradeSummary() {
   upgradeSummary.value = await getEnterpriseUpgradeSummary()
 }
 
 async function handleUpgradeSubmit() {
+  if (!upgradeSummary.value.canUpgrade) {
+    ElMessage.warning('当前状态暂不支持再次提交企业升级申请')
+    return
+  }
+
   if (!upgradeForm.enterpriseName || !upgradeForm.unifiedSocialCode) {
     ElMessage.warning('请先填写企业名称和统一社会信用代码')
     return
   }
+
+  if (!upgradeForm.contactName || !upgradeForm.contactMobile) {
+    ElMessage.warning('请补充联系人与联系电话')
+    return
+  }
+
   if (!upgradeForm.enterpriseTags.length) {
     ElMessage.warning('请至少选择一个企业身份标签')
+    return
+  }
+
+  if (!upgradeForm.businessScope.trim()) {
+    ElMessage.warning('请填写业务范围')
+    return
+  }
+
+  if (!upgradeForm.businessLicense.length) {
+    ElMessage.warning('请上传营业执照')
     return
   }
 
@@ -97,21 +126,26 @@ init()
             <el-form-item label="企业名称">
               <el-input v-model="upgradeForm.enterpriseName" placeholder="请输入企业名称" />
             </el-form-item>
+
             <el-form-item label="统一社会信用代码">
               <el-input
                 v-model="upgradeForm.unifiedSocialCode"
                 placeholder="请输入统一社会信用代码"
               />
             </el-form-item>
+
             <el-form-item label="联系人">
-              <el-input v-model="upgradeForm.contactName" placeholder="请输入联系人" />
+              <el-input v-model="upgradeForm.contactName" placeholder="请输入联系人姓名" />
             </el-form-item>
-            <el-form-item label="联系人手机号">
-              <el-input v-model="upgradeForm.contactMobile" placeholder="请输入联系人手机号" />
+
+            <el-form-item label="联系电话">
+              <el-input v-model="upgradeForm.contactMobile" placeholder="请输入联系电话" />
             </el-form-item>
+
             <el-form-item label="注册地址">
               <el-input v-model="upgradeForm.registeredAddress" placeholder="请输入注册地址" />
             </el-form-item>
+
             <el-form-item label="企业身份标签">
               <el-checkbox-group v-model="upgradeForm.enterpriseTags">
                 <el-checkbox :value="ENTERPRISE_CAPABILITY.demander">
@@ -122,6 +156,7 @@ init()
                 </el-checkbox>
               </el-checkbox-group>
             </el-form-item>
+
             <el-form-item label="业务范围">
               <el-input
                 v-model="upgradeForm.businessScope"
@@ -130,6 +165,7 @@ init()
                 placeholder="请描述企业主营业务与希望开通的平台能力"
               />
             </el-form-item>
+
             <el-form-item label="企业简介">
               <el-input
                 v-model="upgradeForm.enterpriseIntro"
@@ -138,10 +174,26 @@ init()
                 placeholder="选填"
               />
             </el-form-item>
+
+            <el-form-item label="营业执照">
+              <UploadCard
+                v-model="upgradeForm.businessLicense"
+                title="上传营业执照"
+                tip="支持 JPG、PNG、PDF，提交时会自动上传并按接口要求携带文件对象标识。"
+                :limit="1"
+                :max-size-mb="20"
+                accept=".png,.jpg,.jpeg,.pdf"
+              />
+            </el-form-item>
           </el-form>
 
           <div class="upgrade-actions">
-            <el-button type="primary" :loading="upgradeLoading" @click="handleUpgradeSubmit">
+            <el-button
+              type="primary"
+              :loading="upgradeLoading"
+              :disabled="!upgradeSummary.canUpgrade"
+              @click="handleUpgradeSubmit"
+            >
               提交企业升级申请
             </el-button>
           </div>
@@ -159,17 +211,7 @@ init()
                 {{ userStore.userInfo?.lastLoginTime || '-' }}
               </el-descriptions-item>
               <el-descriptions-item label="当前状态">
-                {{
-                  upgradeSummary.currentStatus === 'not_started'
-                    ? '未发起'
-                    : upgradeSummary.currentStatus === 'reviewing'
-                      ? '审核中'
-                      : upgradeSummary.currentStatus === 'approved'
-                        ? '已通过'
-                        : upgradeSummary.currentStatus === 'rejected'
-                          ? '已驳回'
-                          : '待激活'
-                }}
+                {{ statusText }}
               </el-descriptions-item>
             </el-descriptions>
           </DetailSection>

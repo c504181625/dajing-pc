@@ -102,10 +102,34 @@ function handleSizeChange(size: number) {
 .stats-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 28px;
   margin-top: 2px;
-  min-height: 28px;
+  min-height: 34px;
   align-items: center;
+}
+
+.stats-row :deep(.table-stat),
+.stats-row :deep(.stats-text),
+.stats-row :deep(.stats-switch) {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dj-color-text-primary);
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.stats-row :deep(.stats-switch) {
+  cursor: pointer;
+}
+
+.stats-row :deep(.stats-switch.is-active) {
+  color: var(--dj-color-text-primary);
+  font-weight: 500;
 }
 
 .pagination-wrap {

@@ -35,6 +35,7 @@ import type {
 } from '@/types/content'
 import { ACCOUNT_TYPE } from '@/enum/role'
 import { AccountStatus, CommunityContentStatus } from '@/enum/status'
+import { formatDateTime } from '@/utils/date'
 import { http } from '@/utils/request'
 
 const contentCategories: ContentCategoryItem[] = [
@@ -117,7 +118,7 @@ function normalizeArticleItem(raw: unknown): CommunityArticleItem {
       name: String(source.authorName || source.nickname || '平台运营中心'),
       accountType: 'platform_admin',
     },
-    publishTime: String(source.createTime || source.updateTime || ''),
+    publishTime: formatDateTime(source.createTime || source.updateTime, { fallback: '' }),
     viewCount: Number(source.viewCount || 0),
     likeCount: Number(source.likeCount || 0),
     commentCount: Number(source.commentCount || 0),
@@ -136,7 +137,7 @@ function normalizeAnswerItem(raw: unknown): CommunityQuestionAnswerItem {
       accountType: 'personal',
       organization: source.organization ? String(source.organization) : undefined,
     },
-    publishTime: String(source.createTime || source.updateTime || ''),
+    publishTime: formatDateTime(source.createTime || source.updateTime, { fallback: '' }),
     content: String(source.content || ''),
     likeCount: Number(source.likeCount || 0),
     accepted: Number(source.isAccepted || 0) === 1,
@@ -160,7 +161,7 @@ function normalizeQuestionItem(raw: unknown): CommunityQuestionItem {
       name: String(source.authorName || source.nickname || '社区用户'),
       accountType: 'personal',
     },
-    publishTime: String(source.createTime || source.updateTime || ''),
+    publishTime: formatDateTime(source.createTime || source.updateTime, { fallback: '' }),
     answerCount: Number(source.answerCount || 0),
     viewCount: Number(source.viewCount || 0),
     rewardText: source.rewardText ? String(source.rewardText) : undefined,
@@ -184,7 +185,7 @@ function normalizeExpertItem(raw: unknown): ExpertOnlineItem {
       ? String(source.consultationPriceText)
       : undefined,
     onlineTimeText: source.onlineTimeText ? String(source.onlineTimeText) : undefined,
-    publishTime: String(source.createTime || source.updateTime || ''),
+    publishTime: formatDateTime(source.createTime || source.updateTime, { fallback: '' }),
   }
 }
 

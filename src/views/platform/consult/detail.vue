@@ -156,8 +156,46 @@ watch(
         </el-descriptions>
       </DetailSection>
 
-      <SectionCard title="操作区">
+      <DetailSection title="附件预览">
+        <div v-if="currentDetail?.attachments.length" class="attachment-list">
+          <div v-for="file in currentDetail.attachments" :key="file.id" class="attachment-card">
+            <div>
+              <div class="attachment-name">{{ file.name }}</div>
+              <div class="attachment-meta">{{ file.fileType.toUpperCase() }}</div>
+            </div>
+            <el-button type="primary" link @click="openPreview([file])">预览文件</el-button>
+          </div>
+        </div>
+        <EmptyBlock
+          v-else
+          title="暂无附件"
+          description="当前咨询未上传附件，可直接处理文字内容。"
+        />
+      </DetailSection>
+
+      <SectionCard v-if="isHandleMode" title="操作区">
         <div class="top-layout">
+          <el-descriptions v-if="currentDetail" :column="2" border class="operate-summary">
+            <el-descriptions-item label="当前状态">
+              <StatusTag :status="currentDetail.status" :map="CONSULT_STATUS_MAP" />
+            </el-descriptions-item>
+            <el-descriptions-item label="附件数量">
+              {{ currentDetail.attachments.length }}
+            </el-descriptions-item>
+            <el-descriptions-item label="企业名称">
+              {{ currentDetail.enterpriseName || '-' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="提交时间">
+              {{ currentDetail.createdAt || '-' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="联系人">
+              {{ currentDetail.contactName || '-' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="联系电话">
+              {{ currentDetail.contactPhone || '-' }}
+            </el-descriptions-item>
+          </el-descriptions>
+
           <div class="action-stack">
             <PermissionButton
               :permission="PERMISSION_CODE.operatorConsultHandle"
@@ -180,51 +218,12 @@ watch(
             >
               转交客服
             </PermissionButton>
-            <el-button
-              class="action-button action-button--muted"
-              :disabled="!currentDetail?.attachments.length"
-              @click="openPreview(currentDetail?.attachments || [])"
-            >
-              预览附件
-            </el-button>
             <el-button class="action-button action-button--muted" @click="handleBackList">
               返回列表
             </el-button>
           </div>
-
-          <el-descriptions v-if="currentDetail" :column="1" border>
-            <el-descriptions-item label="当前状态">
-              <StatusTag :status="currentDetail.status" :map="CONSULT_STATUS_MAP" />
-            </el-descriptions-item>
-            <el-descriptions-item label="企业名称">
-              {{ currentDetail.enterpriseName || '-' }}
-            </el-descriptions-item>
-            <el-descriptions-item label="提交时间">
-              {{ currentDetail.createdAt || '-' }}
-            </el-descriptions-item>
-            <el-descriptions-item label="附件数量">
-              {{ currentDetail.attachments.length }}
-            </el-descriptions-item>
-          </el-descriptions>
         </div>
       </SectionCard>
-
-      <DetailSection title="附件预览">
-        <div v-if="currentDetail?.attachments.length" class="attachment-list">
-          <div v-for="file in currentDetail.attachments" :key="file.id" class="attachment-card">
-            <div>
-              <div class="attachment-name">{{ file.name }}</div>
-              <div class="attachment-meta">{{ file.fileType.toUpperCase() }}</div>
-            </div>
-            <el-button type="primary" link @click="openPreview([file])">预览文件</el-button>
-          </div>
-        </div>
-        <EmptyBlock
-          v-else
-          title="暂无附件"
-          description="当前咨询未上传附件，可直接处理文字内容。"
-        />
-      </DetailSection>
 
       <DetailSection title="处理记录">
         <div class="timeline-wrap">
@@ -311,13 +310,18 @@ watch(
 .top-layout {
   display: grid;
   gap: 16px;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
 }
 
 .action-stack {
   display: grid;
   gap: 12px;
   align-content: start;
+}
+
+.operate-summary {
+  height: 100%;
 }
 
 .action-button {

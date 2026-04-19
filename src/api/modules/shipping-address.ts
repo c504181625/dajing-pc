@@ -1,5 +1,6 @@
 import { resolveEmptyValue, toRecord } from '@/api/helper'
 import type { ShippingAddressForm, ShippingAddressItem } from '@/types/account'
+import { formatDateTime } from '@/utils/date'
 import { http } from '@/utils/request'
 
 function normalizeShippingAddress(raw: unknown): ShippingAddressItem {
@@ -15,8 +16,8 @@ function normalizeShippingAddress(raw: unknown): ShippingAddressItem {
     detailAddress,
     isDefault: Boolean(source.isDefault),
     fullAddress: [region, detailAddress].filter(Boolean).join(' '),
-    createTime: source.createTime ? String(source.createTime) : undefined,
-    updateTime: source.updateTime ? String(source.updateTime) : undefined,
+    createTime: source.createTime ? formatDateTime(source.createTime) : undefined,
+    updateTime: source.updateTime ? formatDateTime(source.updateTime) : undefined,
   }
 }
 

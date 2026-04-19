@@ -35,17 +35,13 @@ function submit(action: AuditAction) {
 </script>
 
 <template>
-  <SectionCard
-    title="审核操作"
-    description="支持通过、驳回和要求补充材料。驳回时请填写明确原因，便于企业补正。"
-    class="audit-action-card"
-  >
+  <SectionCard title="审核操作" class="audit-action-card">
     <el-form label-position="top">
       <el-form-item label="审核意见">
         <el-input
           v-model="remark"
           type="textarea"
-          :rows="5"
+          :rows="4"
           maxlength="200"
           show-word-limit
           placeholder="请输入审核意见、补充材料要求或驳回原因"
@@ -94,13 +90,16 @@ function submit(action: AuditAction) {
 }
 
 .actions {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 12px;
 }
 
 .action-button {
-  width: 100%;
-  height: 42px;
+  flex: 1 1 0;
+  min-width: 96px;
+  height: 40px;
   margin: 0;
   border-radius: 12px;
 }
@@ -132,6 +131,12 @@ function submit(action: AuditAction) {
     background: linear-gradient(180deg, #5ca2ff 0%, #3f8ff5 100%);
     border-color: transparent;
     color: #fff;
+  }
+}
+
+@media (max-width: 960px) {
+  .action-button {
+    flex-basis: 100%;
   }
 }
 </style>

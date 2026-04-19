@@ -3,6 +3,7 @@ import type { PageResult } from '@/types/api'
 import type { ReportDetail, ReportItem, ReportQuery } from '@/types/business'
 import { ACCOUNT_TYPE } from '@/enum/role'
 import { OperationStatus, ReportStatus } from '@/enum/status'
+import { formatDateTime } from '@/utils/date'
 import { http } from '@/utils/request'
 
 function isOperatorSession() {
@@ -57,7 +58,9 @@ function normalizeReportDetail(raw: unknown, id = ''): ReportDetail {
         : Number(source.sealStatus) === 2
           ? 'rejected'
           : 'pending',
-    publishAt: String(source.publishAt || source.createTime || source.createdAt || ''),
+    publishAt: formatDateTime(source.publishAt || source.createTime || source.createdAt, {
+      fallback: '',
+    }),
     reportFile: {
       id: `${id || source.id || 'report'}-file`,
       name: fileUrl ? '检测报告' : '未上传报告',
@@ -69,7 +72,7 @@ function normalizeReportDetail(raw: unknown, id = ''): ReportDetail {
       {
         id: `${id || source.id || 'report'}-record`,
         title: '报告详情已加载',
-        time: String(source.createTime || source.createdAt || ''),
+        time: formatDateTime(source.createTime || source.createdAt, { fallback: '' }),
         description: '当前报告详情由 QIP 真实接口返回。',
         status: OperationStatus.Done,
       },

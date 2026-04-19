@@ -203,6 +203,18 @@ onMounted(() => {
 
       <SectionCard title="操作区">
         <div class="top-layout">
+          <el-descriptions :column="1" border>
+            <el-descriptions-item label="页面模式">{{ pageTitle }}</el-descriptions-item>
+            <el-descriptions-item label="当前分类">{{ currentCategoryName }}</el-descriptions-item>
+            <el-descriptions-item label="内容类型">
+              {{ form.bizType === ContentBizType.News ? '资讯公告' : '知识文章' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="发布状态">
+              <StatusTag v-if="detail" :status="detail.status" :map="publishStatusMap" />
+              <span v-else>待保存</span>
+            </el-descriptions-item>
+          </el-descriptions>
+
           <div class="action-stack">
             <el-button
               v-if="!isEditing"
@@ -239,18 +251,6 @@ onMounted(() => {
               返回列表
             </el-button>
           </div>
-
-          <el-descriptions :column="1" border>
-            <el-descriptions-item label="页面模式">{{ pageTitle }}</el-descriptions-item>
-            <el-descriptions-item label="当前分类">{{ currentCategoryName }}</el-descriptions-item>
-            <el-descriptions-item label="内容类型">
-              {{ form.bizType === ContentBizType.News ? '资讯公告' : '知识文章' }}
-            </el-descriptions-item>
-            <el-descriptions-item label="发布状态">
-              <StatusTag v-if="detail" :status="detail.status" :map="publishStatusMap" />
-              <span v-else>待保存</span>
-            </el-descriptions-item>
-          </el-descriptions>
         </div>
       </SectionCard>
 

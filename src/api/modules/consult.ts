@@ -3,6 +3,7 @@ import type { PageResult } from '@/types/api'
 import type { ConsultDetail, ConsultItem, ConsultQuery } from '@/types/business'
 import { ACCOUNT_TYPE } from '@/enum/role'
 import { ConsultStatus, OperationStatus } from '@/enum/status'
+import { formatDateTime } from '@/utils/date'
 import { http } from '@/utils/request'
 
 function isOperatorSession() {
@@ -38,7 +39,7 @@ function normalizeConsultItem(raw: unknown): ConsultItem {
     contactName: String(source.contactName || ''),
     contactPhone: String(source.contactPhone || ''),
     status: normalizeConsultStatus(source.status),
-    createdAt: String(source.createTime || source.createdAt || ''),
+    createdAt: formatDateTime(source.createTime || source.createdAt, { fallback: '' }),
   }
 }
 
@@ -66,7 +67,7 @@ function buildConsultDetail(raw: unknown, id: string): ConsultDetail {
           {
             id: `${id}-reply`,
             title: '已回复',
-            time: String(source.replyTime || source.updateTime || ''),
+            time: formatDateTime(source.replyTime || source.updateTime, { fallback: '' }),
             description: String(source.replyContent || ''),
             status: OperationStatus.Done,
             operator: '平台处理人',
@@ -76,7 +77,7 @@ function buildConsultDetail(raw: unknown, id: string): ConsultDetail {
           {
             id: `${id}-submit`,
             title: '待处理',
-            time: String(source.createTime || source.createdAt || ''),
+            time: formatDateTime(source.createTime || source.createdAt, { fallback: '' }),
             description: '咨询已提交，等待平台处理。',
             status: OperationStatus.Processing,
           },

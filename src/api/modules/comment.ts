@@ -3,6 +3,7 @@ import type { PageResult } from '@/types/api'
 import type { CommentItem, CommentQuery } from '@/types/business'
 import { ACCOUNT_TYPE } from '@/enum/role'
 import { CommentStatus } from '@/enum/status'
+import { formatDateTime } from '@/utils/date'
 import { http } from '@/utils/request'
 
 function isOperatorSession() {
@@ -36,7 +37,7 @@ function normalizeCommentItem(raw: unknown): CommentItem {
     status: normalizeCommentStatus(source.status),
     appealStatus: 'none',
     violated: Number(source.status || 0) === 1,
-    createdAt: String(source.createTime || source.createdAt || ''),
+    createdAt: formatDateTime(source.createTime || source.createdAt, { fallback: '' }),
   }
 }
 

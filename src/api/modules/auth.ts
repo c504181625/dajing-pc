@@ -22,6 +22,7 @@ import type {
   SmsLoginForm,
   EnterpriseRegisterForm,
 } from '@/types/auth'
+import { formatDateTime } from '@/utils/date'
 import { http } from '@/utils/request'
 import {
   uploadCertFile,
@@ -211,7 +212,7 @@ function buildLoginProfile(raw: unknown, fallbackIdentifier: string): CurrentUse
       ? (source.dataScopes as CurrentUser['dataScopes'])
       : [dataScope],
     deptName: source.deptName ? String(source.deptName) : undefined,
-    lastLoginTime: source.lastLoginTime ? String(source.lastLoginTime) : undefined,
+    lastLoginTime: source.lastLoginTime ? formatDateTime(source.lastLoginTime) : undefined,
   }
 }
 
@@ -268,9 +269,18 @@ async function ensureUploadedFile(
   category: 'general' | 'license' | 'cert' | 'id-card' = 'general',
 ) {
   if (!item) return ''
-  if (item.url) return item.url
+  if (item.url && !item.raw) return item.url
   if (item.raw) {
-    return uploadFile(item.raw, category)
+    const uploaded =
+      category === 'license'
+        ? await uploadLicenseFile(item.raw)
+        : category === 'cert'
+          ? await uploadCertFile(item.raw)
+          : category === 'id-card'
+            ? await uploadIdCardFile(item.raw)
+            : await uploadGeneralFile(item.raw)
+
+    return String(uploaded.objectName || uploaded.fileKey || uploaded.url || '')
   }
   return ''
 }

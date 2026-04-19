@@ -15,6 +15,7 @@ import {
   SampleDeliveryMode,
   SampleReceiveStatus,
 } from '@/enum/status'
+import { formatDateTime } from '@/utils/date'
 import { http } from '@/utils/request'
 
 function isOperatorSession() {
@@ -111,7 +112,7 @@ function normalizeOrderItem(raw: unknown): OrderItem {
     sampleReceiveStatus: normalizeSampleReceiveStatus(source),
     amount: Number(source.amount || 0),
     reportNo: source.reportNo ? String(source.reportNo) : undefined,
-    createdAt: String(source.createTime || source.createdAt || ''),
+    createdAt: formatDateTime(source.createTime || source.createdAt, { fallback: '' }),
   }
 }
 
@@ -194,7 +195,7 @@ function buildOrderDetail(raw: unknown, id = '', progressList: unknown[] = [], r
           return {
             id: String(record.id || `${order.id || id}-progress-${index + 1}`),
             title: String(record.node || `进度节点 ${index + 1}`),
-            time: String(record.createTime || record.operatedAt || ''),
+            time: formatDateTime(record.createTime || record.operatedAt, { fallback: '' }),
             description: String(record.remark || ''),
             status: OperationStatus.Done,
             operator: record.operatorId ? `用户 ${record.operatorId}` : undefined,
@@ -226,7 +227,7 @@ function buildOrderDetail(raw: unknown, id = '', progressList: unknown[] = [], r
       ? {
           score: Number(evaluation.score || 0),
           content: String(evaluation.content || ''),
-          createdAt: String(evaluation.createTime || ''),
+          createdAt: formatDateTime(evaluation.createTime, { fallback: '' }),
         }
       : undefined,
     refundRecords: [],

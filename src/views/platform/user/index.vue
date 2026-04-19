@@ -73,7 +73,9 @@ function getAccountGroupLabel(row: UserItem) {
 }
 
 const accountStats = computed(() => {
-  const enterpriseCount = tableData.value.filter((item) => item.accountGroup === 'enterprise').length
+  const enterpriseCount = tableData.value.filter(
+    (item) => item.accountGroup === 'enterprise',
+  ).length
   const personalCount = tableData.value.filter((item) => item.accountGroup === 'personal').length
 
   return [
@@ -386,7 +388,7 @@ onMounted(() => {
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--dj-color-text-secondary);
+  color: var(--dj-color-text-primary);
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
@@ -394,6 +396,6 @@ onMounted(() => {
 
 .stats-switch.is-active {
   color: var(--dj-color-text-primary);
-  font-weight: 600;
+  font-weight: 500;
 }
 </style>

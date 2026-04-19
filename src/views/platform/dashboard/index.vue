@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import type { Component } from 'vue'
 import {
   Bell,
@@ -234,11 +234,41 @@ const metricCards = computed<MetricCard[]>(() => {
   const reportMetric = pickOverviewMetric(['报告', 'report'], 4)
 
   return [
-    buildMetricCard('今日订单总数', Number(orderMetric?.value || 0), '/operator/business/order', Tickets, 0.91),
-    buildMetricCard('今日入驻企业', Number(enterpriseMetric?.value || 0), '/operator/business/enterprise-audit', OfficeBuilding, 0.43),
-    buildMetricCard('今日新增用户', Number(userMetric?.value || 0), '/operator/business/user', User, 1.25),
-    buildMetricCard('今日新增需求', Number(demandMetric?.value || 0), '/operator/business/demand', Promotion, 1.25),
-    buildMetricCard('今日生成报告', Number(reportMetric?.value || 0), '/operator/business/report', DocumentChecked, 0.8),
+    buildMetricCard(
+      '今日订单总数',
+      Number(orderMetric?.value || 0),
+      '/operator/business/order',
+      Tickets,
+      0.91,
+    ),
+    buildMetricCard(
+      '今日入驻企业',
+      Number(enterpriseMetric?.value || 0),
+      '/operator/business/enterprise-audit',
+      OfficeBuilding,
+      0.43,
+    ),
+    buildMetricCard(
+      '今日新增用户',
+      Number(userMetric?.value || 0),
+      '/operator/business/user',
+      User,
+      1.25,
+    ),
+    buildMetricCard(
+      '今日新增需求',
+      Number(demandMetric?.value || 0),
+      '/operator/business/demand',
+      Promotion,
+      1.25,
+    ),
+    buildMetricCard(
+      '今日生成报告',
+      Number(reportMetric?.value || 0),
+      '/operator/business/report',
+      DocumentChecked,
+      0.8,
+    ),
   ]
 })
 
@@ -379,7 +409,11 @@ const userTrendSeries = computed(() => {
 
 const structureItems = computed(() => [
   { label: '检验检测', value: Math.max(getMetricValue(['订单'], 0, 32), 1), color: '#5b8ef8' },
-  { label: '认证认可', value: Math.max(getMetricValue(['企业', '机构'], 1, 20), 1), color: '#63c3cf' },
+  {
+    label: '认证认可',
+    value: Math.max(getMetricValue(['企业', '机构'], 1, 20), 1),
+    color: '#63c3cf',
+  },
   { label: '计量服务', value: Math.max(getMetricValue(['报告'], 4, 16), 1), color: '#55a85e' },
   { label: '质量培训', value: Math.max(getMetricValue(['用户'], 2, 14), 1), color: '#9fc6ff' },
   { label: '质量咨询', value: Math.max(getTodoValue(['咨询'], 6), 1), color: '#f3b36b' },
@@ -476,7 +510,11 @@ loadData()
     </div>
 
     <div class="analytics-grid">
-      <SectionCard title="检测业务趋势" class="grid-span-6" body-class="panel-body panel-body--trend">
+      <SectionCard
+        title="检测业务趋势"
+        class="grid-span-6"
+        body-class="panel-body panel-body--trend"
+      >
         <template #extra>
           <div class="chart-toolbar">
             <div class="range-switch">
@@ -508,11 +546,15 @@ loadData()
           :x-axis="trendAxis"
           :series="primaryTrendSeries"
           :stats="primaryTrendStats"
-          :height="118"
+          :height="152"
         />
       </SectionCard>
 
-      <SectionCard title="质量服务结构分布" class="grid-span-3" body-class="panel-body panel-body--small">
+      <SectionCard
+        title="质量服务结构分布"
+        class="grid-span-3"
+        body-class="panel-body panel-body--small"
+      >
         <WorkbenchDonutPanel
           :items="structureItems"
           center-title="总数"
@@ -521,7 +563,7 @@ loadData()
             { label: '在线服务', value: formatNumber(metricCards[0]?.value || 0) },
             { label: '本周新增', value: formatNumber(metricCards[3]?.value || 0) },
           ]"
-          :height="118"
+          :height="148"
         />
       </SectionCard>
 
@@ -538,7 +580,11 @@ loadData()
         </div>
       </SectionCard>
 
-      <SectionCard title="服务交易与质量产出趋势" class="grid-span-8" body-class="panel-body panel-body--trend">
+      <SectionCard
+        title="服务交易与质量产出趋势"
+        class="grid-span-8"
+        body-class="panel-body panel-body--trend"
+      >
         <template #extra>
           <div class="chart-toolbar">
             <div class="range-switch">
@@ -570,11 +616,15 @@ loadData()
           :x-axis="trendAxis"
           :series="serviceTrendSeries"
           :stats="serviceTrendStats"
-          :height="118"
+          :height="152"
         />
       </SectionCard>
 
-      <SectionCard title="用户趋势" class="grid-span-4" body-class="panel-body panel-body--trend panel-body--user">
+      <SectionCard
+        title="用户趋势"
+        class="grid-span-6"
+        body-class="panel-body panel-body--trend panel-body--user"
+      >
         <template #extra>
           <el-select v-model="userGranularity" size="small" style="width: 110px">
             <el-option
@@ -585,7 +635,7 @@ loadData()
             />
           </el-select>
         </template>
-        <WorkbenchTrendPanel :x-axis="trendAxis" :series="userTrendSeries" :height="118" />
+        <WorkbenchTrendPanel :x-axis="trendAxis" :series="userTrendSeries" :height="196" />
       </SectionCard>
     </div>
   </PageContainer>
@@ -610,7 +660,11 @@ loadData()
   border: 1px solid color-mix(in srgb, var(--dj-color-primary) 32%, white);
   border-radius: 16px;
   background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--dj-color-primary) 10%, transparent), transparent 38%),
+    radial-gradient(
+      circle at top right,
+      color-mix(in srgb, var(--dj-color-primary) 10%, transparent),
+      transparent 38%
+    ),
     linear-gradient(180deg, #fff 0%, #fbfdff 100%);
   cursor: pointer;
   transition:
@@ -688,8 +742,8 @@ loadData()
 
 .summary-grid {
   display: grid;
-  grid-template-columns: minmax(0, 11fr) minmax(0, 8fr);
-  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
   align-items: stretch;
 }
 
@@ -697,12 +751,36 @@ loadData()
   height: 100%;
 }
 
+.summary-card:deep(.section-card),
+.analytics-grid :deep(.section-card) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-card:deep(.section-card > .el-card__body),
+.analytics-grid :deep(.section-card > .el-card__body) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.summary-card:deep(.el-card__header) {
+  display: flex;
+  align-items: center;
+  min-height: 54px;
+  padding: 0 16px 10px;
+  box-sizing: border-box;
+}
+
 .summary-card:deep(.el-card__body) {
-  height: calc(100% - 57px);
+  padding: 6px 14px 8px;
+  height: auto;
 }
 
 .summary-card__body {
   height: 100%;
+  min-height: 136px;
 }
 
 .todo-board {
@@ -718,7 +796,7 @@ loadData()
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 10px;
-  padding: 9px 0;
+  padding: 7px 0;
   border: 0;
   border-bottom: 1px solid rgb(15 23 42 / 6%);
   background: transparent;
@@ -733,7 +811,7 @@ loadData()
 .todo-board__title {
   overflow: hidden;
   color: var(--dj-color-text-primary);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -741,13 +819,13 @@ loadData()
 
 .todo-board__value {
   color: #ef4444;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .todo-board__arrow {
   color: #c0c6d4;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .shortcut-board {
@@ -761,12 +839,12 @@ loadData()
 .shortcut-board__item {
   display: flex;
   min-width: 0;
-  min-height: 70px;
+  min-height: 60px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 6px;
+  gap: 4px;
+  padding: 6px;
   border: 1px solid rgb(15 23 42 / 6%);
   border-radius: 14px;
   background: linear-gradient(180deg, #fff 0%, #fbfcff 100%);
@@ -777,20 +855,20 @@ loadData()
 }
 
 .shortcut-board__icon {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
+  border-radius: 10px;
   background: color-mix(in srgb, var(--dj-color-primary) 10%, white);
   color: var(--dj-color-primary);
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .shortcut-board__title {
   text-align: center;
   color: var(--dj-color-text-primary);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   line-height: 1.35;
 }
@@ -798,7 +876,7 @@ loadData()
 .analytics-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
   align-items: stretch;
 }
 
@@ -806,12 +884,8 @@ loadData()
   grid-column: span 6;
 }
 
-.grid-span-4 {
-  grid-column: span 4;
-}
-
 .grid-span-8 {
-  grid-column: span 8;
+  grid-column: span 6;
 }
 
 .grid-span-3 {
@@ -823,23 +897,36 @@ loadData()
 }
 
 .panel-body--trend {
-  min-height: 176px;
+  min-height: 0;
+  display: flex;
 }
 
 .panel-body--small {
-  min-height: 176px;
+  min-height: 0;
+  display: flex;
 }
 
 .panel-body--user {
-  display: flex;
   flex-direction: column;
   justify-content: stretch;
+  min-height: 228px;
+}
+
+.panel-body--trend > *,
+.panel-body--small > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.panel-body--user > * {
+  flex: 1;
+  min-width: 0;
 }
 
 .chart-toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
@@ -847,20 +934,20 @@ loadData()
 .range-switch {
   display: inline-flex;
   align-items: center;
-  padding: 4px;
-  border-radius: 12px;
+  padding: 3px;
+  border-radius: 10px;
   background: color-mix(in srgb, var(--dj-color-primary) 7%, white);
 }
 
 .range-switch__item {
-  min-width: 66px;
-  height: 30px;
-  padding: 0 12px;
+  min-width: 58px;
+  height: 28px;
+  padding: 0 10px;
   border: 0;
   border-radius: 8px;
   background: transparent;
   color: var(--dj-color-text-secondary);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -871,18 +958,41 @@ loadData()
 }
 
 .keyword-cloud {
-  display: flex;
-  min-height: 100%;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  justify-content: flex-start;
-  gap: 8px 10px;
-  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  height: 100%;
+  align-content: center;
+  justify-items: start;
+  gap: 14px 10px;
+  min-height: 150px;
+  padding: 2px 0 0;
 }
 
 .keyword-item {
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.15;
+}
+
+.analytics-grid :deep(.el-card__header) {
+  display: flex;
+  align-items: center;
+  min-height: 58px;
+  padding: 14px 16px 12px;
+  box-sizing: border-box;
+}
+
+.analytics-grid :deep(.el-card__body) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 8px 14px 10px;
+}
+
+.summary-card:deep(.section-header),
+.analytics-grid :deep(.section-header) {
+  width: 100%;
+  min-height: 28px;
+  align-items: center;
 }
 
 @media (max-width: 1600px) {
@@ -924,6 +1034,10 @@ loadData()
   .shortcut-board {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .keyword-cloud {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -931,6 +1045,11 @@ loadData()
   .todo-board,
   .shortcut-board {
     grid-template-columns: 1fr;
+  }
+
+  .keyword-cloud {
+    grid-template-columns: 1fr;
+    min-height: 0;
   }
 }
 </style>

@@ -158,13 +158,17 @@ function handleSelect(index: string) {
   min-width: auto;
   margin: 4px 0;
   padding-left: 48px !important;
+  display: flex;
+  align-items: center;
   font-size: 13px;
+  font-weight: 500;
 }
 
 .sidebar-menu:deep(.el-menu-item.is-active) {
   color: var(--dj-color-primary);
   background: var(--dj-color-menu-active);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dj-color-primary) 14%, white);
+  font-weight: 600;
 }
 
 .sidebar-menu:deep(.el-sub-menu.is-opened > .el-sub-menu__title) {
@@ -174,7 +178,10 @@ function handleSelect(index: string) {
 
 .sidebar-menu:deep(.el-menu-item .el-icon),
 .sidebar-menu:deep(.el-sub-menu__title .el-icon) {
+  width: 18px;
+  min-width: 18px;
   margin-right: 10px;
   font-size: 17px;
+  text-align: center;
 }
 </style>

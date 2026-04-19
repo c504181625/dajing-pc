@@ -10,7 +10,10 @@ import type { PageResult } from '@/types/api'
 import type { UserDetail, UserItem, UserQuery } from '@/types/business'
 import { ACCOUNT_TYPE, normalizeAccountType } from '@/enum/role'
 import { AccountStatus, UserType } from '@/enum/status'
+import { formatDateTime } from '@/utils/date'
 import { http } from '@/utils/request'
+import { getCurrentUser as getCurrentAuthUser } from './auth'
+import { uploadLicenseFile } from './file'
 
 const adminApiPrefix = '/api/admin'
 
@@ -93,8 +96,8 @@ function normalizeUserItem(raw: unknown): UserItem {
     riskLabel: source.riskLabel ? String(source.riskLabel) : undefined,
     roleNames,
     status: normalizeUserStatus(source.status),
-    createdAt: String(getRecordValue(source, ['createdAt', 'createTime']) || ''),
-    lastLoginTime: source.lastLoginTime ? String(source.lastLoginTime) : undefined,
+    createdAt: formatDateTime(getRecordValue(source, ['createdAt', 'createTime']), { fallback: '' }),
+    lastLoginTime: source.lastLoginTime ? formatDateTime(source.lastLoginTime) : undefined,
   }
 }
 
@@ -168,13 +171,107 @@ export function deleteUser(_id: string): Promise<boolean> {
 }
 
 export function getEnterpriseUpgradeSummary(): Promise<EnterpriseUpgradeSummary> {
-  return resolveEmptyValue<EnterpriseUpgradeSummary>({
-    canUpgrade: false,
-    hasPendingApplication: false,
-    currentStatus: 'not_started',
-  })
+  return getCurrentAuthUser()
+    .then(async (currentUser) => {
+      const accountType = normalizeAccountType(currentUser.accountType)
+
+      if (accountType === ACCOUNT_TYPE.operator) {
+        return {
+          canUpgrade: false,
+          hasPendingApplication: false,
+          currentStatus: 'approved',
+          remark: '平台运营方账号无需发起企业升级申请。',
+        } satisfies EnterpriseUpgradeSummary
+      }
+
+      if (accountType === ACCOUNT_TYPE.enterprise) {
+        return {
+          canUpgrade: false,
+          hasPendingApplication: false,
+          currentStatus: 'approved',
+          remark: currentUser.enterpriseName
+            ? `当前账号已绑定企业：${currentUser.enterpriseName}`
+            : '当前账号已升级为企业账号。',
+        } satisfies EnterpriseUpgradeSummary
+      }
+
+      try {
+        const enterprise = await http<unknown>({
+          url: '/api/user/enterprise/my',
+          method: 'get',
+        })
+        const source = toRecord(enterprise)
+        const certStatus = Number(getRecordValue(source, ['certStatus']) ?? -1)
+        const currentStatus: EnterpriseUpgradeSummary['currentStatus'] =
+          certStatus === 1 ? 'approved' : certStatus === 2 ? 'rejected' : 'reviewing'
+
+        return {
+          canUpgrade: currentStatus !== 'reviewing' && currentStatus !== 'approved',
+          hasPendingApplication: currentStatus === 'reviewing',
+          currentStatus,
+          lastApplyTime: formatDateTime(
+            getRecordValue(source, ['createTime', 'submitTime']),
+            { fallback: '' },
+          ),
+          remark: String(
+            getRecordValue(source, ['rejectReason', 'reviewRemark', 'remark']) ||
+              (currentStatus === 'approved'
+                ? '企业升级申请已通过。'
+                : currentStatus === 'reviewing'
+                  ? '企业升级申请正在审核中。'
+                  : '企业升级申请未通过，请根据审核意见调整后重新提交。'),
+          ),
+        } satisfies EnterpriseUpgradeSummary
+      } catch (error) {
+        const source = toRecord(error)
+        const code = Number(source.code || 0)
+        const message = String(source.message || '')
+
+        if (code === 42001 || message.includes('企业不存在')) {
+          return {
+            canUpgrade: true,
+            hasPendingApplication: false,
+            currentStatus: 'not_started',
+            remark: '当前账号尚未发起企业升级申请。',
+          } satisfies EnterpriseUpgradeSummary
+        }
+
+        throw error
+      }
+    })
 }
 
-export function submitEnterpriseUpgrade(_payload: EnterpriseUpgradeForm): Promise<boolean> {
-  return resolveEmptyValue(true)
+async function ensureEnterpriseLicenseObjectName(
+  item: EnterpriseUpgradeForm['businessLicense'][number] | undefined,
+) {
+  if (!item) return ''
+  if (item.raw) {
+    const uploaded = await uploadLicenseFile(item.raw)
+    return String(uploaded.objectName || uploaded.fileKey || uploaded.url || '')
+  }
+  return String(item.url || '')
+}
+
+export async function submitEnterpriseUpgrade(payload: EnterpriseUpgradeForm): Promise<boolean> {
+  const businessLicense = await ensureEnterpriseLicenseObjectName(payload.businessLicense[0])
+  const enterpriseType = payload.enterpriseTags.includes('provider') ? 2 : 1
+
+  return http<boolean>({
+    url: '/api/user/enterprise/register',
+    method: 'post',
+    data: {
+      enterpriseName: payload.enterpriseName,
+      unifiedCreditCode: payload.unifiedSocialCode || undefined,
+      businessLicense,
+      legalPerson: payload.contactName,
+      contactName: payload.contactName,
+      contactPhone: payload.contactMobile,
+      enterpriseType,
+      region: payload.region.join(''),
+      address: payload.registeredAddress,
+      serviceRange: payload.businessScope,
+      introduction: payload.enterpriseIntro || undefined,
+      qualification: payload.enterpriseCapabilities?.join(' / ') || undefined,
+    },
+  }).then(() => true)
 }

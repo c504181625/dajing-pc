@@ -25,7 +25,7 @@ const props = withDefaults(
   {
     footer: () => [],
     centerTitle: '总数',
-    height: 180,
+    height: 156,
   },
 )
 
@@ -40,6 +40,10 @@ function createOption(): EChartsCoreOption {
     animationDuration: 500,
     tooltip: {
       trigger: 'item',
+      appendToBody: true,
+      confine: false,
+      renderMode: 'html',
+      extraCssText: 'z-index: 9999;',
       backgroundColor: 'rgba(15, 23, 42, 0.88)',
       borderWidth: 0,
       textStyle: {
@@ -50,7 +54,7 @@ function createOption(): EChartsCoreOption {
     series: [
       {
         type: 'pie',
-        radius: ['58%', '80%'],
+        radius: ['64%', '86%'],
         center: ['50%', '50%'],
         startAngle: 90,
         padAngle: 2,
@@ -137,7 +141,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="donut-shell">
     <div class="donut-main">
-      <div class="donut-chart" :style="{ height: `${height}px` }">
+      <div class="donut-chart" :style="{ minHeight: `${height}px` }">
         <div ref="chartEl" class="donut-chart__canvas" />
         <div class="donut-chart__center">
           <div class="donut-chart__title">{{ centerTitle }}</div>
@@ -169,21 +173,24 @@ onBeforeUnmount(() => {
 .donut-shell {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   height: 100%;
+  justify-content: space-between;
 }
 
 .donut-main {
   display: grid;
-  grid-template-columns: minmax(132px, 150px) minmax(140px, 1fr);
-  gap: 8px;
-  align-items: start;
+  grid-template-columns: minmax(118px, 132px) minmax(120px, 1fr);
+  gap: 6px;
+  align-items: center;
   min-width: 0;
+  flex: 1;
 }
 
 .donut-chart {
   position: relative;
   min-width: 0;
+  height: 100%;
 }
 
 .donut-chart__canvas {
@@ -194,28 +201,30 @@ onBeforeUnmount(() => {
 .donut-chart__center {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  align-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   pointer-events: none;
   text-align: center;
 }
 
 .donut-chart__title {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--dj-color-text-secondary);
 }
 
 .donut-chart__value {
-  margin-top: 4px;
-  font-size: 22px;
+  font-size: 20px;
+  line-height: 1;
   color: var(--dj-color-text-primary);
 }
 
 .donut-legend {
   display: grid;
-  gap: 6px;
-  align-content: start;
+  gap: 4px;
+  align-content: center;
   min-width: 0;
 }
 
@@ -230,34 +239,34 @@ onBeforeUnmount(() => {
 .donut-legend__label {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
+  gap: 6px;
+  font-size: 11px;
   color: var(--dj-color-text-primary);
   min-width: 0;
 }
 
 .donut-legend__dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  box-shadow: 0 0 0 4px rgb(31 94 255 / 8%);
+  box-shadow: 0 0 0 3px rgb(31 94 255 / 8%);
 }
 
 .donut-footer {
   display: grid;
-  gap: 4px;
-  padding-top: 8px;
+  gap: 3px;
+  padding-top: 6px;
   border-top: 1px solid rgb(15 23 42 / 7%);
 }
 
 .donut-footer__item {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--dj-color-text-secondary);
 }
 
 .donut-footer__item strong,
 .donut-legend__item strong {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--dj-color-text-primary);
 }
 

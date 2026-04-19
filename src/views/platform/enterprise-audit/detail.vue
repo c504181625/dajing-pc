@@ -227,8 +227,6 @@ loadDetail()
 
       <SectionCard title="操作区">
         <div class="top-layout">
-          <AuditActionBar :loading="actionLoading" :disabled="!canOperate" @submit="handleSubmit" />
-
           <SectionCard title="审核说明" class="inner-card">
             <el-descriptions v-if="detail" :column="1" border>
               <el-descriptions-item label="当前状态">
@@ -242,6 +240,8 @@ loadDetail()
               </el-descriptions-item>
             </el-descriptions>
           </SectionCard>
+
+          <AuditActionBar :loading="actionLoading" :disabled="!canOperate" @submit="handleSubmit" />
         </div>
       </SectionCard>
 
@@ -265,7 +265,8 @@ loadDetail()
 .top-layout {
   display: grid;
   gap: 16px;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
 }
 
 .inner-card {

@@ -36,7 +36,7 @@ withDefaults(
 
 <style scoped lang="scss">
 .section-card {
-  overflow: hidden;
+  overflow: visible;
 }
 
 .section-header {

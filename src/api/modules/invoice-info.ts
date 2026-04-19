@@ -1,5 +1,6 @@
 import type { InvoiceInfoForm, InvoiceInfoItem } from '@/types/account'
 import { toRecord } from '@/api/helper'
+import { formatDateTime } from '@/utils/date'
 import { http } from '@/utils/request'
 
 function normalizeInvoiceInfo(raw: unknown): InvoiceInfoItem {
@@ -15,8 +16,8 @@ function normalizeInvoiceInfo(raw: unknown): InvoiceInfoItem {
     registerAddress: source.registerAddress ? String(source.registerAddress) : undefined,
     registerPhone: source.registerPhone ? String(source.registerPhone) : undefined,
     isDefault: Boolean(source.isDefault),
-    createTime: source.createTime ? String(source.createTime) : undefined,
-    updateTime: source.updateTime ? String(source.updateTime) : undefined,
+    createTime: source.createTime ? formatDateTime(source.createTime) : undefined,
+    updateTime: source.updateTime ? formatDateTime(source.updateTime) : undefined,
   }
 }
 

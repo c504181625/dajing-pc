@@ -1,0 +1,367 @@
+{
+  "generatedAt": "2026-04-19T13:19:33.204Z",
+  "accounts": {
+    "admin": {
+      "account": "admin",
+      "role": "平台运营方",
+      "accountType": 4
+    },
+    "personal": {
+      "account": "19174990558",
+      "role": "个人账号",
+      "accountType": 1
+    },
+    "demander": {
+      "account": "13120583910",
+      "role": "企业需求方",
+      "accountType": 1
+    },
+    "provider": {
+      "account": "18134064570",
+      "role": "服务提供方",
+      "accountType": 2
+    }
+  },
+  "personal": {
+    "currentUser": {
+      "id": "2045544346690375681",
+      "accountId": "2045544346690375681",
+      "accountType": 1,
+      "username": null,
+      "phone": "191****0558",
+      "nickname": "测试1",
+      "avatar": null,
+      "userType": 1,
+      "status": 0,
+      "enterpriseId": "2045853536995086337",
+      "enterpriseName": "回归测试企业R2-467661",
+      "roleCodes": [],
+      "enterpriseTags": [
+        "enterprise",
+        "demander"
+      ],
+      "homeRoute": "/enterprise/home",
+      "permissionCodes": [
+        "demand:publish",
+        "demand:my",
+        "order:my",
+        "enterprise:my",
+        "profile:view",
+        "profile:edit"
+      ],
+      "menuCodes": [
+        "home",
+        "demand:publish",
+        "demand:my",
+        "order:my",
+        "enterprise:my",
+        "profile"
+      ],
+      "memberLevel": 0,
+      "points": 0,
+      "realNameStatus": null,
+      "createTime": "2026-04-18T16:45:51.284975"
+    },
+    "realNameStatus": {
+      "userId": "2045544346690375681",
+      "realName": null,
+      "idCardNo": null,
+      "realNameStatus": null
+    },
+    "profileUpdate": {
+      "ok": true,
+      "payload": {
+        "nickname": "测试1",
+        "avatar": ""
+      }
+    },
+    "enterpriseBefore": {
+      "id": "2045853536995086337",
+      "userId": "2045544346690375681",
+      "enterpriseName": "回归测试企业R2-467661",
+      "unifiedCreditCode": "916604467661509187",
+      "legalPerson": "测****",
+      "contactName": "测试联系人",
+      "contactPhone": "191****0558",
+      "enterpriseType": 1,
+      "companyType": "需求发布方",
+      "certStatus": 1,
+      "rejectReason": null,
+      "reviewerName": "开发者测试",
+      "email": null,
+      "registeredCapital": null,
+      "businessLicense": "https://qip.hauchet.cn/files/license/80fc063b-c23a-49b4-af66-fcc6fc5e4c9b.png",
+      "serviceRange": "质量检测、认证咨询",
+      "serviceTypes": [
+        "质量检测、认证咨询"
+      ],
+      "qualification": null,
+      "region": "湖南省长沙市",
+      "address": "回归测试地址 88 号",
+      "introduction": "第二轮接口回归自动化创建企业升级申请",
+      "authorizationLetter": null,
+      "certFileUrl": null,
+      "certNo": null,
+      "certExpiry": null,
+      "certScope": null,
+      "avgScore": 0,
+      "orderCount": 0,
+      "createTime": "2026-04-19T13:14:27.997771",
+      "auditRecords": [
+        {
+          "id": "2045853537066389506",
+          "enterpriseId": "2045853536995086337",
+          "operatorId": "2045544346690375681",
+          "operatorName": null,
+          "action": 0,
+          "actionLabel": "企业提交申请",
+          "remark": "企业入驻申请提交",
+          "createTime": "2026-04-19T13:14:28.015243"
+        },
+        {
+          "id": "2045853537594871809",
+          "enterpriseId": "2045853536995086337",
+          "operatorId": "2043908592913141762",
+          "operatorName": "开发者测试",
+          "action": 1,
+          "actionLabel": "审核通过",
+          "remark": "审核通过",
+          "createTime": "2026-04-19T13:14:28.141339"
+        }
+      ],
+      "qualificationFiles": [],
+      "qualifications": []
+    },
+    "licenseUpload": {
+      "fileKey": "license/b44a390f-6d79-4c2f-a51f-110fd08e2a31.png",
+      "objectName": "license/b44a390f-6d79-4c2f-a51f-110fd08e2a31.png",
+      "url": "https://qip.hauchet.cn/files/license/b44a390f-6d79-4c2f-a51f-110fd08e2a31.png",
+      "fileName": "enterprise-upgrade-round2-1776604773673.png",
+      "fileType": "image/png",
+      "size": "170784"
+    },
+    "enterpriseUpgrade": {
+      "ok": false,
+      "payload": {
+        "enterpriseName": "回归测试企业R2-773880",
+        "unifiedCreditCode": "916604773880318941",
+        "businessLicense": "license/b44a390f-6d79-4c2f-a51f-110fd08e2a31.png",
+        "legalPerson": "测试联系人",
+        "contactName": "测试联系人",
+        "contactPhone": "19174990558",
+        "enterpriseType": 1,
+        "serviceRange": "质量检测、认证咨询",
+        "region": "湖南省长沙市",
+        "address": "回归测试地址 88 号",
+        "introduction": "第二轮接口回归自动化创建企业升级申请"
+      },
+      "error": {
+        "code": 42003,
+        "message": "该企业已注册",
+        "data": null,
+        "success": false
+      }
+    },
+    "afterAuditCurrentUser": {
+      "id": "2045544346690375681",
+      "accountId": "2045544346690375681",
+      "accountType": 1,
+      "username": null,
+      "phone": "191****0558",
+      "nickname": "测试1",
+      "avatar": null,
+      "userType": 1,
+      "status": 0,
+      "enterpriseId": "2045853536995086337",
+      "enterpriseName": "回归测试企业R2-467661",
+      "roleCodes": [],
+      "enterpriseTags": [
+        "enterprise",
+        "demander"
+      ],
+      "homeRoute": "/enterprise/home",
+      "permissionCodes": [
+        "demand:publish",
+        "demand:my",
+        "order:my",
+        "enterprise:my",
+        "profile:view",
+        "profile:edit"
+      ],
+      "menuCodes": [
+        "home",
+        "demand:publish",
+        "demand:my",
+        "order:my",
+        "enterprise:my",
+        "profile"
+      ],
+      "memberLevel": 0,
+      "points": 0,
+      "realNameStatus": null,
+      "createTime": "2026-04-18T16:45:51.284975"
+    },
+    "enterpriseAfter": {
+      "id": "2045853536995086337",
+      "userId": "2045544346690375681",
+      "enterpriseName": "回归测试企业R2-467661",
+      "unifiedCreditCode": "916604467661509187",
+      "legalPerson": "测****",
+      "contactName": "测试联系人",
+      "contactPhone": "191****0558",
+      "enterpriseType": 1,
+      "companyType": "需求发布方",
+      "certStatus": 1,
+      "rejectReason": null,
+      "reviewerName": "开发者测试",
+      "email": null,
+      "registeredCapital": null,
+      "businessLicense": "https://qip.hauchet.cn/files/license/80fc063b-c23a-49b4-af66-fcc6fc5e4c9b.png",
+      "serviceRange": "质量检测、认证咨询",
+      "serviceTypes": [
+        "质量检测、认证咨询"
+      ],
+      "qualification": null,
+      "region": "湖南省长沙市",
+      "address": "回归测试地址 88 号",
+      "introduction": "第二轮接口回归自动化创建企业升级申请",
+      "authorizationLetter": null,
+      "certFileUrl": null,
+      "certNo": null,
+      "certExpiry": null,
+      "certScope": null,
+      "avgScore": 0,
+      "orderCount": 0,
+      "createTime": "2026-04-19T13:14:27.997771",
+      "auditRecords": [
+        {
+          "id": "2045853537066389506",
+          "enterpriseId": "2045853536995086337",
+          "operatorId": "2045544346690375681",
+          "operatorName": null,
+          "action": 0,
+          "actionLabel": "企业提交申请",
+          "remark": "企业入驻申请提交",
+          "createTime": "2026-04-19T13:14:28.015243"
+        },
+        {
+          "id": "2045853537594871809",
+          "enterpriseId": "2045853536995086337",
+          "operatorId": "2043908592913141762",
+          "operatorName": "开发者测试",
+          "action": 1,
+          "actionLabel": "审核通过",
+          "remark": "审核通过",
+          "createTime": "2026-04-19T13:14:28.141339"
+        }
+      ],
+      "qualificationFiles": [],
+      "qualifications": []
+    }
+  },
+  "demander": {
+    "demand": {
+      "demandId": "2045854848341712898",
+      "payload": {
+        "title": "第二轮回归需求-780354",
+        "sampleName": "接口回归样品",
+        "sampleCount": 2,
+        "contactName": "需求联系人",
+        "contactPhone": "13120583910",
+        "additionalReq": "自动化第二轮回归测试需求",
+        "category": "材料检测",
+        "testProject": "拉伸强度、硬度",
+        "testStandard": "GB/T 16865-2013",
+        "remark": "round2 regression"
+      },
+      "detail": {
+        "id": "2045854848341712898",
+        "userId": "2043938411942694914",
+        "enterpriseId": null,
+        "title": "第二轮回归需求-780354",
+        "sampleName": "接口回归样品",
+        "sampleType": null,
+        "sampleSize": null,
+        "sampleDesc": null,
+        "entrustNo": "ENT2026041907200",
+        "additionalReq": "自动化第二轮回归测试需求",
+        "testProject": "拉伸强度、硬度",
+        "testStandard": "GB/T 16865-2013",
+        "sampleCount": 2,
+        "expectedFinishDate": null,
+        "remark": "round2 regression",
+        "attachments": null,
+        "category": "材料检测",
+        "region": null,
+        "budgetAmount": null,
+        "status": 1,
+        "statusDesc": "待接单",
+        "bidCount": 0,
+        "createTime": "2026-04-19T13:19:40.648214"
+      }
+    }
+  },
+  "provider": {
+    "demandVisible": true
+  },
+  "admin": {
+    "enterprisePendingMatch": null,
+    "enterpriseAudit": {
+      "ok": false,
+      "reason": "未在待审核企业列表中找到本轮申请"
+    }
+  },
+  "flow": {},
+  "issues": [
+    {
+      "title": "个人升级企业申请未成功提交",
+      "role": "个人",
+      "module": "企业升级",
+      "path": "/personal/profile",
+      "steps": [
+        "个人账号登录",
+        "上传营业执照",
+        "提交企业升级申请"
+      ],
+      "actual": "{\"code\":42003,\"message\":\"该企业已注册\",\"data\":null,\"success\":false}",
+      "expected": "企业升级申请应提交成功并进入待审核状态",
+      "api": "POST /api/user/enterprise/register",
+      "request": {
+        "enterpriseName": "回归测试企业R2-773880",
+        "unifiedCreditCode": "916604773880318941",
+        "businessLicense": "license/b44a390f-6d79-4c2f-a51f-110fd08e2a31.png",
+        "legalPerson": "测试联系人",
+        "contactName": "测试联系人",
+        "contactPhone": "19174990558",
+        "enterpriseType": 1,
+        "serviceRange": "质量检测、认证咨询",
+        "region": "湖南省长沙市",
+        "address": "回归测试地址 88 号",
+        "introduction": "第二轮接口回归自动化创建企业升级申请"
+      },
+      "response": {
+        "code": 42003,
+        "message": "该企业已注册",
+        "data": null,
+        "success": false
+      },
+      "type": "接口/业务",
+      "severity": "中",
+      "blocking": false,
+      "regression": false
+    }
+  ],
+  "fatal": {
+    "message": "HTTP 500",
+    "status": 500,
+    "url": "http://43.138.0.218:8080/api/trade/demand/bid",
+    "payload": {
+      "timestamp": "2026-04-19T13:20:00.940+00:00",
+      "path": "/api/trade/demand/bid",
+      "status": 500,
+      "error": "Internal Server Error",
+      "requestId": "ffead7a6-930"
+    },
+    "stack": "Error: HTTP 500\n    at request (file:///D:/code/%E5%A4%A7%E4%BA%AC/dajing-pc/scripts/round2-regression.mjs:55:19)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async main (file:///D:/code/%E5%A4%A7%E4%BA%AC/dajing-pc/scripts/round2-regression.mjs:389:9)"
+  }
+}

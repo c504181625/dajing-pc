@@ -20255,6 +20255,8 @@
                                                                   },
                                        "trade_DirectOrderReqDTO":  {
                                                                        "required":  [
+                                                                                        "amount",
+                                                                                        "estimatedDays",
                                                                                         "institutionId",
                                                                                         "serviceType",
                                                                                         "title"

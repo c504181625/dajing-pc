@@ -12,6 +12,7 @@ import type {
   EnterpriseAuditQuery,
 } from '@/types/business'
 import { AuditAction, AuditStatus, OperationStatus } from '@/enum/status'
+import { formatDateTime } from '@/utils/date'
 import { http } from '@/utils/request'
 
 const adminApiPrefix = '/api/admin'
@@ -95,7 +96,7 @@ function normalizeEnterpriseAuditItem(raw: unknown): EnterpriseAuditItem {
       ? (source.serviceTypes as EnterpriseAuditItem['serviceTypes'])
       : [],
     status: normalizeEnterpriseAuditStatus(source.certStatus),
-    submitTime: String(source.createTime || source.submitTime || ''),
+    submitTime: formatDateTime(source.createTime || source.submitTime, { fallback: '' }),
     reviewerName: source.reviewerName ? String(source.reviewerName) : undefined,
   }
 }
@@ -116,7 +117,7 @@ function normalizeQualificationStatus(expireDate?: string, expireStatus?: unknow
 }
 
 function buildAuditRecords(raw: Record<string, unknown>, detailId: string) {
-  const submitTime = String(raw.createTime || raw.submitTime || '')
+  const submitTime = formatDateTime(raw.createTime || raw.submitTime, { fallback: '' })
   const certStatus = normalizeEnterpriseAuditStatus(raw.certStatus)
   const baseRecords: NonNullable<EnterpriseAuditDetail['auditRecords']> = [
     {
@@ -239,7 +240,7 @@ export function getEnterpriseAuditDetail(id: string): Promise<EnterpriseAuditDet
       id: String(item.id || item.certNo || item.certName),
       name: String(item.certName || item.certNo || '资质证书'),
       number: String(item.certNo || ''),
-      validUntil: String(item.expireDate || ''),
+      validUntil: formatDateTime(item.expireDate, { fallback: '' }),
       status: normalizeQualificationStatus(item.expireDate, (item.raw as Record<string, unknown> | undefined)?.expireStatus),
     }))
 
@@ -251,7 +252,7 @@ export function getEnterpriseAuditDetail(id: string): Promise<EnterpriseAuditDet
       contactPhone: String(source.contactPhone || ''),
       enterpriseType: normalizeEnterpriseType(source.enterpriseType || source.companyType),
       status: normalizeEnterpriseAuditStatus(source.certStatus),
-      submitTime: String(source.createTime || source.submitTime || ''),
+      submitTime: formatDateTime(source.createTime || source.submitTime, { fallback: '' }),
       reviewerName: source.reviewerName ? String(source.reviewerName) : undefined,
       email: String(source.email || ''),
       province,
@@ -450,4 +451,24 @@ export function deleteEnterpriseCertificate(enterpriseId: string, certId: string
     url: `${userApiPrefix}/enterprise/${enterpriseId}/cert/${certId}`,
     method: 'delete',
   })
+}
+
+export function upgradeEnterpriseToProvider(
+  enterpriseId: string,
+  payload: {
+    certFileUrl: string
+    certNo: string
+    certExpiry: string
+    certScope?: string
+  },
+): Promise<boolean> {
+  if (!isUseOpenApi()) {
+    return Promise.resolve(true)
+  }
+
+  return http<void>({
+    url: `${userApiPrefix}/enterprise/${enterpriseId}/upgrade-provider`,
+    method: 'put',
+    params: payload,
+  }).then(() => true)
 }

@@ -29,7 +29,7 @@ const props = withDefaults(
   {
     xAxis: () => [],
     stats: () => [],
-    height: 188,
+    height: 156,
   },
 )
 
@@ -55,6 +55,10 @@ function createOption(): EChartsCoreOption {
     animationDuration: 500,
     tooltip: {
       trigger: 'axis',
+      appendToBody: true,
+      confine: false,
+      renderMode: 'html',
+      extraCssText: 'z-index: 9999;',
       backgroundColor: 'rgba(15, 23, 42, 0.88)',
       borderWidth: 0,
       textStyle: {
@@ -70,15 +74,15 @@ function createOption(): EChartsCoreOption {
       icon: 'circle',
       textStyle: {
         color: '#6b7280',
-        fontSize: 13,
+        fontSize: 12,
       },
       data: props.series.map((item) => item.label),
     },
     grid: {
-      top: 34,
-      left: 2,
-      right: 4,
-      bottom: 2,
+      top: 26,
+      left: 0,
+      right: 0,
+      bottom: 6,
       containLabel: true,
     },
     xAxis: {
@@ -122,9 +126,9 @@ function createOption(): EChartsCoreOption {
       smooth: true,
       data: item.values,
       symbol: 'circle',
-      symbolSize: 8,
+      symbolSize: 6,
       lineStyle: {
-        width: 3,
+        width: 2.5,
         color: item.color,
       },
       itemStyle: {
@@ -187,7 +191,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="trend-shell" :class="{ 'is-single': !stats.length }">
-    <div class="trend-chart" :style="{ height: `${height}px` }">
+    <div class="trend-chart" :style="{ minHeight: `${height}px` }">
       <div ref="chartEl" class="trend-chart__canvas" />
     </div>
 
@@ -219,21 +223,25 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .trend-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(132px, 156px);
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) minmax(122px, 138px);
+  gap: 6px;
+  height: 100%;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
+  align-items: stretch;
 }
 
 .trend-shell.is-single {
   grid-template-columns: 1fr;
+  grid-template-rows: minmax(0, 1fr);
 }
 
 .trend-chart {
   min-width: 0;
-  overflow: hidden;
-  padding: 2px 4px 0;
-  border-radius: 16px;
+  height: 100%;
+  overflow: visible;
+  padding: 2px 0 0;
+  border-radius: 14px;
   background:
     linear-gradient(180deg, rgb(247 250 255 / 88%) 0%, rgb(255 255 255 / 94%) 100%),
     #fff;
@@ -244,10 +252,15 @@ onBeforeUnmount(() => {
   height: 100%;
 }
 
+.trend-shell.is-single .trend-chart {
+  min-height: 100%;
+}
+
 .trend-stats {
   display: grid;
+  height: 100%;
   min-width: 0;
-  gap: 8px;
+  gap: 6px;
   align-content: stretch;
 }
 
@@ -256,21 +269,21 @@ onBeforeUnmount(() => {
   min-height: 0;
   flex-direction: column;
   justify-content: center;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 1px solid rgb(15 23 42 / 7%);
-  border-radius: 14px;
+  border-radius: 12px;
   background: linear-gradient(180deg, #fff 0%, #fbfcff 100%);
 }
 
 .trend-stat__label {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--dj-color-text-secondary);
 }
 
 .trend-stat__value {
   display: block;
-  margin-top: 5px;
-  font-size: 18px;
+  margin-top: 4px;
+  font-size: 16px;
   line-height: 1;
   color: var(--dj-color-text-primary);
 }
@@ -278,13 +291,13 @@ onBeforeUnmount(() => {
 .trend-stat__meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 6px;
+  gap: 6px;
+  margin-top: 4px;
 }
 
 .trend-stat__previous,
 .trend-stat__compare {
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .trend-stat__previous,
@@ -293,7 +306,7 @@ onBeforeUnmount(() => {
 }
 
 .trend-stat__delta {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--dj-color-text-regular);
 }
