@@ -106,6 +106,16 @@ export const personalRoutes: RouteRecordRaw = {
       },
     },
     {
+      path: 'skin',
+      name: 'PersonalSkin',
+      component: () => import('@/views/platform/system/skin/index.vue'),
+      meta: {
+        title: '系统皮肤',
+        icon: 'Brush',
+        accountTypes: personalAccountTypes,
+      },
+    },
+    {
       path: 'enterprise-upgrade',
       name: 'PersonalEnterpriseUpgrade',
       component: () => import('@/views/personal/profile/index.vue'),

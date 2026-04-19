@@ -94,11 +94,11 @@ function normalizeOrderItem(raw: unknown): OrderItem {
     id: String(source.id || source.orderId || ''),
     orderNo: String(source.orderNo || ''),
     enterpriseName: String(
-      source.enterpriseName ||
+      (source.demandUserName ? `${source.demandUserName}` : '') ||
+        source.enterpriseName ||
         source.buyerName ||
         source.contactName ||
-        source.buyerContactName ||
-        (source.demandUserId ? `需求方 #${source.demandUserId}` : ''),
+        source.buyerContactName,
     ),
     orgName: String(
       source.institutionName ||
@@ -149,7 +149,13 @@ async function loadOrderReport(orderId: string) {
   }
 }
 
-function buildOrderDetail(raw: unknown, id = '', progressList: unknown[] = [], reportRaw: unknown = null, evaluationRaw: unknown = null): OrderDetail {
+function buildOrderDetail(
+  raw: unknown,
+  id = '',
+  progressList: unknown[] = [],
+  reportRaw: unknown = null,
+  evaluationRaw: unknown = null,
+): OrderDetail {
   const source = toRecord(raw)
   const order = normalizeOrderItem(raw)
   const report = toRecord(reportRaw)
@@ -206,7 +212,7 @@ function buildOrderDetail(raw: unknown, id = '', progressList: unknown[] = [], r
             id: `${order.id || id}-create`,
             title: '订单已创建',
             time: order.createdAt,
-            description: '当前订单详情由 QIP 真实接口返回。',
+            description: '',
             status: OperationStatus.Done,
           },
         ],
@@ -250,7 +256,9 @@ export function getOrderList(params?: Record<string, unknown>): Promise<PageResu
       },
     }).then((res) => {
       const page = normalizePageResult(res, normalizeOrderItem, params)
-      const keyword = String(params?.keyword || '').trim().toLowerCase()
+      const keyword = String(params?.keyword || '')
+        .trim()
+        .toLowerCase()
       const filtered = page.list.filter((item: OrderItem) => {
         const matchKeyword =
           !keyword ||
@@ -281,7 +289,9 @@ export function getOrderList(params?: Record<string, unknown>): Promise<PageResu
     },
   }).then((res) => {
     const page = normalizePageResult(res, normalizeOrderItem, params)
-    const keyword = String(params?.keyword || '').trim().toLowerCase()
+    const keyword = String(params?.keyword || '')
+      .trim()
+      .toLowerCase()
     const filtered = page.list.filter((item: OrderItem) => {
       const matchKeyword =
         !keyword ||

@@ -172,6 +172,16 @@ export const enterpriseRoutes: RouteRecordRaw = {
       },
     },
     {
+      path: 'skin',
+      name: 'EnterpriseSkin',
+      component: () => import('@/views/platform/system/skin/index.vue'),
+      meta: {
+        title: '系统皮肤',
+        icon: 'Brush',
+        accountTypes: enterpriseAccountTypes,
+      },
+    },
+    {
       path: 'demand-hall',
       name: 'EnterpriseLegacyDemandHallRedirect',
       redirect: '/enterprise/service-project',

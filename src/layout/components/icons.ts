@@ -1,6 +1,7 @@
 import {
   Avatar,
   Bell,
+  Brush,
   Calendar,
   ChatDotRound,
   ChatLineSquare,
@@ -32,6 +33,7 @@ import {
 export const iconMap = {
   Avatar,
   Bell,
+  Brush,
   Calendar,
   ChatDotRound,
   ChatLineSquare,

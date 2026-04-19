@@ -157,7 +157,12 @@ function sumSeriesValues(
   return series[index]?.values.reduce((sum, item) => sum + item, 0) || 0
 }
 
-function buildCompareMeta(current: number, baselineRatio: number, labelPrefix: string, isMoney = false) {
+function buildCompareMeta(
+  current: number,
+  baselineRatio: number,
+  labelPrefix: string,
+  isMoney = false,
+) {
   const previousRaw =
     current > 0
       ? Math.max(Number((current * baselineRatio).toFixed(isMoney ? 2 : 0)), isMoney ? 0.01 : 1)
@@ -167,7 +172,7 @@ function buildCompareMeta(current: number, baselineRatio: number, labelPrefix: s
     current > previousRaw ? 'up' : current < previousRaw ? 'down' : 'flat'
 
   return {
-    previous: `${labelPrefix}${isMoney ? `￥${formatCurrency(previousRaw)}` : formatNumber(previousRaw)}`,
+    previous: `${labelPrefix}${isMoney ? `¥${formatCurrency(previousRaw)}` : formatNumber(previousRaw)}`,
     delta: trend === 'flat' ? '0%' : `${trend === 'up' ? '↑' : '↓'}${formatPercent(deltaRaw)}`,
     trend,
   }
@@ -183,7 +188,7 @@ function buildMetricCard(
   const compare = buildCompareMeta(rawValue, baselineRatio, '昨日', formatter === formatCurrency)
   return {
     label,
-    value: formatter === formatCurrency ? `￥${formatter(rawValue)}` : formatter(rawValue),
+    value: formatter === formatCurrency ? `¥${formatter(rawValue)}` : formatter(rawValue),
     icon,
     previous: compare.previous,
     delta: compare.delta,
@@ -200,7 +205,7 @@ function buildTrendStat(
   const compare = buildCompareMeta(value, baselineRatio, '上周', isMoney)
   return {
     label,
-    value: isMoney ? `￥${formatCurrency(value)}` : formatNumber(value),
+    value: isMoney ? `¥${formatCurrency(value)}` : formatNumber(value),
     previous: compare.previous,
     delta: compare.delta,
     trend: compare.trend,
@@ -238,9 +243,12 @@ const todayOrderCount = computed(() => todayOrders.value.length)
 const pendingDemandCount = computed(
   () =>
     demandList.value.filter((item) =>
-      [DemandStatus.Pending, DemandStatus.Assigned, DemandStatus.Replied, DemandStatus.Processing].includes(
-        item.status,
-      ),
+      [
+        DemandStatus.Pending,
+        DemandStatus.Assigned,
+        DemandStatus.Replied,
+        DemandStatus.Processing,
+      ].includes(item.status),
     ).length,
 )
 const pendingConsultCount = computed(
@@ -355,12 +363,18 @@ const conversionTrendSeries = computed(() => [
   {
     label: '接收到需求数',
     color: '#f59e0b',
-    values: buildTrendValues(pendingDemandCount.value + demandList.value.length, [0.66, 0.62, 0.9, 0.64, 0.78, 0.82, 1]),
+    values: buildTrendValues(
+      pendingDemandCount.value + demandList.value.length,
+      [0.66, 0.62, 0.9, 0.64, 0.78, 0.82, 1],
+    ),
   },
   {
     label: '已报价需求数',
     color: '#fb7185',
-    values: buildTrendValues(quotePendingCount.value + 1, [0.42, 0.5, 0.72, 0.46, 0.54, 0.58, 0.76]),
+    values: buildTrendValues(
+      quotePendingCount.value + 1,
+      [0.42, 0.5, 0.72, 0.46, 0.54, 0.58, 0.76],
+    ),
   },
   {
     label: '成交订单数',
@@ -384,12 +398,18 @@ const executionTrendSeries = computed(() => [
   {
     label: '已完成检测任务',
     color: '#fdba74',
-    values: buildTrendValues(completedReportCount.value + 1, [0.36, 0.34, 0.58, 0.42, 0.48, 0.62, 0.76]),
+    values: buildTrendValues(
+      completedReportCount.value + 1,
+      [0.36, 0.34, 0.58, 0.42, 0.48, 0.62, 0.76],
+    ),
   },
   {
     label: '已上传报告数',
     color: '#f97316',
-    values: buildTrendValues(reportUploadCount.value + 1, [0.24, 0.28, 0.46, 0.34, 0.36, 0.42, 0.56]),
+    values: buildTrendValues(
+      reportUploadCount.value + 1,
+      [0.24, 0.28, 0.46, 0.34, 0.36, 0.42, 0.56],
+    ),
   },
 ])
 
@@ -403,7 +423,10 @@ const clientTrendSeries = computed(() => [
   {
     label: '客户咨询数',
     color: '#4f8ef7',
-    values: buildTrendValues(consultList.value.length + 1, [0.46, 0.58, 0.8, 0.44, 0.48, 0.52, 0.68]),
+    values: buildTrendValues(
+      consultList.value.length + 1,
+      [0.46, 0.58, 0.8, 0.44, 0.48, 0.52, 0.68],
+    ),
   },
   {
     label: '活跃客户数',
@@ -459,19 +482,19 @@ const refundAmount = computed(() =>
 const incomeWords = computed<IncomeWord[]>(() => [
   {
     label: '已回款金额',
-    value: `￥${formatCurrency(receivedAmount.value)}`,
+    value: `¥${formatCurrency(receivedAmount.value)}`,
     color: '#2f7cf6',
     size: '24px',
   },
   {
     label: '待回款金额',
-    value: `￥${formatCurrency(pendingAmount.value)}`,
+    value: `¥${formatCurrency(pendingAmount.value)}`,
     color: '#20b2aa',
     size: '22px',
   },
   {
     label: '退款金额',
-    value: `￥${formatCurrency(refundAmount.value)}`,
+    value: `¥${formatCurrency(refundAmount.value)}`,
     color: '#f97316',
     size: '20px',
   },
@@ -505,68 +528,68 @@ loadData()
       <h1>{{ dashboardTitle }}</h1>
     </div>
 
-    <section v-loading="loading" class="metric-grid">
-      <article v-for="item in metricCards" :key="item.label" class="metric-card">
-        <div class="metric-card__head">
-          <span>{{ item.label }}</span>
-          <div class="metric-card__icon">
-            <el-icon><component :is="item.icon" /></el-icon>
-          </div>
-        </div>
-        <strong class="metric-card__value">{{ item.value }}</strong>
-        <div class="metric-card__foot">
-          <span>{{ item.previous }}</span>
-          <em :class="[`is-${item.trend}`]">{{ item.delta }}</em>
-        </div>
-      </article>
-    </section>
-
-    <div class="summary-grid">
-      <SectionCard title="待处理事项">
-        <div class="todo-board todo-board--compact">
-          <button
-            v-for="item in pendingItems"
-            :key="item.title"
-            type="button"
-            class="todo-board__item"
-            @click="jump(item.path)"
-          >
-            <span class="todo-board__title">{{ item.title }}</span>
-            <span class="todo-board__value">{{ item.value }}</span>
-            <span class="todo-board__arrow">›</span>
-          </button>
-        </div>
-      </SectionCard>
-
-      <SectionCard title="快捷入口">
-        <div class="shortcut-strip">
-          <button
-            v-for="item in enterpriseShortcuts"
-            :key="item.title"
-            type="button"
-            class="shortcut-strip__item"
-            @click="jump(item.path)"
-          >
-            <span class="shortcut-strip__icon">
+    <template v-if="isServiceProvider">
+      <section v-loading="loading" class="metric-grid">
+        <article v-for="item in metricCards" :key="item.label" class="metric-card">
+          <div class="metric-card__head">
+            <span>{{ item.label }}</span>
+            <div class="metric-card__icon">
               <el-icon><component :is="item.icon" /></el-icon>
-            </span>
-            <span class="shortcut-strip__title">{{ item.title }}</span>
-          </button>
-        </div>
-      </SectionCard>
-    </div>
+            </div>
+          </div>
+          <strong class="metric-card__value">{{ item.value }}</strong>
+          <div class="metric-card__foot">
+            <span>{{ item.previous }}</span>
+            <em :class="[`is-${item.trend}`]">{{ item.delta }}</em>
+          </div>
+        </article>
+      </section>
 
-    <div class="content-grid">
-      <div class="content-grid__main">
-        <SectionCard title="接单与转化趋势">
+      <div class="summary-grid">
+        <SectionCard title="待处理事项" class="summary-card" body-class="summary-card__body">
+          <div class="todo-board todo-board--compact">
+            <button
+              v-for="item in pendingItems"
+              :key="item.title"
+              type="button"
+              class="todo-board__item"
+              @click="jump(item.path)"
+            >
+              <span class="todo-board__title">{{ item.title }}</span>
+              <span class="todo-board__value">{{ item.value }}</span>
+              <span class="todo-board__arrow">›</span>
+            </button>
+          </div>
+        </SectionCard>
+
+        <SectionCard title="快捷入口" class="summary-card" body-class="summary-card__body">
+          <div class="shortcut-board">
+            <button
+              v-for="item in enterpriseShortcuts"
+              :key="item.title"
+              type="button"
+              class="shortcut-board__item"
+              @click="jump(item.path)"
+            >
+              <span class="shortcut-board__icon">
+                <el-icon><component :is="item.icon" /></el-icon>
+              </span>
+              <span class="shortcut-board__title">{{ item.title }}</span>
+            </button>
+          </div>
+        </SectionCard>
+      </div>
+
+      <div class="analytics-grid">
+        <SectionCard
+          title="接单与转化趋势"
+          class="grid-span-6"
+          body-class="panel-body panel-body--trend"
+        >
           <template #extra>
             <div class="chart-toolbar">
               <el-radio-group v-model="conversionRange" size="small">
-                <el-radio-button
-                  v-for="item in rangeOptions"
-                  :key="item.value"
-                  :value="item.value"
-                >
+                <el-radio-button v-for="item in rangeOptions" :key="item.value" :value="item.value">
                   {{ item.label }}
                 </el-radio-button>
               </el-radio-group>
@@ -579,19 +602,57 @@ loadData()
             :x-axis="trendAxis"
             :series="conversionTrendSeries"
             :stats="conversionTrendStats"
-            :height="228"
+            :height="152"
           />
         </SectionCard>
 
-        <SectionCard title="业务执行与交付趋势">
+        <SectionCard
+          title="服务与商品总览"
+          class="grid-span-3"
+          body-class="panel-body panel-body--small"
+        >
+          <WorkbenchDonutPanel
+            :items="serviceOverviewItems"
+            center-title="总数"
+            :footer="[
+              { label: '待报价', value: formatNumber(quotePendingCount) },
+              { label: '执行中', value: formatNumber(testingPendingCount) },
+              { label: '已完成', value: formatNumber(completedReportCount) },
+            ]"
+            :height="148"
+          />
+        </SectionCard>
+
+        <SectionCard
+          id="income-structure"
+          title="收入结构"
+          class="grid-span-3"
+          body-class="panel-body panel-body--small"
+        >
+          <div class="income-cloud income-cloud--compact">
+            <article
+              v-for="item in incomeWords"
+              :key="item.label"
+              class="income-word"
+              :style="{ color: item.color }"
+            >
+              <span class="income-word__label" :style="{ fontSize: item.size }">
+                {{ item.label }}
+              </span>
+              <strong>{{ item.value }}</strong>
+            </article>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="业务执行与交付趋势"
+          class="grid-span-6"
+          body-class="panel-body panel-body--trend"
+        >
           <template #extra>
             <div class="chart-toolbar">
               <el-radio-group v-model="executionRange" size="small">
-                <el-radio-button
-                  v-for="item in rangeOptions"
-                  :key="item.value"
-                  :value="item.value"
-                >
+                <el-radio-button v-for="item in rangeOptions" :key="item.value" :value="item.value">
                   {{ item.label }}
                 </el-radio-button>
               </el-radio-group>
@@ -604,40 +665,15 @@ loadData()
             :x-axis="trendAxis"
             :series="executionTrendSeries"
             :stats="executionTrendStats"
-            :height="228"
-          />
-        </SectionCard>
-      </div>
-
-      <div class="content-grid__aside">
-        <SectionCard title="服务与商品总览">
-          <WorkbenchDonutPanel
-            :items="serviceOverviewItems"
-            center-title="总数"
-            :footer="[
-              { label: '待报价', value: formatNumber(quotePendingCount) },
-              { label: '执行中', value: formatNumber(testingPendingCount) },
-              { label: '已完成', value: formatNumber(completedReportCount) },
-            ]"
-            :height="196"
+            :height="152"
           />
         </SectionCard>
 
-        <SectionCard id="income-structure" title="收入结构">
-          <div class="income-cloud">
-            <article
-              v-for="item in incomeWords"
-              :key="item.label"
-              class="income-word"
-              :style="{ color: item.color }"
-            >
-              <span class="income-word__label" :style="{ fontSize: item.size }">{{ item.label }}</span>
-              <strong>{{ item.value }}</strong>
-            </article>
-          </div>
-        </SectionCard>
-
-        <SectionCard title="用户趋势">
+        <SectionCard
+          title="用户趋势"
+          class="grid-span-6"
+          body-class="panel-body panel-body--trend panel-body--user"
+        >
           <template #extra>
             <el-select v-model="userGranularity" size="small" style="width: 108px">
               <el-option
@@ -648,10 +684,44 @@ loadData()
               />
             </el-select>
           </template>
-          <WorkbenchTrendPanel :x-axis="trendAxis" :series="clientTrendSeries" :height="214" />
+          <WorkbenchTrendPanel :x-axis="trendAxis" :series="clientTrendSeries" :height="196" />
         </SectionCard>
       </div>
-    </div>
+    </template>
+
+    <template v-else>
+      <div class="demander-dashboard">
+        <SectionCard title="账号状态" class="simple-card">
+          <el-alert
+            type="success"
+            :closable="false"
+            show-icon
+            title="企业需求发布方账号已可直接发布需求、跟进订单并查看处理进度。"
+          />
+          <div class="demander-actions">
+            <el-button type="primary" @click="jump('/enterprise/demand/create')"
+              >发布需求</el-button
+            >
+            <el-button plain @click="jump('/enterprise/demand')">查看我的需求</el-button>
+            <el-button plain @click="jump('/enterprise/order')">查看我的订单</el-button>
+          </div>
+        </SectionCard>
+
+        <!-- <SectionCard title="后续能力" class="simple-card">
+          <div class="simple-empty">
+            <strong>企业需求发布入口已就绪</strong>
+            <p>可从“需求管理”“订单管理”“消息中心”和“账号设置”继续处理业务。</p>
+            <div class="simple-links">
+              <el-button text type="primary" @click="jump('/enterprise/message')">消息中心</el-button>
+              <el-button text type="primary" @click="jump('/enterprise/account-settings')">
+                账号设置
+              </el-button>
+              <el-button text type="primary" @click="jump('/enterprise/skin')">系统皮肤</el-button>
+            </div>
+          </div>
+        </SectionCard> -->
+      </div>
+    </template>
   </PageContainer>
 </template>
 
@@ -670,12 +740,29 @@ loadData()
 }
 
 .metric-card {
-  padding: 14px 16px;
-  border: 1px solid rgb(84 135 255 / 56%);
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--dj-color-primary) 32%, white);
   border-radius: 16px;
   background:
-    radial-gradient(circle at top right, rgb(31 94 255 / 10%), transparent 38%),
+    radial-gradient(
+      circle at top right,
+      color-mix(in srgb, var(--dj-color-primary) 10%, transparent),
+      transparent 38%
+    ),
     linear-gradient(180deg, #fff 0%, #fbfdff 100%);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.metric-card:hover,
+.todo-board__item:hover,
+.shortcut-board__item:hover,
+.income-word:hover,
+.simple-card:deep(.section-card):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgb(15 23 42 / 8%);
 }
 
 .metric-card__head,
@@ -692,12 +779,12 @@ loadData()
 }
 
 .metric-card__icon {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   border-radius: 10px;
-  background: rgb(47 124 246 / 88%);
+  background: var(--dj-color-primary);
   color: #fff;
   font-size: 15px;
 }
@@ -727,7 +814,7 @@ loadData()
 
 .metric-card__foot em {
   font-style: normal;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .is-up {
@@ -742,25 +829,57 @@ loadData()
   color: var(--dj-color-text-regular);
 }
 
-.summary-grid,
-.content-grid {
+.summary-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.68fr) minmax(340px, 1fr);
-  gap: 16px;
-  align-items: start;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
 }
 
-.content-grid__main,
-.content-grid__aside {
-  display: grid;
-  gap: 16px;
-  min-width: 0;
+.summary-card {
+  height: 100%;
+}
+
+.summary-card:deep(.section-card),
+.analytics-grid :deep(.section-card),
+.simple-card:deep(.section-card) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-card:deep(.section-card > .el-card__body),
+.analytics-grid :deep(.section-card > .el-card__body),
+.simple-card:deep(.section-card > .el-card__body) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.summary-card:deep(.el-card__header) {
+  display: flex;
+  align-items: center;
+  min-height: 54px;
+  padding: 0 16px 10px;
+  box-sizing: border-box;
+}
+
+.summary-card:deep(.el-card__body) {
+  padding: 6px 14px 8px;
+  height: auto;
+}
+
+.summary-card__body {
+  height: 100%;
+  min-height: 136px;
 }
 
 .todo-board--compact {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0 18px;
+  gap: 0 14px;
+  height: 100%;
+  align-content: start;
 }
 
 .todo-board__item {
@@ -768,7 +887,7 @@ loadData()
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 10px;
-  padding: 12px 0;
+  padding: 7px 0;
   border: 0;
   border-bottom: 1px solid rgb(15 23 42 / 6%);
   background: transparent;
@@ -783,7 +902,7 @@ loadData()
 .todo-board__title {
   overflow: hidden;
   color: var(--dj-color-text-primary);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -791,29 +910,32 @@ loadData()
 
 .todo-board__value {
   color: #ef4444;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .todo-board__arrow {
   color: #c0c6d4;
-  font-size: 16px;
+  font-size: 14px;
 }
 
-.shortcut-strip {
+.shortcut-board {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  align-content: start;
+  height: 100%;
 }
 
-.shortcut-strip__item {
+.shortcut-board__item {
   display: flex;
   min-width: 0;
+  min-height: 60px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 8px;
+  gap: 4px;
+  padding: 6px;
   border: 1px solid rgb(15 23 42 / 6%);
   border-radius: 14px;
   background: linear-gradient(180deg, #fff 0%, #fbfcff 100%);
@@ -823,42 +945,83 @@ loadData()
     box-shadow 0.2s ease;
 }
 
-.shortcut-strip__item:hover,
-.todo-board__item:hover,
-.income-word:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgb(15 23 42 / 8%);
-}
-
-.shortcut-strip__icon {
-  width: 34px;
-  height: 34px;
+.shortcut-board__icon {
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
-  background: rgb(47 124 246 / 10%);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--dj-color-primary) 10%, white);
   color: var(--dj-color-primary);
-  font-size: 16px;
+  font-size: 14px;
 }
 
-.shortcut-strip__title {
+.shortcut-board__title {
   text-align: center;
   color: var(--dj-color-text-primary);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   line-height: 1.35;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.grid-span-6 {
+  grid-column: span 6;
+}
+
+.grid-span-3 {
+  grid-column: span 3;
+}
+
+.panel-body {
+  height: 100%;
+}
+
+.panel-body--trend,
+.panel-body--small {
+  min-height: 0;
+  display: flex;
+}
+
+.panel-body--user {
+  flex-direction: column;
+  justify-content: stretch;
+  min-height: 228px;
+}
+
+.panel-body--trend > *,
+.panel-body--small > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.panel-body--user > * {
+  flex: 1;
+  min-width: 0;
 }
 
 .chart-toolbar {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .income-cloud {
   display: grid;
-  min-height: 214px;
   gap: 12px;
+}
+
+.income-cloud--compact {
+  min-height: 148px;
+  align-content: start;
 }
 
 .income-word {
@@ -884,20 +1047,81 @@ loadData()
   color: var(--dj-color-text-primary);
 }
 
+.demander-dashboard {
+  display: grid;
+  gap: 16px;
+}
+
+.simple-card :deep(.el-card__body) {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.demander-actions,
+.simple-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.simple-empty {
+  display: flex;
+  min-height: 140px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  color: var(--dj-color-text-secondary);
+}
+
+.simple-empty strong {
+  color: var(--dj-color-text-primary);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.simple-empty p {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.analytics-grid :deep(.el-card__header) {
+  display: flex;
+  align-items: center;
+  min-height: 58px;
+  padding: 14px 16px 12px;
+  box-sizing: border-box;
+}
+
+.analytics-grid :deep(.el-card__body) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 8px 14px 10px;
+}
+
+.summary-card:deep(.section-header),
+.analytics-grid :deep(.section-header) {
+  width: 100%;
+  min-height: 28px;
+  align-items: center;
+}
+
 @media (max-width: 1600px) {
   .metric-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .shortcut-strip {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 1280px) {
   .summary-grid,
-  .content-grid {
+  .analytics-grid {
     grid-template-columns: 1fr;
+  }
+
+  .grid-span-6,
+  .grid-span-3 {
+    grid-column: span 1;
   }
 
   .todo-board--compact {
@@ -916,7 +1140,7 @@ loadData()
 @media (max-width: 900px) {
   .metric-grid,
   .todo-board--compact,
-  .shortcut-strip {
+  .shortcut-board {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -924,12 +1148,17 @@ loadData()
 @media (max-width: 640px) {
   .metric-grid,
   .todo-board--compact,
-  .shortcut-strip {
+  .shortcut-board {
     grid-template-columns: 1fr;
   }
 
+  .demander-actions,
+  .simple-links {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .chart-toolbar {
-    flex-wrap: wrap;
     justify-content: flex-end;
   }
 }
