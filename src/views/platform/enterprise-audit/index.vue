@@ -7,13 +7,16 @@ import PageContainer from '@/components/PageContainer.vue'
 import DetailSection from '@/components-business/DetailSection/index.vue'
 import PermissionButton from '@/components-business/PermissionButton/index.vue'
 import SearchForm from '@/components-business/SearchForm/index.vue'
-import StatsPanel from '@/components-business/StatsPanel/index.vue'
 import StatusTag from '@/components-business/StatusTag/index.vue'
 import TablePanel from '@/components-business/TablePanel/index.vue'
 import { AUDIT_STATUS_MAP, SERVICE_TYPE_OPTIONS } from '@/constants/dicts'
 import { PERMISSION_CODE } from '@/enum/permission'
 import { AuditStatus } from '@/enum/status'
-import type { EnterpriseAuditDetail, EnterpriseAuditItem, EnterpriseAuditQuery } from '@/types/business'
+import type {
+  EnterpriseAuditDetail,
+  EnterpriseAuditItem,
+  EnterpriseAuditQuery,
+} from '@/types/business'
 
 const router = useRouter()
 const loading = ref(false)
@@ -54,48 +57,23 @@ const searchFields = [
     label: '服务类型',
     prop: 'enterpriseType',
     component: 'select' as const,
-    placeholder: '请选择企业类型',
+    placeholder: '请选择服务类型',
     options: enterpriseTypeOptions,
   },
 ]
 
-const statCards = computed(() => [
-  {
-    title: '待审核',
-    value: tableData.value.filter((item) => item.status === AuditStatus.Pending).length,
-  },
-  {
-    title: '补材料',
-    value: tableData.value.filter((item) => item.status === AuditStatus.Supplement).length,
-  },
-  {
-    title: '超时',
-    value: tableData.value.filter((item) => !item.reviewerName || item.reviewerName === '未分配').length,
-  },
-  {
-    title: '已通过',
-    value: tableData.value.filter((item) => item.status === AuditStatus.Approved).length,
-  },
-])
+const auditStats = computed(() => {
+  const pending = tableData.value.filter((item) => item.status === AuditStatus.Pending).length
+  const supplement = tableData.value.filter((item) => item.status === AuditStatus.Supplement).length
+  const approved = tableData.value.filter((item) => item.status === AuditStatus.Approved).length
 
-const displayStatCards = computed(() => [
-  {
-    ...statCards.value[0],
-    hint: '等待平台首轮审核处理的入驻申请',
-  },
-  {
-    ...statCards.value[1],
-    hint: '已退回补充材料，待企业重新提交',
-  },
-  {
-    ...statCards.value[2],
-    hint: '当前仍未分配或处理超时的审核任务',
-  },
-  {
-    ...statCards.value[3],
-    hint: '已经完成审核并准入的平台机构',
-  },
-])
+  return [
+    { key: 'all', label: '全部', value: total.value },
+    { key: AuditStatus.Pending, label: '待审核', value: pending },
+    { key: AuditStatus.Supplement, label: '补材料', value: supplement },
+    { key: AuditStatus.Approved, label: '已通过', value: approved },
+  ]
+})
 
 async function loadData() {
   loading.value = true
@@ -110,11 +88,11 @@ async function loadData() {
 
 function handleSearch() {
   queryForm.pageNum = 1
-  loadData()
+  void loadData()
 }
 
 function handlePageChange() {
-  loadData()
+  void loadData()
 }
 
 async function openDetail(id: string) {
@@ -130,17 +108,11 @@ loadData()
 </script>
 
 <template>
-  <PageContainer
-    title="企业审核管理"
-    subtitle="统一承接企业入驻、补件、审核通过和驳回动作，是一期平台运营的重要入口。"
-  >
-    <StatsPanel :items="displayStatCards" />
-
+  <PageContainer title="企业/机构审核">
     <SearchForm v-model="queryForm" :fields="searchFields" @search="handleSearch" @reset="loadData" />
 
     <TablePanel
-      title="审核任务列表"
-      description="支持平台管理员与审核员按状态、服务类型、企业关键字筛选审核任务。"
+      title=""
       :total="total"
       :page-num="queryForm.pageNum"
       :page-size="queryForm.pageSize"
@@ -148,6 +120,12 @@ loadData()
       @update:page-size="queryForm.pageSize = $event"
       @pageChange="handlePageChange"
     >
+      <template #stats>
+        <span v-for="item in auditStats" :key="item.key" class="table-stat">
+          {{ item.label }}（{{ item.value }}）
+        </span>
+      </template>
+
       <template #toolbar>
         <PermissionButton :permission="PERMISSION_CODE.auditEnterpriseQuery" plain>
           导出列表
@@ -211,4 +189,10 @@ loadData()
   </PageContainer>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.table-stat {
+  color: var(--dj-color-text-primary);
+  font-size: 16px;
+  font-weight: 500;
+}
+</style>

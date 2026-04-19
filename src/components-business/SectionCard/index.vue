@@ -20,7 +20,6 @@ withDefaults(
         <div class="section-copy">
           <slot name="header">
             <div class="section-title">{{ title }}</div>
-            <div v-if="description" class="section-description">{{ description }}</div>
           </slot>
         </div>
         <div class="section-extra">
@@ -55,13 +54,6 @@ withDefaults(
   font-size: 16px;
   font-weight: 700;
   color: var(--dj-color-text-primary);
-}
-
-.section-description {
-  margin-top: 6px;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--dj-color-text-regular);
 }
 
 .section-extra {

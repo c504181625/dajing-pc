@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router'
 
 import { loginByPassword, personalRegister, sendSmsCode } from '@/api/modules/auth'
 import AuthSimpleLayout from '@/components-business/AuthSimpleLayout/index.vue'
-import RegionSelect from '@/components-business/RegionSelect/index.vue'
+// import RegionSelect from '@/components-business/RegionSelect/index.vue'
 import { MOBILE_PATTERN, PASSWORD_STRENGTH_PATTERN, USERNAME_PATTERN } from '@/enum/auth'
 import { useMessageStore } from '@/store/modules/message'
 import { usePermissionStore } from '@/store/modules/permission'
@@ -66,7 +66,7 @@ async function handleSendCode() {
 
 async function handleSubmit() {
   if (!USERNAME_PATTERN.test(form.username)) {
-    ElMessage.warning('用户名需为 4-20 位字母、数字或下划线')
+    ElMessage.warning('用户名需为 2-20 位中文、字母、数字或下划线')
     return
   }
 
@@ -154,7 +154,12 @@ onBeforeUnmount(() => {
       <el-row :gutter="16">
         <el-col :span="12">
           <el-form-item label="密码">
-            <el-input v-model="form.password" type="password" show-password placeholder="请输入密码" />
+            <el-input
+              v-model="form.password"
+              type="password"
+              show-password
+              placeholder="请输入密码"
+            />
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -169,7 +174,7 @@ onBeforeUnmount(() => {
         </el-col>
       </el-row>
 
-      <el-row :gutter="16">
+      <!-- <el-row :gutter="16">
         <el-col :span="12">
           <el-form-item label="所在地区">
             <RegionSelect v-model="form.region" />
@@ -180,10 +185,12 @@ onBeforeUnmount(() => {
             <el-input v-model="form.addressDetail" placeholder="请输入详细地址" />
           </el-form-item>
         </el-col>
-      </el-row>
+      </el-row> -->
 
       <div class="agreement-row">
-        <el-checkbox v-model="form.agreement">我已阅读并同意《用户服务协议》与《隐私政策》</el-checkbox>
+        <el-checkbox v-model="form.agreement"
+          >我已阅读并同意《用户服务协议》与《隐私政策》</el-checkbox
+        >
       </div>
 
       <el-button class="submit-button" type="primary" :loading="loading" @click="handleSubmit">

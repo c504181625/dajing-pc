@@ -56,9 +56,9 @@ function handleSelect(index: string) {
   height: 100vh;
   flex: 0 0 var(--dj-sidebar-width);
   background:
-    radial-gradient(circle at top left, rgb(31 94 255 / 8%), transparent 28%),
-    linear-gradient(180deg, #fcfdff 0%, #f6f8fc 100%);
-  border-right: 1px solid rgb(15 23 42 / 6%);
+    var(--dj-theme-page-decoration),
+    linear-gradient(180deg, color-mix(in srgb, var(--dj-color-bg-card) 98%, var(--dj-color-primary) 2%) 0%, color-mix(in srgb, var(--dj-color-bg-card) 92%, var(--dj-color-primary) 8%) 100%);
+  border-right: 1px solid color-mix(in srgb, var(--dj-color-border) 90%, var(--dj-color-primary) 10%);
   box-shadow: 10px 0 28px rgb(15 23 42 / 5%);
   display: flex;
   flex-direction: column;
@@ -73,7 +73,7 @@ function handleSelect(index: string) {
   align-items: center;
   gap: 14px;
   padding: 20px 22px 18px;
-  border-bottom: 1px solid rgb(15 23 42 / 6%);
+  border-bottom: 1px solid color-mix(in srgb, var(--dj-color-border) 92%, var(--dj-color-primary) 8%);
 }
 
 .brand-logo {
@@ -83,8 +83,8 @@ function handleSelect(index: string) {
   object-fit: contain;
   border-radius: 12px;
   padding: 6px;
-  background: linear-gradient(180deg, #fff 0%, #eef4ff 100%);
-  box-shadow: inset 0 0 0 1px rgb(31 94 255 / 10%);
+  background: linear-gradient(180deg, #fff 0%, color-mix(in srgb, white 84%, var(--dj-color-primary) 16%) 100%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dj-color-primary) 14%, white);
 }
 
 .brand-text {
@@ -94,7 +94,7 @@ function handleSelect(index: string) {
 }
 
 .brand-text strong {
-  color: #18243d;
+  color: var(--dj-color-text-primary);
   font-size: 17px;
   font-weight: 700;
   line-height: 1.2;
@@ -102,7 +102,7 @@ function handleSelect(index: string) {
 
 .brand-text span {
   font-size: 12px;
-  color: #6b7a90;
+  color: var(--dj-color-text-regular);
 }
 
 .sidebar-scrollbar {
@@ -135,7 +135,7 @@ function handleSelect(index: string) {
   height: 44px;
   margin-bottom: 6px;
   border-radius: 12px;
-  color: #5b6b84;
+  color: var(--dj-color-text-secondary);
   font-size: 14px;
   transition:
     background-color 0.2s ease,
@@ -149,9 +149,9 @@ function handleSelect(index: string) {
 
 .sidebar-menu:deep(.el-sub-menu__title:hover),
 .sidebar-menu:deep(.el-menu-item:hover) {
-  color: #1d4ed8;
-  background: rgb(31 94 255 / 7%);
-  box-shadow: inset 0 0 0 1px rgb(31 94 255 / 10%);
+  color: var(--dj-color-primary);
+  background: var(--dj-color-menu-hover);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dj-color-primary) 12%, white);
 }
 
 .sidebar-menu:deep(.el-sub-menu .el-menu-item) {
@@ -162,14 +162,14 @@ function handleSelect(index: string) {
 }
 
 .sidebar-menu:deep(.el-menu-item.is-active) {
-  color: #1446bf;
-  background: linear-gradient(90deg, rgb(31 94 255 / 15%) 0%, rgb(31 94 255 / 5%) 100%);
-  box-shadow: inset 0 0 0 1px rgb(31 94 255 / 14%);
+  color: var(--dj-color-primary);
+  background: var(--dj-color-menu-active);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dj-color-primary) 14%, white);
 }
 
 .sidebar-menu:deep(.el-sub-menu.is-opened > .el-sub-menu__title) {
-  color: #17326b;
-  background: rgb(15 23 42 / 4%);
+  color: var(--dj-color-text-primary);
+  background: color-mix(in srgb, var(--dj-color-primary) 4%, white);
 }
 
 .sidebar-menu:deep(.el-menu-item .el-icon),

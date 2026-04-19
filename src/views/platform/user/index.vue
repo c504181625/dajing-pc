@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 
 import {
   deleteUser,
@@ -13,7 +13,6 @@ import PageContainer from '@/components/PageContainer.vue'
 import DetailSection from '@/components-business/DetailSection/index.vue'
 import PermissionButton from '@/components-business/PermissionButton/index.vue'
 import SearchForm from '@/components-business/SearchForm/index.vue'
-import StatsPanel from '@/components-business/StatsPanel/index.vue'
 import StatusTag from '@/components-business/StatusTag/index.vue'
 import TablePanel from '@/components-business/TablePanel/index.vue'
 import { ACCOUNT_STATUS_MAP, USER_TYPE_OPTIONS } from '@/constants/dicts'
@@ -49,7 +48,7 @@ const searchFields = computed(() => [
   {
     label: '关键词',
     prop: 'keyword',
-    placeholder: '姓名/手机号/企业名称/统一社会信用代码',
+    placeholder: '姓名 / 手机号 / 企业名称 / 统一社会信用代码',
   },
   {
     label: '账号类型',
@@ -67,33 +66,29 @@ const searchFields = computed(() => [
   },
 ])
 
-const statCards = computed(() => {
-  const personalCount = tableData.value.filter((item) => item.userType === UserType.Personal).length
-  const enterpriseCount = tableData.value.filter(
-    (item) => item.userType === UserType.Enterprise,
-  ).length
-  const riskCount = tableData.value.filter((item) => item.riskLabel).length
+function getAccountGroupLabel(row: UserItem) {
+  if (row.accountGroup === 'operator') return '平台运营方'
+  if (row.accountGroup === 'enterprise') return '企业用户'
+  return '个人用户'
+}
+
+const accountStats = computed(() => {
+  const enterpriseCount = tableData.value.filter((item) => item.accountGroup === 'enterprise').length
+  const personalCount = tableData.value.filter((item) => item.accountGroup === 'personal').length
 
   return [
+    { key: 'all', label: '全部', value: total.value, queryValue: '' as UserType | '' },
     {
-      title: '当前列表账号数',
-      value: total.value,
-      hint: '基于当前筛选条件的结果',
-    },
-    {
-      title: '个人主体',
-      value: personalCount,
-      hint: '可继续升级为企业账号',
-    },
-    {
-      title: '企业主体',
+      key: UserType.Enterprise,
+      label: '企业账号',
       value: enterpriseCount,
-      hint: '支持多能力标签叠加',
+      queryValue: UserType.Enterprise as UserType | '',
     },
     {
-      title: '风险 / 待处理',
-      value: riskCount,
-      hint: '包含补材、临期与长时间未登录',
+      key: UserType.Personal,
+      label: '个人账号',
+      value: personalCount,
+      queryValue: UserType.Personal as UserType | '',
     },
   ]
 })
@@ -111,11 +106,22 @@ async function loadData() {
 
 function handleSearch() {
   queryForm.pageNum = 1
-  loadData()
+  void loadData()
+}
+
+function handleReset() {
+  queryForm.pageNum = 1
+  void loadData()
 }
 
 function handlePageChange() {
-  loadData()
+  void loadData()
+}
+
+function switchAccountType(value: UserType | '') {
+  queryForm.userType = value
+  queryForm.pageNum = 1
+  void loadData()
 }
 
 async function openDetail(row: UserItem) {
@@ -136,7 +142,7 @@ async function openEdit(row: UserItem) {
 }
 
 async function handleSave() {
-  await updateUser({
+  const updated = await updateUser({
     id: editForm.id,
     name: editForm.name,
     mobile: editForm.mobile,
@@ -144,16 +150,23 @@ async function handleSave() {
     enterpriseName: editForm.enterpriseName || undefined,
     remark: editForm.remark || undefined,
   })
+
+  if (!updated) {
+    ElMessage.warning('当前接口文档未提供用户资料修改接口，已阻止无效提交')
+    return
+  }
+
   ElMessage.success('账号信息已保存')
   editVisible.value = false
   await loadData()
+
   if (currentDetail.value?.id === editForm.id) {
     currentDetail.value = await getUserDetail(editForm.id)
   }
 }
 
 async function handleToggle(row: UserItem) {
-  await toggleUserStatus(row.id)
+  await toggleUserStatus(row.id, row.status)
   ElMessage.success(row.status === AccountStatus.Enabled ? '账号已禁用' : '账号已启用')
   await loadData()
 }
@@ -167,35 +180,37 @@ async function handleDelete(row: UserItem) {
     return
   }
 
-  await deleteUser(row.id)
+  const deleted = await deleteUser(row.id)
+  if (!deleted) {
+    ElMessage.warning('当前接口文档未提供用户删除接口，已阻止无效删除')
+    return
+  }
+
   ElMessage.success('账号已删除')
   await loadData()
+
   if (currentDetail.value?.id === row.id) {
     detailVisible.value = false
     currentDetail.value = null
   }
 }
 
-loadData()
+onMounted(() => {
+  void loadData()
+})
 </script>
 
 <template>
-  <PageContainer
-    title="用户管理"
-    subtitle="把个人、企业与复合身份账号放进统一队列里，集中处理查看、编辑、状态调整与删除。"
-  >
-    <StatsPanel :items="statCards" />
-
+  <PageContainer title="用户管理">
     <SearchForm
       v-model="queryForm"
       :fields="searchFields"
       @search="handleSearch"
-      @reset="loadData"
+      @reset="handleReset"
     />
 
     <TablePanel
-      title="账号列表"
-      description="统一查看账号主体、企业标签、认证状态与风险信息。"
+      title=""
       :total="total"
       :page-num="queryForm.pageNum"
       :page-size="queryForm.pageSize"
@@ -203,13 +218,25 @@ loadData()
       @update:page-size="queryForm.pageSize = $event"
       @pageChange="handlePageChange"
     >
+      <template #stats>
+        <button
+          v-for="item in accountStats"
+          :key="item.key"
+          type="button"
+          class="stats-switch"
+          :class="{ 'is-active': queryForm.userType === item.queryValue }"
+          @click="switchAccountType(item.queryValue)"
+        >
+          {{ item.label }}（{{ item.value }}）
+        </button>
+      </template>
+
       <el-table v-loading="loading" :data="tableData" border>
         <el-table-column prop="name" label="姓名 / 账号" min-width="140" />
         <el-table-column label="主体与当前身份" min-width="180">
           <template #default="{ row }">
             <div class="identity-cell">
-              <div>{{ row.userType === UserType.Personal ? '个人用户' : '企业用户' }}</div>
-              <!-- <div class="identity-sub">{{ row.currentIdentity || '-' }}</div> -->
+              <div>{{ getAccountGroupLabel(row) }}</div>
             </div>
           </template>
         </el-table-column>
@@ -262,7 +289,13 @@ loadData()
           </template>
         </el-table-column>
         <el-table-column prop="lastLoginTime" label="最近登录" min-width="160" />
-        <el-table-column label="操作" min-width="220" fixed="right" align="center" header-align="center">
+        <el-table-column
+          label="操作"
+          min-width="220"
+          fixed="right"
+          align="center"
+          header-align="center"
+        >
           <template #default="{ row }">
             <el-space wrap>
               <el-button text type="primary" @click="openDetail(row)">查看</el-button>
@@ -306,12 +339,12 @@ loadData()
           <el-descriptions-item label="统一社会信用代码">
             {{ currentDetail.socialCreditCode || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="角色">{{
-            currentDetail.roleNames.join(' / ')
-          }}</el-descriptions-item>
-          <el-descriptions-item label="备注">{{
-            currentDetail.remark || '-'
-          }}</el-descriptions-item>
+          <el-descriptions-item label="角色">
+            {{ currentDetail.roleNames.join(' / ') || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="备注">
+            {{ currentDetail.remark || '-' }}
+          </el-descriptions-item>
         </el-descriptions>
       </DetailSection>
     </el-drawer>
@@ -343,14 +376,24 @@ loadData()
 </template>
 
 <style scoped lang="scss">
-
 .identity-cell {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.identity-sub {
+.stats-switch {
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--dj-color-text-secondary);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.stats-switch.is-active {
+  color: var(--dj-color-text-primary);
+  font-weight: 600;
 }
 </style>

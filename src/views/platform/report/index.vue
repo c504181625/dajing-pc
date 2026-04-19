@@ -7,7 +7,6 @@ import { deleteReport, getReportList } from '@/api/modules/report'
 import PageContainer from '@/components/PageContainer.vue'
 import PermissionButton from '@/components-business/PermissionButton/index.vue'
 import SearchForm from '@/components-business/SearchForm/index.vue'
-import StatsPanel from '@/components-business/StatsPanel/index.vue'
 import StatusTag from '@/components-business/StatusTag/index.vue'
 import TablePanel from '@/components-business/TablePanel/index.vue'
 import { REPORT_STATUS_MAP } from '@/constants/dicts'
@@ -53,43 +52,18 @@ const searchFields = [
   },
 ]
 
-const statCards = computed(() => [
-  {
-    title: '待审核',
-    value: tableData.value.filter((item) => item.status === ReportStatus.Pending).length,
-  },
-  {
-    title: '抽查中',
-    value: tableData.value.filter((item) => item.status === ReportStatus.Reviewing).length,
-  },
-  {
-    title: '已发布',
-    value: tableData.value.filter((item) => item.status === ReportStatus.Published).length,
-  },
-  {
-    title: '已退回',
-    value: tableData.value.filter((item) => item.status === ReportStatus.Invalid).length,
-  },
-])
+const reportStats = computed(() => {
+  const pending = tableData.value.filter((item) => item.status === ReportStatus.Pending).length
+  const reviewing = tableData.value.filter((item) => item.status === ReportStatus.Reviewing).length
+  const published = tableData.value.filter((item) => item.status === ReportStatus.Published).length
 
-const displayStatCards = computed(() => [
-  {
-    ...statCards.value[0],
-    hint: '待平台完成审核或签章校验的报告',
-  },
-  {
-    ...statCards.value[1],
-    hint: '已进入抽查复核与风控检查阶段',
-  },
-  {
-    ...statCards.value[2],
-    hint: '已经发布并允许查看或下载的报告',
-  },
-  {
-    ...statCards.value[3],
-    hint: '退回修改或已作废处理的报告记录',
-  },
-])
+  return [
+    { key: 'all', label: '全部', value: total.value },
+    { key: ReportStatus.Pending, label: '待出具', value: pending },
+    { key: ReportStatus.Reviewing, label: '审核中', value: reviewing },
+    { key: ReportStatus.Published, label: '已发布', value: published },
+  ]
+})
 
 async function loadData() {
   loading.value = true
@@ -133,16 +107,11 @@ loadData()
 </script>
 
 <template>
-  <PageContainer
-    title="报告管理"
-    subtitle="报告列表负责检索与状态筛选，作废、隐藏、抽查等复杂动作进入详情页处理。"
-  >
-    <StatsPanel :items="displayStatCards" />
-
+  <PageContainer title="报告管理">
     <SearchForm v-model="queryForm" :fields="searchFields" @search="handleSearch" @reset="loadData" />
 
     <TablePanel
-      title="报告列表"
+      title=""
       :total="total"
       :page-num="queryForm.pageNum"
       :page-size="queryForm.pageSize"
@@ -150,6 +119,12 @@ loadData()
       @update:page-size="queryForm.pageSize = $event"
       @pageChange="handlePageChange"
     >
+      <template #stats>
+        <span v-for="item in reportStats" :key="item.key" class="table-stat">
+          {{ item.label }}（{{ item.value }}）
+        </span>
+      </template>
+
       <el-table v-loading="loading" :data="tableData" border>
         <el-table-column prop="reportNo" label="报告编号" min-width="180" />
         <el-table-column prop="orderNo" label="订单号" min-width="180" />
@@ -205,4 +180,10 @@ loadData()
   </PageContainer>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.table-stat {
+  color: var(--dj-color-text-primary);
+  font-size: 16px;
+  font-weight: 500;
+}
+</style>

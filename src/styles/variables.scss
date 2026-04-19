@@ -1,5 +1,6 @@
 :root {
   --dj-color-primary: #1f5eff;
+  --dj-color-primary-hover: #184fe1;
   --dj-color-success: #18a058;
   --dj-color-warning: #f0a020;
   --dj-color-danger: #d03050;
@@ -9,6 +10,13 @@
   --dj-color-border: #e5e6eb;
   --dj-color-bg-page: #f4f6f9;
   --dj-color-bg-card: #ffffff;
+  --dj-color-menu-active: linear-gradient(90deg, rgb(31 94 255 / 15%) 0%, rgb(31 94 255 / 5%) 100%);
+  --dj-color-menu-hover: rgb(31 94 255 / 7%);
+  --dj-color-header-bg: rgb(255 255 255 / 92%);
+  --dj-theme-page-decoration:
+    radial-gradient(circle at top right, rgb(31 94 255 / 12%), transparent 30%),
+    radial-gradient(circle at left top, rgb(103 152 255 / 8%), transparent 34%);
+  --dj-theme-page-decoration-size: cover, cover;
   --dj-sidebar-width: 236px;
   --dj-header-height: 72px;
   --dj-radius: 14px;

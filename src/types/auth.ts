@@ -45,6 +45,7 @@ export interface UploadFileItem {
   type?: string
   size?: number
   status?: 'success' | 'uploading' | 'fail'
+  raw?: File
 }
 
 export interface LoginFormBase {

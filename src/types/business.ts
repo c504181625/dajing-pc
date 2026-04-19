@@ -63,6 +63,7 @@ export interface AuditRecord extends OperationTimelineNode {
 export interface UserItem {
   id: string
   userType: UserType
+  accountGroup?: 'personal' | 'enterprise' | 'operator'
   accountType?: AccountType
   currentIdentity?: CurrentIdentity
   name: string

@@ -9,6 +9,7 @@ import {
   getContentCategories,
 } from '@/api/modules/content'
 import PageContainer from '@/components/PageContainer.vue'
+import CommunityTabsBar from '@/components-business/CommunityTabsBar/index.vue'
 import PermissionButton from '@/components-business/PermissionButton/index.vue'
 import SearchForm from '@/components-business/SearchForm/index.vue'
 import StatusTag from '@/components-business/StatusTag/index.vue'
@@ -18,7 +19,6 @@ import type { DictOption } from '@/types/business'
 import type {
   CommunityQuestionItem,
   ContentCategoryItem,
-  ContentQuestionForm,
   QuestionQuery,
 } from '@/types/content'
 
@@ -131,15 +131,15 @@ function handlePageChange() {
 }
 
 function goDetail(row: CommunityQuestionItem) {
-  router.push(`/operator/community/qa/detail/${row.id}`)
+  router.push(`/operator/business/community/qa/detail/${row.id}`)
 }
 
 function openCreate() {
-  router.push('/operator/community/qa/detail/create?mode=create')
+  router.push('/operator/business/community/qa/detail/create?mode=create')
 }
 
 function openEdit(row: CommunityQuestionItem) {
-  router.push(`/operator/community/qa/detail/${row.id}?mode=edit`)
+  router.push(`/operator/business/community/qa/detail/${row.id}?mode=edit`)
 }
 
 async function handleDelete(row: CommunityQuestionItem) {
@@ -162,7 +162,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <PageContainer title="社区问答" subtitle="统一查看问题主题、解决状态与互动热度。">
+  <PageContainer title="社区问答">
+    <CommunityTabsBar current="qa" />
     <SearchForm
       v-model="queryForm"
       :fields="searchFields"
@@ -172,7 +173,6 @@ onMounted(() => {
 
     <TablePanel
       title="问答列表"
-      description="支持新增问答、编辑内容并跳转到详情预览页。"
       :total="total"
       :page-num="queryForm.pageNum"
       :page-size="queryForm.pageSize"

@@ -41,10 +41,10 @@ const operatorMenuCodes = [
   MENU_CODE.operatorReport,
   MENU_CODE.operatorComment,
   MENU_CODE.operatorMessage,
+  MENU_CODE.operatorCommunity,
   MENU_CODE.operatorSystem,
   MENU_CODE.operatorRole,
-  MENU_CODE.operatorWorkflow,
-  MENU_CODE.operatorBaseConfig,
+  MENU_CODE.operatorSkin,
 ]
 
 const enterpriseBaseMenuCodes = [

@@ -96,11 +96,13 @@ function handleUserCommand(command: 'profile' | 'logout') {
     return
   }
 
+  const logoutPath = userStore.isPlatformUser ? '/operator-login' : '/login'
+
   userStore.logout()
   permissionStore.resetRoutes(router)
   messageStore.resetStats()
   ElMessage.success('已退出登录')
-  router.replace('/login')
+  router.replace(logoutPath)
 }
 </script>
 
@@ -132,6 +134,7 @@ function handleUserCommand(command: 'profile' | 'logout') {
         :name="userStore.userInfo?.name"
         :role-name="userIdentityText"
         :enterprise-name="userStore.userInfo?.enterpriseName"
+        :avatar="userStore.userInfo?.avatar"
         @command="handleUserCommand"
       />
     </div>
@@ -146,9 +149,9 @@ function handleUserCommand(command: 'profile' | 'logout') {
   justify-content: space-between;
   gap: 16px;
   padding: 0 24px;
-  background: rgb(255 255 255 / 92%);
+  background: var(--dj-color-header-bg);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgb(15 23 42 / 8%);
+  border-bottom: 1px solid color-mix(in srgb, var(--dj-color-border) 90%, var(--dj-color-primary) 10%);
 }
 
 .topbar-left {
@@ -168,8 +171,8 @@ function handleUserCommand(command: 'profile' | 'logout') {
   height: 40px;
   padding: 0 16px;
   border-radius: 14px;
-  border-color: rgb(84 135 255 / 28%);
-  background: linear-gradient(180deg, #fff 0%, #f4f8ff 100%);
+  border-color: color-mix(in srgb, var(--dj-color-primary) 28%, white);
+  background: linear-gradient(180deg, #fff 0%, color-mix(in srgb, white 88%, var(--dj-color-primary) 12%) 100%);
   color: var(--dj-color-primary);
   font-size: 13px;
   font-weight: 600;
@@ -178,8 +181,8 @@ function handleUserCommand(command: 'profile' | 'logout') {
 
 .topbar-back:hover,
 .topbar-back:focus-visible {
-  border-color: rgb(84 135 255 / 28%);
-  background: linear-gradient(180deg, #fff 0%, #f4f8ff 100%);
+  border-color: color-mix(in srgb, var(--dj-color-primary) 28%, white);
+  background: linear-gradient(180deg, #fff 0%, color-mix(in srgb, white 88%, var(--dj-color-primary) 12%) 100%);
   color: var(--dj-color-primary);
 }
 
@@ -189,9 +192,9 @@ function handleUserCommand(command: 'profile' | 'logout') {
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  border: 1px solid rgb(15 23 42 / 8%);
+  border: 1px solid color-mix(in srgb, var(--dj-color-border) 90%, var(--dj-color-primary) 10%);
   border-radius: 14px;
-  background: #fff;
+  background: var(--dj-color-bg-card);
   cursor: pointer;
   transition:
     border-color 0.2s ease,
@@ -200,8 +203,8 @@ function handleUserCommand(command: 'profile' | 'logout') {
 }
 
 .message-entry:hover {
-  border-color: rgb(31 94 255 / 28%);
-  box-shadow: 0 10px 24px rgb(31 94 255 / 8%);
+  border-color: color-mix(in srgb, var(--dj-color-primary) 28%, white);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--dj-color-primary) 8%, transparent);
   transform: translateY(-1px);
 }
 
@@ -211,7 +214,7 @@ function handleUserCommand(command: 'profile' | 'logout') {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: rgb(31 94 255 / 10%);
+  background: color-mix(in srgb, var(--dj-color-primary) 10%, white);
   color: var(--dj-color-primary);
   font-size: 18px;
 }

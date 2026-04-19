@@ -3,16 +3,11 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import {
-  deleteArticle,
-  getCommunityArticleList,
-  getCommunityOverview,
-  getContentCategories,
-} from '@/api/modules/content'
+import { deleteArticle, getCommunityArticleList, getContentCategories } from '@/api/modules/content'
 import PageContainer from '@/components/PageContainer.vue'
+import CommunityTabsBar from '@/components-business/CommunityTabsBar/index.vue'
 import PermissionButton from '@/components-business/PermissionButton/index.vue'
 import SearchForm from '@/components-business/SearchForm/index.vue'
-import StatsPanel from '@/components-business/StatsPanel/index.vue'
 import StatusTag from '@/components-business/StatusTag/index.vue'
 import TablePanel from '@/components-business/TablePanel/index.vue'
 import { ContentBizType, ContentPublishStatus } from '@/enum/content'
@@ -20,7 +15,6 @@ import { PERMISSION_CODE } from '@/enum/permission'
 import type { DictOption } from '@/types/business'
 import type {
   CommunityArticleItem,
-  CommunityOverviewData,
   ContentCategoryItem,
   ContentQuery,
 } from '@/types/content'
@@ -31,7 +25,6 @@ const loading = ref(false)
 const total = ref(0)
 const tableData = ref<CommunityArticleItem[]>([])
 const categories = ref<ContentCategoryItem[]>([])
-const overview = ref<CommunityOverviewData | null>(null)
 
 const queryForm = reactive<ContentQuery>({
   pageNum: 1,
@@ -66,35 +59,6 @@ const categoryOptions = computed(() =>
     .filter((item) => item.bizType === ContentBizType.News || item.bizType === ContentBizType.Knowledge)
     .map((item) => ({ label: item.name, value: item.code })),
 )
-
-const stats = computed(() => {
-  const publishedCount = tableData.value.filter((item) => item.status === ContentPublishStatus.Published).length
-  const recommendedCount = tableData.value.filter((item) => item.featured).length
-  const knowledgeCount = tableData.value.filter((item) => item.bizType === ContentBizType.Knowledge).length
-
-  return [
-    {
-      title: '当前列表内容数',
-      value: overview.value?.articleTotal ?? total.value,
-      hint: '统计全站资讯与知识文章内容总量',
-    },
-    {
-      title: '已发布内容',
-      value: publishedCount,
-      hint: '仅已发布资讯会在前台资讯中心展示',
-    },
-    {
-      title: '精选推荐',
-      value: recommendedCount,
-      hint: '可进入详情页维护推荐位与置顶展示',
-    },
-    {
-      title: '知识文章',
-      value: knowledgeCount,
-      hint: '与平台公告共用同一套内容数据模型',
-    },
-  ]
-})
 
 const searchFields = computed(() => [
   {
@@ -132,10 +96,6 @@ async function loadCategories() {
   categories.value = await getContentCategories()
 }
 
-async function loadOverview() {
-  overview.value = await getCommunityOverview()
-}
-
 async function loadData() {
   loading.value = true
   try {
@@ -148,7 +108,7 @@ async function loadData() {
 }
 
 async function refreshAll() {
-  await Promise.all([loadOverview(), loadData()])
+  await loadData()
 }
 
 function handleSearch() {
@@ -161,15 +121,15 @@ function handlePageChange() {
 }
 
 function openCreate() {
-  router.push('/operator/community/news/detail/create?mode=create')
+  router.push('/operator/business/community/news/detail/create?mode=create')
 }
 
 function openDetail(row: CommunityArticleItem) {
-  router.push(`/operator/community/news/detail/${row.id}`)
+  router.push(`/operator/business/community/news/detail/${row.id}`)
 }
 
 function openEdit(row: CommunityArticleItem) {
-  router.push(`/operator/community/news/detail/${row.id}?mode=edit`)
+  router.push(`/operator/business/community/news/detail/${row.id}?mode=edit`)
 }
 
 async function handleDelete(row: CommunityArticleItem) {
@@ -192,9 +152,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <PageContainer title="资讯管理" subtitle="面向平台管理员统一维护资讯公告、知识文章与发布状态。">
-    <StatsPanel :items="stats" />
-
+  <PageContainer title="资讯管理">
+    <CommunityTabsBar current="news" />
     <SearchForm
       v-model="queryForm"
       :fields="searchFields"
@@ -204,7 +163,6 @@ onMounted(() => {
 
     <TablePanel
       title="资讯列表"
-      description="支持新增、编辑、删除、预览与推荐运营设置。"
       :total="total"
       :page-num="queryForm.pageNum"
       :page-size="queryForm.pageSize"

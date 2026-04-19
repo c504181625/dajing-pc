@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
 import { computed, onMounted, reactive, ref } from 'vue'
@@ -44,7 +45,11 @@ async function handleSubmit() {
 
   saving.value = true
   try {
-    await saveCommunityQuestion(form)
+    const saved = await saveCommunityQuestion(form)
+    if (!saved) {
+      ElMessage.warning('当前接口仅支持新增提问，暂不支持当前提交方式')
+      return
+    }
     ElMessage.success('提问已提交')
     router.push('/community/qa')
   } finally {

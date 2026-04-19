@@ -1,4 +1,10 @@
-import type { AccountType, CurrentIdentity, EnterpriseCapability, EnterpriseTag } from '@/types/auth'
+import type {
+  AccountType,
+  CurrentIdentity,
+  EnterpriseCapability,
+  EnterpriseTag,
+  PlatformRole,
+} from '@/types/auth'
 
 export const ACCOUNT_TYPE = {
   personal: 'personal',
@@ -47,10 +53,15 @@ export const PLATFORM_ROLE_LABEL_MAP: Record<string, string> = {
   [PLATFORM_ROLE.auditor]: '平台审核员',
 }
 
-export function normalizeAccountType(accountType?: string): AccountType {
-  if (accountType === ACCOUNT_TYPE.legacyPlatformAdmin) {
+export function normalizeAccountType(accountType?: string | number | null): AccountType {
+  if (accountType === 4 || accountType === '4' || accountType === ACCOUNT_TYPE.legacyPlatformAdmin) {
     return ACCOUNT_TYPE.operator
   }
+
+  if (accountType === 1 || accountType === '1') return ACCOUNT_TYPE.enterprise
+  if (accountType === 2 || accountType === '2') return ACCOUNT_TYPE.enterprise
+  if (accountType === 3 || accountType === '3') return ACCOUNT_TYPE.enterprise
+  if (accountType === 0 || accountType === '0') return ACCOUNT_TYPE.personal
 
   if (
     accountType === ACCOUNT_TYPE.personal ||
@@ -69,7 +80,11 @@ export function isOperatorAccountType(accountType?: string) {
 
 export function normalizeEnterpriseTag(tag?: string): EnterpriseTag | null {
   if (tag === ENTERPRISE_TAG.demander) return ENTERPRISE_TAG.demander
-  if (tag === ENTERPRISE_TAG.provider || tag === ENTERPRISE_TAG.legacyProvider) {
+  if (
+    tag === ENTERPRISE_TAG.provider ||
+    tag === ENTERPRISE_TAG.legacyProvider ||
+    tag === 'institution'
+  ) {
     return ENTERPRISE_TAG.provider
   }
   return null
@@ -110,4 +125,18 @@ export function normalizeCurrentIdentity(identity?: string, accountType?: string
   }
 
   return normalizedAccountType === ACCOUNT_TYPE.enterprise ? 'enterprise' : 'personal'
+}
+
+export function normalizePlatformRole(role?: string | null): PlatformRole | undefined {
+  if (!role) return undefined
+
+  const normalizedRole = role.toLowerCase()
+
+  if (normalizedRole === PLATFORM_ROLE.superAdmin) return PLATFORM_ROLE.superAdmin
+  if (normalizedRole === PLATFORM_ROLE.platformAdmin || normalizedRole === 'operator') {
+    return PLATFORM_ROLE.platformAdmin
+  }
+  if (normalizedRole === PLATFORM_ROLE.auditor) return PLATFORM_ROLE.auditor
+
+  return undefined
 }

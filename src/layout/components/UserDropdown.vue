@@ -5,6 +5,7 @@ defineProps<{
   name?: string
   roleName?: string
   enterpriseName?: string
+  avatar?: string
 }>()
 
 const emit = defineEmits<{
@@ -21,7 +22,8 @@ const emit = defineEmits<{
   >
     <div class="user-dropdown">
       <div class="avatar">
-        <el-icon><User /></el-icon>
+        <img v-if="avatar" :src="avatar" alt="用户头像" class="avatar-image" />
+        <el-icon v-else><User /></el-icon>
       </div>
       <div class="meta">
         <div class="name">{{ name || '未登录用户' }}</div>
@@ -68,12 +70,19 @@ const emit = defineEmits<{
 .avatar {
   width: 38px;
   height: 38px;
+  overflow: hidden;
   display: grid;
   place-items: center;
   border-radius: 50%;
   color: var(--dj-color-primary);
   background: rgb(31 94 255 / 10%);
   font-size: 18px;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .meta {

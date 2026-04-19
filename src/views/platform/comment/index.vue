@@ -7,7 +7,6 @@ import PageContainer from '@/components/PageContainer.vue'
 import DetailSection from '@/components-business/DetailSection/index.vue'
 import PermissionButton from '@/components-business/PermissionButton/index.vue'
 import SearchForm from '@/components-business/SearchForm/index.vue'
-import StatsPanel from '@/components-business/StatsPanel/index.vue'
 import StatusTag from '@/components-business/StatusTag/index.vue'
 import TablePanel from '@/components-business/TablePanel/index.vue'
 import { COMMENT_STATUS_MAP } from '@/constants/dicts'
@@ -55,31 +54,16 @@ const searchFields = [
   },
 ]
 
-const statCards = computed(() => [
-  { title: '五星', value: tableData.value.filter((item) => item.score === 5).length },
-  { title: '低分', value: tableData.value.filter((item) => item.score <= 2).length },
-  { title: '待申诉', value: tableData.value.filter((item) => item.appealStatus === 'pending').length },
-  { title: '违规', value: tableData.value.filter((item) => item.violated).length },
-])
+const commentStats = computed(() => {
+  const highScore = tableData.value.filter((item) => item.score >= 4).length
+  const appealed = tableData.value.filter((item) => item.appealStatus && item.appealStatus !== 'none').length
 
-const displayStatCards = computed(() => [
-  {
-    ...statCards.value[0],
-    hint: '高分好评与优质服务体验的集中反馈',
-  },
-  {
-    ...statCards.value[1],
-    hint: '低分评价与重点质量风险反馈记录',
-  },
-  {
-    ...statCards.value[2],
-    hint: '等待平台介入处理的申诉评价',
-  },
-  {
-    ...statCards.value[3],
-    hint: '已标记违规或需要重点复核的评价',
-  },
-])
+  return [
+    { key: 'all', label: '全部', value: total.value },
+    { key: 'high', label: '高分评价', value: highScore },
+    { key: 'appeal', label: '有申诉', value: appealed },
+  ]
+})
 
 async function loadData() {
   loading.value = true
@@ -121,16 +105,11 @@ loadData()
 </script>
 
 <template>
-  <PageContainer
-    title="评价管理"
-    subtitle="围绕评分、申诉与违规处理统一管理评价记录，详情采用右侧滑出查看。"
-  >
-    <StatsPanel :items="displayStatCards" />
-
+  <PageContainer title="评价管理">
     <SearchForm v-model="queryForm" :fields="searchFields" @search="handleSearch" @reset="loadData" />
 
     <TablePanel
-      title="评价列表"
+      title=""
       :total="total"
       :page-num="queryForm.pageNum"
       :page-size="queryForm.pageSize"
@@ -138,6 +117,12 @@ loadData()
       @update:page-size="queryForm.pageSize = $event"
       @pageChange="handlePageChange"
     >
+      <template #stats>
+        <span v-for="item in commentStats" :key="item.key" class="table-stat">
+          {{ item.label }}（{{ item.value }}）
+        </span>
+      </template>
+
       <el-table v-loading="loading" :data="tableData" border>
         <el-table-column prop="orderNo" label="订单号" min-width="180" />
         <el-table-column prop="enterpriseName" label="企业名称" min-width="180" />
@@ -191,4 +176,10 @@ loadData()
   </PageContainer>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.table-stat {
+  color: var(--dj-color-text-primary);
+  font-size: 16px;
+  font-weight: 500;
+}
+</style>

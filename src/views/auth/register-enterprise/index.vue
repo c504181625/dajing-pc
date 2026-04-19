@@ -72,7 +72,7 @@ async function handleSendCode() {
 
 async function handleSubmit() {
   if (!USERNAME_PATTERN.test(form.username)) {
-    ElMessage.warning('用户名需为 4-20 位字母、数字或下划线')
+    ElMessage.warning('用户名需为 4-20 位中文、字母、数字或下划线')
     return
   }
   if (!MOBILE_PATTERN.test(form.mobile)) {

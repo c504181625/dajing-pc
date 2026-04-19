@@ -67,7 +67,7 @@ export const AUTH_RESULT_MAP: Record<AuthStatus, AuthResultInfo> = {
   },
 }
 
-export const USERNAME_PATTERN = /^[A-Za-z0-9_]{4,20}$/
+export const USERNAME_PATTERN = /^[\u4e00-\u9fa5A-Za-z0-9_]{2,20}$/
 export const MOBILE_PATTERN = /^1[3-9]\d{9}$/
 export const UNIFIED_SOCIAL_CODE_PATTERN = /^[0-9A-Z]{18}$/
 export const PASSWORD_STRENGTH_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&._-]{8,20}$/

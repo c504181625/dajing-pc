@@ -8,7 +8,7 @@ import {
   loginByMobile,
   loginByPassword,
 } from '@/api/modules/auth'
-import { MENU_CODE } from '@/enum/permission'
+import { MENU_CODE, PERMISSION_CODE } from '@/enum/permission'
 import {
   ACCOUNT_TYPE,
   ENTERPRISE_CAPABILITY,
@@ -21,7 +21,6 @@ import type {
   AuthLoginResponse,
   CurrentUser,
   EnterpriseCapability,
-  EnterpriseTag,
   LoginCreditCodeCommand,
   LoginEmailCommand,
   LoginMobileCommand,
@@ -32,7 +31,7 @@ import { getAccessToken, removeAccessToken, setAccessToken } from '@/utils/auth'
 
 function getDefaultLandingPath(user?: CurrentUser | null) {
   if (!user) return '/login'
-  if (user.homeRoute) return user.homeRoute
+  // if (user.homeRoute) return user.homeRoute // Ignore backend route, use account type defaults
 
   if (user.accountType === ACCOUNT_TYPE.operator) return '/operator/dashboard'
   if (user.accountType === ACCOUNT_TYPE.enterprise) return '/enterprise/dashboard'
@@ -52,10 +51,10 @@ function getDefaultMenuCodes(user: Pick<CurrentUser, 'accountType' | 'enterprise
       MENU_CODE.operatorReport,
       MENU_CODE.operatorComment,
       MENU_CODE.operatorMessage,
+      MENU_CODE.operatorCommunity,
       MENU_CODE.operatorSystem,
       MENU_CODE.operatorRole,
-      MENU_CODE.operatorWorkflow,
-      MENU_CODE.operatorBaseConfig,
+      MENU_CODE.operatorSkin,
     ]
   }
 
@@ -93,16 +92,104 @@ function getDefaultMenuCodes(user: Pick<CurrentUser, 'accountType' | 'enterprise
   ]
 }
 
+function getDefaultPermissionCodes(user: Pick<CurrentUser, 'accountType' | 'enterpriseTags'>) {
+  if (user.accountType === ACCOUNT_TYPE.operator) {
+    return [
+      PERMISSION_CODE.operatorDashboardView,
+      PERMISSION_CODE.operatorUserView,
+      PERMISSION_CODE.operatorUserEdit,
+      PERMISSION_CODE.operatorEnterpriseAuditView,
+      PERMISSION_CODE.operatorEnterpriseAuditApprove,
+      PERMISSION_CODE.operatorDemandView,
+      PERMISSION_CODE.operatorDemandAssign,
+      PERMISSION_CODE.operatorConsultView,
+      PERMISSION_CODE.operatorConsultHandle,
+      PERMISSION_CODE.operatorOrderView,
+      PERMISSION_CODE.operatorOrderHandle,
+      PERMISSION_CODE.operatorReportView,
+      PERMISSION_CODE.operatorReportAudit,
+      PERMISSION_CODE.operatorCommentView,
+      PERMISSION_CODE.operatorCommentHandle,
+      PERMISSION_CODE.operatorMessageView,
+      PERMISSION_CODE.operatorRoleView,
+      PERMISSION_CODE.operatorRoleEdit,
+      PERMISSION_CODE.operatorSkinView,
+      PERMISSION_CODE.operatorSkinEdit,
+      PERMISSION_CODE.contentManageView,
+      PERMISSION_CODE.dictionaryManageView,
+      PERMISSION_CODE.operationLogView,
+    ]
+  }
+
+  if (user.accountType === ACCOUNT_TYPE.enterprise) {
+    const basePermissions = [
+      PERMISSION_CODE.enterpriseDashboardView,
+      PERMISSION_CODE.enterpriseProfileView,
+      PERMISSION_CODE.enterpriseProfileEdit,
+      PERMISSION_CODE.enterpriseDemandView,
+      PERMISSION_CODE.enterpriseDemandPublish,
+      PERMISSION_CODE.enterpriseDemandEdit,
+      PERMISSION_CODE.enterpriseOrderView,
+      PERMISSION_CODE.enterpriseReportView,
+      PERMISSION_CODE.enterpriseMessageView,
+      PERMISSION_CODE.enterpriseAccountSettingsView,
+    ]
+
+    if (!user.enterpriseTags.includes(ENTERPRISE_CAPABILITY.serviceProvider)) {
+      return basePermissions
+    }
+
+    return [
+      ...basePermissions,
+      PERMISSION_CODE.enterpriseDemandHandle,
+      PERMISSION_CODE.enterpriseOrderReceive,
+      PERMISSION_CODE.enterpriseOrderHandle,
+      PERMISSION_CODE.enterpriseReportHandle,
+      PERMISSION_CODE.enterpriseServiceCapabilityView,
+      PERMISSION_CODE.enterpriseServiceCapabilityEdit,
+      PERMISSION_CODE.enterpriseServiceProjectView,
+      PERMISSION_CODE.enterpriseServiceProjectManage,
+      PERMISSION_CODE.enterpriseQualificationView,
+      PERMISSION_CODE.enterpriseQualificationSubmit,
+      PERMISSION_CODE.enterpriseProviderQualificationSubmit,
+      PERMISSION_CODE.enterpriseServiceShelf,
+    ]
+  }
+
+  return [
+    PERMISSION_CODE.personalDashboardView,
+    PERMISSION_CODE.personalDemandView,
+    PERMISSION_CODE.personalDemandPublish,
+    PERMISSION_CODE.personalDemandEdit,
+    PERMISSION_CODE.personalOrderView,
+    PERMISSION_CODE.personalMessageView,
+    PERMISSION_CODE.personalProfileView,
+    PERMISSION_CODE.personalProfileEdit,
+    PERMISSION_CODE.personalEnterpriseUpgradeView,
+    PERMISSION_CODE.personalEnterpriseUpgradeSubmit,
+  ]
+}
+
 function normalizeUserInfo(user: CurrentUser) {
   const accountType = normalizeAccountType(user.accountType)
   const enterpriseTags = normalizeEnterpriseTags(
     user.enterpriseTags?.length ? user.enterpriseTags : user.enterpriseCapabilities,
   )
-  const permissionCodes = Array.from(new Set(user.permissionCodes || []))
-  const menuCodes = Array.from(
-    new Set(user.menuCodes?.length ? user.menuCodes : getDefaultMenuCodes({ accountType, enterpriseTags })),
+  const permissionCodes = Array.from(
+    new Set(
+      [
+        ...getDefaultPermissionCodes({ accountType, enterpriseTags }),
+        ...(user.permissionCodes || []),
+      ],
+    ),
   )
-  const homeRoute = user.homeRoute || getDefaultLandingPath({ ...user, accountType, enterpriseTags } as CurrentUser)
+  const menuCodes = Array.from(
+    new Set([
+      ...getDefaultMenuCodes({ accountType, enterpriseTags }),
+      ...(user.menuCodes || []),
+    ]),
+  )
+  const homeRoute = getDefaultLandingPath({ ...user, accountType, enterpriseTags } as CurrentUser)
 
   return {
     ...user,
@@ -170,9 +257,10 @@ export const useUserStore = defineStore(
       return res
     }
 
-    async function fetchCurrentUser() {
+    async function fetchCurrentUser(force = false) {
       if (!token.value) return null
-      if (userInfo.value) {
+      if (userInfo.value && !force) {
+        userInfo.value = normalizeUserInfo(userInfo.value)
         userLoaded.value = true
         return userInfo.value
       }

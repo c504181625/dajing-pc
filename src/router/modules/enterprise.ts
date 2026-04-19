@@ -12,7 +12,7 @@ export const enterpriseRoutes: RouteRecordRaw = {
   component: Layout,
   redirect: '/enterprise/dashboard',
   meta: {
-    title: '企业后台',
+    title: '企业/机构后台',
     icon: 'OfficeBuilding',
     accountTypes: enterpriseAccountTypes,
   },
@@ -143,6 +143,18 @@ export const enterpriseRoutes: RouteRecordRaw = {
         accountTypes: enterpriseAccountTypes,
         permissions: [PERMISSION_CODE.enterpriseMessageView],
         menuCode: MENU_CODE.enterpriseMessage,
+      },
+    },
+    {
+      path: 'consult',
+      name: 'EnterpriseConsult',
+      component: () => import('@/views/merchant/consult/index.vue'),
+      meta: {
+        title: '客户咨询',
+        hidden: true,
+        activeMenu: '/enterprise/dashboard',
+        accountTypes: enterpriseAccountTypes,
+        permissions: [PERMISSION_CODE.enterpriseConsultView],
       },
     },
     {

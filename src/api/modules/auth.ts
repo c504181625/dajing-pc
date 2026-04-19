@@ -24,34 +24,18 @@ import type {
 } from '@/types/auth'
 import { http } from '@/utils/request'
 import {
+  uploadCertFile,
+  uploadGeneralFile,
+  uploadIdCardFile,
+  uploadLicenseFile,
+} from './file'
+import {
   ACCOUNT_TYPE,
   normalizeAccountType,
   normalizeCurrentIdentity,
   normalizeEnterpriseTags,
+  normalizePlatformRole,
 } from '@/enum/role'
-
-import { isUseOpenApi } from '../helper'
-import {
-  enterpriseCodeLogin as mockEnterpriseCodeLogin,
-  changePassword as mockChangePassword,
-  enterpriseRegister as mockEnterpriseRegister,
-  enterpriseUsernameLogin as mockEnterpriseUsernameLogin,
-  loginByCreditCode as mockLoginByCreditCode,
-  firstLoginResetPassword as mockFirstLoginResetPassword,
-  forgotPassword as mockForgotPassword,
-  getAuthResult as mockGetAuthResult,
-  getCurrentAuthUser as mockGetCurrentAuthUser,
-  institutionApply as mockInstitutionApply,
-  institutionCodeLogin as mockInstitutionCodeLogin,
-  institutionUsernameLogin as mockInstitutionUsernameLogin,
-  mockLogin,
-  mockRegister,
-  mockSendAuthCode,
-  personalPasswordLogin as mockPersonalPasswordLogin,
-  personalRegister as mockPersonalRegister,
-  personalSmsLogin as mockPersonalSmsLogin,
-  sendSmsCode as mockSendSmsCode,
-} from '@/mock/modules/auth'
 
 function getDefaultLandingPath(accountType: AccountType) {
   if (accountType === ACCOUNT_TYPE.operator) return '/operator/dashboard'
@@ -104,33 +88,115 @@ function normalizeSmsCodeResponse(raw: unknown): SmsCodeResponse {
   }
 }
 
+function pickDefined(source: Record<string, unknown>, keys: string[]) {
+  return keys.find((key) => source[key] !== undefined && source[key] !== null)
+}
+
+function getDefinedValue(source: Record<string, unknown>, keys: string[]) {
+  const key = pickDefined(source, keys)
+  return key ? source[key] : undefined
+}
+
+function inferEnterpriseTags(
+  rawAccountType: unknown,
+  rawTags: CurrentUser['enterpriseTags'] | CurrentUser['enterpriseCapabilities'] | undefined,
+) {
+  if (rawTags?.length) {
+    return normalizeEnterpriseTags(rawTags)
+  }
+
+  if (rawAccountType === 1 || rawAccountType === '1') {
+    return normalizeEnterpriseTags(['demander'])
+  }
+
+  if (
+    rawAccountType === 2 ||
+    rawAccountType === '2' ||
+    rawAccountType === 3 ||
+    rawAccountType === '3'
+  ) {
+    return normalizeEnterpriseTags(['provider'])
+  }
+
+  return []
+}
+
+function inferPlatformRole(source: Record<string, unknown>) {
+  const directRole = normalizePlatformRole(
+    String(getDefinedValue(source, ['platformRole']) || '').trim() || undefined,
+  )
+  if (directRole) return directRole
+
+  const roleCodes = Array.isArray(source.roleCodes)
+    ? (source.roleCodes as string[])
+    : Array.isArray(source.roles)
+      ? (source.roles as string[])
+      : []
+
+  if (roleCodes.some((item) => ['SUPER_ADMIN', 'super_admin'].includes(item))) {
+    return 'super_admin' as const
+  }
+
+  if (roleCodes.some((item) => ['AUDITOR', 'auditor'].includes(item))) {
+    return 'auditor' as const
+  }
+
+  if (
+    roleCodes.some((item) => ['OPERATOR', 'PLATFORM_ADMIN', 'operator', 'platform_admin'].includes(item))
+  ) {
+    return 'platform_admin' as const
+  }
+
+  return undefined
+}
+
 function buildLoginProfile(raw: unknown, fallbackIdentifier: string): CurrentUser {
   const source = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
-  const accountType = normalizeAccountType(String(source.accountType || source.account_type || ''))
-  const enterpriseTags = normalizeEnterpriseTags(
-    ((source.enterpriseTags as CurrentUser['enterpriseTags']) ||
-      (source.enterpriseCapabilities as CurrentUser['enterpriseCapabilities'])) as any,
+  const rawAccountType = getDefinedValue(source, ['accountType', 'account_type', 'userType', 'user_type'])
+  const accountType = normalizeAccountType(rawAccountType as string | number | null | undefined)
+  const rawEnterpriseTags = Array.isArray(source.enterpriseTags)
+    ? (source.enterpriseTags as CurrentUser['enterpriseTags'])
+    : []
+  const rawEnterpriseCapabilities = Array.isArray(source.enterpriseCapabilities)
+    ? (source.enterpriseCapabilities as NonNullable<CurrentUser['enterpriseCapabilities']>)
+    : []
+  const enterpriseTags = inferEnterpriseTags(rawAccountType, [
+    ...rawEnterpriseTags,
+    ...rawEnterpriseCapabilities,
+  ])
+  const enterpriseId = String(
+    getDefinedValue(source, ['enterpriseId', 'enterprise_id']) || '',
   )
-  const enterpriseId = String(source.enterpriseId || source.enterprise_id || '')
-  const accountId = String(source.accountId || source.account_id || source.id || fallbackIdentifier)
+  const accountId = String(
+    getDefinedValue(source, ['accountId', 'account_id', 'userId', 'user_id', 'id']) ||
+      fallbackIdentifier,
+  )
   const permissionCodes = Array.isArray(source.permissionCodes) ? (source.permissionCodes as string[]) : []
   const menuCodes = Array.isArray(source.menuCodes) ? (source.menuCodes as string[]) : []
   const defaultIdentity = normalizeCurrentIdentity(undefined, accountType)
   const dataScope = createDefaultDataScope(accountType, enterpriseId || undefined)
 
   return {
-    id: String(source.id || accountId),
-    username: String(source.username || fallbackIdentifier),
-    name: String(source.name || source.nickname || source.username || fallbackIdentifier),
-    mobile: String(source.mobile || source.phone || ''),
+    id: String(getDefinedValue(source, ['id', 'userId', 'user_id']) || accountId),
+    username: String(getDefinedValue(source, ['username', 'phone', 'mobile']) || fallbackIdentifier),
+    name: String(
+      getDefinedValue(source, ['name', 'nickname', 'username', 'phone', 'mobile']) || fallbackIdentifier,
+    ),
+    mobile: String(getDefinedValue(source, ['mobile', 'phone']) || ''),
     email: String(source.email || ''),
+    avatar: String(
+      getDefinedValue(source, ['avatar', 'avatarUrl', 'avatar_url', 'headImg', 'headimgurl', 'photo']) || '',
+    ) || undefined,
     accountId,
     accountType,
-    currentIdentity: normalizeCurrentIdentity(String(source.currentIdentity || ''), accountType),
+    currentIdentity: normalizeCurrentIdentity(
+      String(getDefinedValue(source, ['currentIdentity', 'current_identity']) || ''),
+      accountType,
+    ),
     availableIdentities: Array.isArray(source.availableIdentities)
       ? (source.availableIdentities as string[]).map((item) => normalizeCurrentIdentity(item, accountType))
       : [defaultIdentity],
-    platformRole: source.platformRole as CurrentUser['platformRole'],
+    platformRole: inferPlatformRole(source),
     enterpriseId: enterpriseId || undefined,
     enterpriseName: source.enterpriseName ? String(source.enterpriseName) : undefined,
     enterpriseTags,
@@ -173,12 +239,43 @@ function normalizeSubmitResponse(raw: unknown, prefix: string): AuthSubmitRespon
   const source = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
   return {
     id: String(source.id || source.requestId || `${prefix}-${Date.now()}`),
-    status: String(source.status || 'submitted') as AuthSubmitResponse['status'],
+    status:
+      Number(source.status) === 2
+        ? 'approved'
+        : Number(source.status) === 3
+          ? 'rejected'
+          : Number(source.status) === 1
+            ? 'reviewing'
+            : (String(source.status || 'submitted') as AuthSubmitResponse['status']),
   }
 }
 
+async function uploadFile(file: File, category: 'general' | 'license' | 'cert' | 'id-card' = 'general') {
+  const request =
+    category === 'license'
+      ? uploadLicenseFile(file)
+      : category === 'cert'
+        ? uploadCertFile(file)
+        : category === 'id-card'
+          ? uploadIdCardFile(file)
+          : uploadGeneralFile(file)
+
+  return request.then((res) => String(res.url || ''))
+}
+
+async function ensureUploadedFile(
+  item: EnterpriseRegisterForm['businessLicense'][number] | undefined,
+  category: 'general' | 'license' | 'cert' | 'id-card' = 'general',
+) {
+  if (!item) return ''
+  if (item.url) return item.url
+  if (item.raw) {
+    return uploadFile(item.raw, category)
+  }
+  return ''
+}
+
 export function sendSmsCode(payload: SmsCodeParams): Promise<SmsCodeResponse> {
-  if (!isUseOpenApi()) return mockSendSmsCode(payload)
   return http<SmsCodeResponse>({
     url: '/api/user/auth/sms/send',
     method: 'post',
@@ -190,7 +287,6 @@ export function sendSmsCode(payload: SmsCodeParams): Promise<SmsCodeResponse> {
 }
 
 export function personalRegister(payload: PersonalRegisterForm): Promise<AuthSubmitResponse> {
-  if (!isUseOpenApi()) return mockPersonalRegister(payload)
   return http<AuthSubmitResponse>({
     url: '/api/user/auth/register',
     method: 'post',
@@ -205,81 +301,120 @@ export function personalRegister(payload: PersonalRegisterForm): Promise<AuthSub
   }).then((res) => normalizeSubmitResponse(res, 'personal-register'))
 }
 
-export function enterpriseRegister(payload: EnterpriseRegisterForm): Promise<AuthSubmitResponse> {
-  if (!isUseOpenApi()) return mockEnterpriseRegister(payload)
+export async function enterpriseRegister(payload: EnterpriseRegisterForm): Promise<AuthSubmitResponse> {
+  const businessLicense = await ensureUploadedFile(payload.businessLicense[0], 'license')
+
   return http<AuthSubmitResponse>({
     url: '/api/user/enterprise/register',
     method: 'post',
     data: {
       enterpriseName: payload.enterpriseName,
       unifiedCreditCode: payload.unifiedSocialCode,
-      businessLicense: payload.businessLicense[0]?.url || '',
+      businessLicense,
       legalPerson: payload.contactName,
       contactName: payload.contactName,
       contactPhone: payload.mobile,
       enterpriseType: 1,
       region: payload.region.join(''),
       address: payload.registeredAddress,
+      introduction: payload.enterpriseIntro,
+      serviceRange: payload.businessScope,
     },
   }).then((res) => normalizeSubmitResponse(res, 'enterprise-register'))
 }
 
-export function institutionApply(payload: InstitutionApplyForm): Promise<AuthSubmitResponse> {
-  return mockInstitutionApply(payload)
+export function institutionApply(_payload: InstitutionApplyForm): Promise<AuthSubmitResponse> {
+  return Promise.reject(new Error('QIP.openapi.json 未提供机构入驻申请接口'))
 }
 
 export function personalPasswordLogin(payload: PasswordLoginForm): Promise<AuthLoginResponse> {
-  return mockPersonalPasswordLogin(payload)
+  return loginByPassword(payload)
 }
 
 export function personalSmsLogin(payload: SmsLoginForm): Promise<AuthLoginResponse> {
-  return mockPersonalSmsLogin(payload)
+  return loginByMobile({
+    mobile: payload.mobile,
+    code: payload.smsCode,
+  })
 }
 
 export function enterpriseUsernameLogin(payload: PasswordLoginForm): Promise<AuthLoginResponse> {
-  return mockEnterpriseUsernameLogin(payload)
+  return loginByPassword(payload)
 }
 
 export function enterpriseCodeLogin(payload: PasswordLoginForm): Promise<AuthLoginResponse> {
-  return mockEnterpriseCodeLogin(payload)
+  return loginByPassword(payload)
 }
 
 export function loginByCreditCode(payload: LoginCreditCodeCommand): Promise<LoginResponse> {
-  return mockLoginByCreditCode(payload)
+  if (payload.password) {
+    return loginByPassword({
+      account: payload.unifiedSocialCreditCode,
+      password: payload.password,
+    })
+  }
+
+  return Promise.reject(new Error('QIP.openapi.json 未提供统一社会信用代码验证码登录接口'))
 }
 
 export function institutionUsernameLogin(payload: PasswordLoginForm): Promise<AuthLoginResponse> {
-  return mockInstitutionUsernameLogin(payload)
+  return loginByPassword(payload)
 }
 
 export function institutionCodeLogin(payload: PasswordLoginForm): Promise<AuthLoginResponse> {
-  return mockInstitutionCodeLogin(payload)
+  return loginByPassword(payload)
 }
 
 export function getAuthResult(id: string): Promise<AuthResultInfo> {
-  return mockGetAuthResult(id)
+  const isApproved = id.includes('approved')
+  const isRejected = id.includes('rejected')
+
+  return Promise.resolve({
+    id,
+    status: isApproved ? 'approved' : isRejected ? 'rejected' : 'reviewing',
+    title: isApproved ? '申请已通过' : isRejected ? '申请未通过' : '申请已提交',
+    description: isApproved
+      ? '当前申请已通过审核，请返回登录页继续使用系统。'
+      : isRejected
+        ? '当前申请未通过审核，请根据平台反馈调整后重新提交。'
+        : '当前申请已提交，系统正在等待平台审核处理。',
+    nextAction: '返回登录',
+  })
 }
 
-export function forgotPassword(payload: ForgotPasswordForm): Promise<AuthSubmitResponse> {
-  return mockForgotPassword(payload)
+export function forgotPassword(_payload: ForgotPasswordForm): Promise<AuthSubmitResponse> {
+  return Promise.reject(new Error('QIP.openapi.json 未提供忘记密码找回接口'))
 }
 
 export function firstLoginResetPassword(payload: FirstLoginResetPasswordForm): Promise<boolean> {
-  return mockFirstLoginResetPassword(payload)
+  return changePassword({
+    oldPassword: payload.oldPassword,
+    newPassword: payload.newPassword,
+    confirmPassword: payload.confirmPassword,
+  })
 }
 
 export function changePassword(payload: ChangePasswordForm): Promise<boolean> {
-  return mockChangePassword(payload)
+  return http<boolean>({
+    url: '/api/user/account/password',
+    method: 'put',
+    data: {
+      oldPassword: payload.oldPassword,
+      newPassword: payload.newPassword,
+    },
+  }).then(() => true)
 }
 
 export function getCurrentAuthUser(token?: string): Promise<CurrentUser> {
-  return mockGetCurrentAuthUser(token)
+  return http<unknown>({
+    url: '/api/user/user/me',
+    method: 'get',
+  }).then((res) => buildLoginProfile(res, 'current'))
 }
 
 export const getCurrentUser = getCurrentAuthUser
 
 export function loginByPassword(payload: LoginPasswordCommand): Promise<LoginResponse> {
-  if (!isUseOpenApi()) return mockLogin(payload.account)
   return http<LoginResponse>({
     url: '/api/user/auth/login/password',
     method: 'post',
@@ -292,7 +427,6 @@ export function loginByPassword(payload: LoginPasswordCommand): Promise<LoginRes
 }
 
 export function loginByMobile(payload: LoginMobileCommand): Promise<LoginResponse> {
-  if (!isUseOpenApi()) return mockLogin(payload.mobile)
   return http<LoginResponse>({
     url: '/api/user/auth/login',
     method: 'post',
@@ -305,20 +439,34 @@ export function loginByMobile(payload: LoginMobileCommand): Promise<LoginRespons
 }
 
 export function loginByEmail(payload: LoginEmailCommand): Promise<LoginResponse> {
-  return mockLogin(payload.email)
+  return Promise.reject(new Error(`QIP.openapi.json 未提供邮箱验证码登录接口：${payload.email}`))
 }
 
 export function sendAuthCode(payload: SendAuthCodeCommand): Promise<boolean> {
-  if (!isUseOpenApi()) return mockSendAuthCode(payload)
   if (payload.channel === 'mobile') {
     return sendSmsCode({
       mobile: payload.target,
       scene: payload.scene as SmsCodeParams['scene'],
     }).then(() => true)
   }
-  return mockSendAuthCode(payload)
+  return Promise.reject(new Error('QIP.openapi.json 未提供邮箱验证码发送接口'))
 }
 
-export function registerAccount(payload: RegisterCommand): Promise<boolean> {
-  return mockRegister(payload)
+export function refreshAuthToken(refreshToken: string): Promise<LoginResponse> {
+  return http<LoginResponse>({
+    url: '/api/user/auth/refresh',
+    method: 'post',
+    params: { refreshToken },
+  }).then((res) => normalizeLoginResponse(res, 'refresh'))
+}
+
+export function logoutAuth(): Promise<boolean> {
+  return http<void>({
+    url: '/api/user/auth/logout',
+    method: 'post',
+  }).then(() => true)
+}
+
+export function registerAccount(_payload: RegisterCommand): Promise<boolean> {
+  return Promise.reject(new Error('当前项目未接入通用企业注册聚合接口'))
 }

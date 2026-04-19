@@ -9,7 +9,6 @@ import {
   saveCommunityArticle,
 } from '@/api/modules/content'
 import PageContainer from '@/components/PageContainer.vue'
-import ActionPanel from '@/components-business/ActionPanel/index.vue'
 import SectionCard from '@/components-business/SectionCard/index.vue'
 import StatusTag from '@/components-business/StatusTag/index.vue'
 import { ContentBizType, ContentPublishStatus } from '@/enum/content'
@@ -102,12 +101,12 @@ async function loadDetail() {
 }
 
 function handleBackList() {
-  router.push('/operator/community/news')
+  router.push('/operator/business/community-home?tab=news')
 }
 
 function openPreview() {
   if (!isCreate.value) {
-    router.push(`/operator/community/preview/news/${String(route.params.id)}`)
+    router.push(`/operator/business/community/preview/news/${String(route.params.id)}`)
   }
 }
 
@@ -142,7 +141,7 @@ async function handleSave() {
     ElMessage.success(isCreate.value ? '资讯已新增' : '资讯已保存')
 
     if (isCreate.value) {
-      router.push('/operator/community/news')
+      router.push('/operator/business/community-home?tab=news')
       return
     }
 
@@ -159,130 +158,174 @@ onMounted(() => {
 </script>
 
 <template>
-  <PageContainer>
-    <el-row :gutter="16">
-      <el-col :span="16">
-        <SectionCard title="内容信息" description="在详情页直接维护资讯标题、分类、摘要与推荐状态。">
-          <el-form label-position="top">
-            <div class="edit-grid">
-              <el-form-item label="内容类型">
-                <el-radio-group v-model="form.bizType" :disabled="!isEditing">
-                  <el-radio :value="ContentBizType.News">资讯公告</el-radio>
-                  <el-radio :value="ContentBizType.Knowledge">知识文章</el-radio>
-                </el-radio-group>
-              </el-form-item>
-              <el-form-item label="文章分类">
-                <el-select v-model="form.categoryCode" :disabled="!isEditing" style="width: 100%">
-                  <el-option
-                    v-for="item in categoryOptions"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="文章标题" class="edit-grid-span-2">
-                <el-input v-model="form.title" :disabled="!isEditing" />
-              </el-form-item>
-              <el-form-item label="摘要" class="edit-grid-span-2">
-                <el-input v-model="form.summary" :disabled="!isEditing" type="textarea" :rows="5" />
-              </el-form-item>
-              <el-form-item label="精选推荐">
-                <el-switch v-model="form.featured" :disabled="!isEditing" />
-              </el-form-item>
-              <el-form-item v-if="detail" label="发布状态">
-                <div class="status-wrap">
-                  <StatusTag :status="detail.status" :map="publishStatusMap" />
-                </div>
-              </el-form-item>
-            </div>
-          </el-form>
-        </SectionCard>
+  <PageContainer :title="pageTitle">
+    <template #extra>
+      <el-button @click="handleBackList">返回列表</el-button>
+    </template>
 
-        <SectionCard title="页面预览" description="按资讯详情页形式查看内容预览区块。">
-          <article class="article-preview">
-            <div class="article-top">
-              <div class="article-tags">
-                <el-tag effect="plain">{{ currentCategoryName }}</el-tag>
-                <el-tag effect="light">
-                  {{ form.bizType === ContentBizType.News ? '资讯公告' : '知识文章' }}
-                </el-tag>
-                <el-tag v-if="form.featured" type="warning" effect="light">推荐</el-tag>
+    <div class="detail-stack">
+      <SectionCard title="内容信息">
+        <el-form label-position="top">
+          <div class="edit-grid">
+            <el-form-item label="内容类型">
+              <el-radio-group v-model="form.bizType" :disabled="!isEditing">
+                <el-radio :value="ContentBizType.News">资讯公告</el-radio>
+                <el-radio :value="ContentBizType.Knowledge">知识文章</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="文章分类">
+              <el-select v-model="form.categoryCode" :disabled="!isEditing" style="width: 100%">
+                <el-option
+                  v-for="item in categoryOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="文章标题" class="edit-grid-span-2">
+              <el-input v-model="form.title" :disabled="!isEditing" />
+            </el-form-item>
+            <el-form-item label="摘要" class="edit-grid-span-2">
+              <el-input v-model="form.summary" :disabled="!isEditing" type="textarea" :rows="5" />
+            </el-form-item>
+            <el-form-item label="精选推荐">
+              <el-switch v-model="form.featured" :disabled="!isEditing" />
+            </el-form-item>
+            <el-form-item v-if="detail" label="发布状态">
+              <div class="status-wrap">
+                <StatusTag :status="detail.status" :map="publishStatusMap" />
               </div>
-              <h1>{{ form.title || '请输入资讯标题' }}</h1>
-              <div class="article-meta">
-                <span>{{ detail?.author.name || '平台运营中心' }}</span>
-                <span>{{ detail?.publishTime || '保存后生成发布时间' }}</span>
-                <span>{{ detail?.viewCount || 0 }} 浏览</span>
-              </div>
-            </div>
-            <p class="article-summary">
-              {{ form.summary || '这里展示资讯摘要、导语和主要内容预览。' }}
-            </p>
-            <div class="article-body">
-              <p>前台资讯中心仅会展示已发布内容，未发布或已下线的内容不会对普通用户可见。</p>
-              <p>当前详情页用于统一维护资讯内容、分类、推荐状态与前台展示效果。</p>
-            </div>
-          </article>
-        </SectionCard>
-      </el-col>
+            </el-form-item>
+          </div>
+        </el-form>
+      </SectionCard>
 
-      <el-col :span="8">
-        <ActionPanel>
-          <el-button
-            v-if="!isEditing"
-            type="primary"
-            class="action-panel-button action-panel-button--primary"
-            @click="startEdit"
-          >
-            编辑内容
-          </el-button>
-          <el-button
-            v-if="isEditing"
-            type="primary"
-            class="action-panel-button action-panel-button--primary"
-            :loading="saving"
-            @click="handleSave"
-          >
-            {{ isCreate ? '保存新增' : '保存修改' }}
-          </el-button>
-          <el-button
-            v-if="isEditing"
-            class="action-panel-button action-panel-button--soft"
-            @click="cancelEdit"
-          >
-            {{ isCreate ? '取消新增' : '取消编辑' }}
-          </el-button>
-          <el-button
-            v-if="!isCreate"
-            class="action-panel-button action-panel-button--muted"
-            @click="openPreview"
-          >
-            前台预览
-          </el-button>
-          <el-button class="action-panel-button action-panel-button--soft" @click="handleBackList">
-            返回列表
-          </el-button>
-        </ActionPanel>
+      <SectionCard title="操作区">
+        <div class="top-layout">
+          <div class="action-stack">
+            <el-button
+              v-if="!isEditing"
+              type="primary"
+              class="action-button action-button--primary"
+              @click="startEdit"
+            >
+              编辑内容
+            </el-button>
+            <el-button
+              v-if="isEditing"
+              type="primary"
+              class="action-button action-button--primary"
+              :loading="saving"
+              @click="handleSave"
+            >
+              {{ isCreate ? '保存新增' : '保存修改' }}
+            </el-button>
+            <el-button
+              v-if="isEditing"
+              class="action-button action-button--soft"
+              @click="cancelEdit"
+            >
+              {{ isCreate ? '取消新增' : '取消编辑' }}
+            </el-button>
+            <el-button
+              v-if="!isCreate"
+              class="action-button action-button--soft"
+              @click="openPreview"
+            >
+              预览内容
+            </el-button>
+            <el-button class="action-button action-button--muted" @click="handleBackList">
+              返回列表
+            </el-button>
+          </div>
 
-        <SectionCard title="发布信息" class="section-gap">
           <el-descriptions :column="1" border>
             <el-descriptions-item label="页面模式">{{ pageTitle }}</el-descriptions-item>
             <el-descriptions-item label="当前分类">{{ currentCategoryName }}</el-descriptions-item>
             <el-descriptions-item label="内容类型">
               {{ form.bizType === ContentBizType.News ? '资讯公告' : '知识文章' }}
             </el-descriptions-item>
-            <el-descriptions-item label="发布时间">
-              {{ detail?.publishTime || '保存后生成' }}
+            <el-descriptions-item label="发布状态">
+              <StatusTag v-if="detail" :status="detail.status" :map="publishStatusMap" />
+              <span v-else>待保存</span>
             </el-descriptions-item>
           </el-descriptions>
-        </SectionCard>
-      </el-col>
-    </el-row>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="页面预览">
+        <article class="article-preview">
+          <div class="article-top">
+            <div class="article-tags">
+              <el-tag effect="plain">{{ currentCategoryName }}</el-tag>
+              <el-tag effect="light">
+                {{ form.bizType === ContentBizType.News ? '资讯公告' : '知识文章' }}
+              </el-tag>
+              <el-tag v-if="form.featured" type="warning" effect="light">推荐</el-tag>
+            </div>
+            <h1>{{ form.title || '请输入资讯标题' }}</h1>
+            <div class="article-meta">
+              <span>{{ detail?.author.name || '平台运营中心' }}</span>
+              <span>{{ detail?.publishTime || '保存后生成发布时间' }}</span>
+              <span>{{ detail?.viewCount || 0 }} 浏览</span>
+            </div>
+          </div>
+          <p class="article-summary">
+            {{ form.summary || '这里展示资讯摘要、导语和主要内容预览。' }}
+          </p>
+          <div class="article-body">
+            <p>前台资讯中心仅会展示已发布内容，未发布或已下线的内容不会对普通用户可见。</p>
+            <p>当前详情页用于统一维护资讯内容、分类、推荐状态与前台展示效果。</p>
+          </div>
+        </article>
+      </SectionCard>
+    </div>
   </PageContainer>
 </template>
 
 <style scoped lang="scss">
+.detail-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.top-layout {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+}
+
+.action-stack {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.action-button {
+  width: 100%;
+  height: 42px;
+  margin: 0;
+  border-radius: 12px;
+}
+
+.action-button--primary {
+  background: linear-gradient(180deg, #5ca2ff 0%, #3f8ff5 100%);
+  border-color: transparent;
+}
+
+.action-button--soft {
+  border-color: rgb(84 135 255 / 24%);
+  background: linear-gradient(180deg, #f8fbff 0%, #edf4ff 100%);
+  color: var(--dj-color-primary);
+}
+
+.action-button--muted {
+  border-color: rgb(84 135 255 / 18%);
+  background: #fff;
+  color: var(--dj-color-text-primary);
+}
+
 .edit-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -344,11 +387,8 @@ onMounted(() => {
   margin: 0;
 }
 
-.section-gap {
-  margin-top: 16px;
-}
-
 @media (max-width: 900px) {
+  .top-layout,
   .edit-grid {
     grid-template-columns: 1fr;
   }

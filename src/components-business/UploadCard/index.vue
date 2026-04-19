@@ -45,6 +45,7 @@ function updateFiles(fileListValue: UploadUserFile[]) {
       name: item.name,
       url: item.url,
       status: item.status === 'fail' ? 'fail' : 'success',
+      raw: item.raw as File | undefined,
     })),
   )
 }

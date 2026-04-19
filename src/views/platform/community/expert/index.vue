@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { deleteExpert, getCommunityExpertList } from '@/api/modules/content'
 import PageContainer from '@/components/PageContainer.vue'
+import CommunityTabsBar from '@/components-business/CommunityTabsBar/index.vue'
 import PermissionButton from '@/components-business/PermissionButton/index.vue'
 import SearchForm from '@/components-business/SearchForm/index.vue'
 import TablePanel from '@/components-business/TablePanel/index.vue'
 import { ExpertServiceStatus } from '@/enum/content'
 import type { DictOption } from '@/types/business'
-import type { ContentExpertForm, ExpertOnlineItem, ExpertQuery } from '@/types/content'
+import type { ExpertOnlineItem, ExpertQuery } from '@/types/content'
 
 const router = useRouter()
 const loading = ref(false)
@@ -78,15 +79,15 @@ function handlePageChange() {
 }
 
 function goDetail(row: ExpertOnlineItem) {
-  router.push(`/operator/community/experts/detail/${row.id}`)
+  router.push(`/operator/business/community/experts/detail/${row.id}`)
 }
 
 function openCreate() {
-  router.push('/operator/community/experts/detail/create?mode=create')
+  router.push('/operator/business/community/experts/detail/create?mode=create')
 }
 
 function openEdit(row: ExpertOnlineItem) {
-  router.push(`/operator/community/experts/detail/${row.id}?mode=edit`)
+  router.push(`/operator/business/community/experts/detail/${row.id}?mode=edit`)
 }
 
 async function handleDelete(row: ExpertOnlineItem) {
@@ -98,7 +99,11 @@ async function handleDelete(row: ExpertOnlineItem) {
     return
   }
 
-  await deleteExpert(row.id)
+  const deleted = await deleteExpert(row.id)
+  if (!deleted) {
+    ElMessage.warning('最新接口未提供专家删除能力，已阻止无效请求')
+    return
+  }
   ElMessage.success('专家信息已删除')
   await loadData()
 }
@@ -109,7 +114,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <PageContainer title="专家在线" subtitle="统一维护专家信息、服务状态与咨询资料。">
+  <PageContainer title="专家在线">
+    <CommunityTabsBar current="experts" />
     <SearchForm
       v-model="queryForm"
       :fields="searchFields"
@@ -119,7 +125,6 @@ onMounted(() => {
 
     <TablePanel
       title="专家列表"
-      description="支持新增专家、查看详情、编辑资料与删除。"
       :total="total"
       :page-num="queryForm.pageNum"
       :page-size="queryForm.pageSize"

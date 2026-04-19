@@ -32,7 +32,6 @@ withDefaults(
           <div class="brand-copy">
             <div class="eyebrow">Quality Innovation Center</div>
             <h1>{{ title }}</h1>
-            <p v-if="subtitle">{{ subtitle }}</p>
           </div>
         </div>
 
@@ -42,9 +41,8 @@ withDefaults(
       </aside>
 
       <section class="auth-split-layout__card">
-        <div v-if="cardTitle || cardDescription" class="card-head">
+        <div v-if="cardTitle" class="card-head">
           <h2 v-if="cardTitle">{{ cardTitle }}</h2>
-          <p v-if="cardDescription">{{ cardDescription }}</p>
         </div>
         <slot />
       </section>
@@ -139,14 +137,6 @@ withDefaults(
   color: #18243d;
 }
 
-.brand-copy p {
-  margin: 0;
-  max-width: 500px;
-  font-size: 15px;
-  line-height: 1.8;
-  color: #60718e;
-}
-
 .aside-slot {
   display: flex;
   flex-direction: column;
@@ -172,13 +162,6 @@ withDefaults(
   margin: 0;
   font-size: 26px;
   color: #18243d;
-}
-
-.card-head p {
-  margin: 8px 0 0;
-  font-size: 14px;
-  line-height: 1.75;
-  color: #647695;
 }
 
 @media (max-width: 1080px) {

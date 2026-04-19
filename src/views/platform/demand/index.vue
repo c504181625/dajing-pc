@@ -15,7 +15,6 @@ import DetailSection from '@/components-business/DetailSection/index.vue'
 import OperationTimeline from '@/components-business/OperationTimeline/index.vue'
 import PermissionButton from '@/components-business/PermissionButton/index.vue'
 import SearchForm from '@/components-business/SearchForm/index.vue'
-import StatsPanel from '@/components-business/StatsPanel/index.vue'
 import StatusTag from '@/components-business/StatusTag/index.vue'
 import TablePanel from '@/components-business/TablePanel/index.vue'
 import { DEMAND_STATUS_MAP, SERVICE_TYPE_OPTIONS } from '@/constants/dicts'
@@ -66,45 +65,18 @@ const searchFields = [
   },
 ]
 
-const statCards = computed(() => [
-  {
-    title: '待分配',
-    value: tableData.value.filter(
-      (item) => !item.assignedOrg || item.status === DemandStatus.Pending,
-    ).length,
-  },
-  {
-    title: '处理中',
-    value: tableData.value.filter((item) => item.status === DemandStatus.Processing).length,
-  },
-  {
-    title: '自主选择',
-    value: tableData.value.filter((item) => item.publishMode === PublishMode.SelfSelect).length,
-  },
-  {
-    title: '超时',
-    value: tableData.value.filter((item) => item.status === DemandStatus.Pending).length,
-  },
-])
+const demandStats = computed(() => {
+  const pending = tableData.value.filter((item) => item.status === DemandStatus.Pending).length
+  const processing = tableData.value.filter((item) => item.status === DemandStatus.Processing).length
+  const completed = tableData.value.filter((item) => item.status === DemandStatus.Completed).length
 
-const displayStatCards = computed(() => [
-  {
-    ...statCards.value[0],
-    hint: '等待平台分配服务机构或进入处理流程',
-  },
-  {
-    ...statCards.value[1],
-    hint: '已进入机构跟进与回复阶段的需求',
-  },
-  {
-    ...statCards.value[2],
-    hint: '企业选择自主对接服务机构的需求',
-  },
-  {
-    ...statCards.value[3],
-    hint: '当前仍在待处理区间的需求任务',
-  },
-])
+  return [
+    { key: 'all', label: '全部', value: total.value },
+    { key: DemandStatus.Pending, label: '待处理', value: pending },
+    { key: DemandStatus.Processing, label: '处理中', value: processing },
+    { key: DemandStatus.Completed, label: '已完成', value: completed },
+  ]
+})
 
 async function loadData() {
   loading.value = true
@@ -200,12 +172,7 @@ loadData()
 </script>
 
 <template>
-  <PageContainer
-    title="需求管理"
-    subtitle="以列表 + 详情抽屉承载需求受理、回复和分配机构操作，保持平台处理链路清晰。"
-  >
-    <StatsPanel :items="displayStatCards" />
-
+  <PageContainer title="需求管理">
     <SearchForm
       v-model="queryForm"
       :fields="searchFields"
@@ -214,7 +181,7 @@ loadData()
     />
 
     <TablePanel
-      title="需求列表"
+      title=""
       :total="total"
       :page-num="queryForm.pageNum"
       :page-size="queryForm.pageSize"
@@ -222,6 +189,12 @@ loadData()
       @update:page-size="queryForm.pageSize = $event"
       @pageChange="handlePageChange"
     >
+      <template #stats>
+        <span v-for="item in demandStats" :key="item.key" class="table-stat">
+          {{ item.label }}（{{ item.value }}）
+        </span>
+      </template>
+
       <el-table v-loading="loading" :data="tableData" border>
         <el-table-column prop="title" label="需求标题" min-width="240" />
         <el-table-column label="服务类型" width="120">
@@ -398,6 +371,12 @@ loadData()
 </template>
 
 <style scoped lang="scss">
+.table-stat {
+  color: var(--dj-color-text-primary);
+  font-size: 16px;
+  font-weight: 500;
+}
+
 .drawer-actions {
   display: flex;
   justify-content: flex-end;

@@ -1,44 +1,47 @@
 import type { PageResult } from '@/types/api'
 import type { MessageItem, MessageQuery, MessageStats } from '@/types/business'
-import { http } from '@/utils/request'
-import { isUseMock } from '../helper'
-import {
-  mockDeleteMessage,
-  mockGetMessageDetail,
-  mockGetMessageList,
-  mockGetMessageStats,
-  mockReadAllMessages,
-  mockReadMessage,
-} from '@/mock/modules/message'
+import { createEmptyPageResult, resolveEmptyValue } from '@/api/helper'
+import { MessageReadStatus, MessageType } from '@/enum/status'
 
 export function getMessageList(params?: MessageQuery): Promise<PageResult<MessageItem>> {
-  if (isUseMock()) return mockGetMessageList(params)
-  return http<PageResult<MessageItem>>({ url: '/message/page', method: 'get', params })
+  return Promise.resolve(createEmptyPageResult<MessageItem>(params))
 }
 
 export function getMessageStats(): Promise<MessageStats> {
-  if (isUseMock()) return mockGetMessageStats()
-  return http<MessageStats>({ url: '/message/stats', method: 'get' })
+  return resolveEmptyValue<MessageStats>({
+    total: 0,
+    unread: 0,
+    system: 0,
+    demand: 0,
+    consult: 0,
+    order: 0,
+    audit: 0,
+    orderNotice: 0,
+    alert: 0,
+  })
 }
 
 export function getMessageDetail(id: string): Promise<MessageItem> {
-  if (isUseMock()) return mockGetMessageDetail(id)
-  return http<MessageItem>({ url: `/message/${id}`, method: 'get' })
+  return resolveEmptyValue<MessageItem>({
+    id,
+    title: '',
+    type: MessageType.System,
+    readStatus: MessageReadStatus.Unread,
+    content: '',
+    createdAt: '',
+  })
 }
 
 export function readMessage(id: string): Promise<boolean> {
-  if (isUseMock()) return mockReadMessage(id)
-  return http<boolean>({ url: `/message/${id}/read`, method: 'post' })
+  return resolveEmptyValue(true)
 }
 
 export const markMessageRead = readMessage
 
 export function readAllMessages(): Promise<boolean> {
-  if (isUseMock()) return mockReadAllMessages()
-  return http<boolean>({ url: '/message/read-all', method: 'post' })
+  return resolveEmptyValue(true)
 }
 
 export function deleteMessage(id: string): Promise<boolean> {
-  if (isUseMock()) return mockDeleteMessage(id)
-  return http<boolean>({ url: `/message/${id}`, method: 'delete' })
+  return resolveEmptyValue(true)
 }

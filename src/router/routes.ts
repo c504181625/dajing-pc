@@ -1,5 +1,8 @@
 import type { RouteRecordRaw } from 'vue-router'
 
+import { normalizeAccountType } from '@/enum/role'
+import { getAccessToken } from '@/utils/auth'
+
 import { communityRoutes } from './modules/community'
 import { enterpriseRoutes } from './modules/enterprise'
 import { operatorRoutes } from './modules/platform'
@@ -15,7 +18,7 @@ function mapLegacyPlatformPath(pathMatch?: string | string[]) {
   const [first = '', ...rest] = normalized.split('/').filter(Boolean)
   const suffix = rest.length ? `/${rest.join('/')}` : ''
 
-  if (!first) {
+  if (!first || first === 'home') {
     return '/operator/dashboard'
   }
 
@@ -50,17 +53,47 @@ function mapLegacyPlatformPath(pathMatch?: string | string[]) {
     }
     const normalizedModule = communityMap[communityModule] || 'news'
     const normalizedSuffix = communityRest.length ? `/${communityRest.join('/')}` : ''
-    return `/operator/community/${normalizedModule}${normalizedSuffix}`
+
+    if (normalizedSuffix.startsWith('/detail')) {
+      return `/operator/business/community/${normalizedModule}${normalizedSuffix}`
+    }
+
+    if (normalizedSuffix.startsWith('/preview')) {
+      return `/operator/business/community/${normalizedModule}${normalizedSuffix}`
+    }
+
+    return `/operator/business/community-home?tab=${normalizedModule}`
   }
 
   return `/operator/${normalized}`
+}
+
+function resolveRootRedirectPath() {
+  const token = getAccessToken()
+  if (!token || typeof window === 'undefined') return '/login'
+
+  try {
+    const raw = localStorage.getItem('user')
+    if (!raw) return '/login'
+
+    const source = JSON.parse(raw) as {
+      userInfo?: { accountType?: string | number | null }
+    }
+    const accountType = normalizeAccountType(source.userInfo?.accountType)
+
+    if (accountType === 'operator') return '/operator/dashboard'
+    if (accountType === 'enterprise') return '/enterprise/dashboard'
+    return '/personal/dashboard'
+  } catch {
+    return '/login'
+  }
 }
 
 export const constantRoutes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'RootRedirect',
-    redirect: '/login',
+    redirect: () => resolveRootRedirectPath(),
     meta: {
       hidden: true,
     },
@@ -71,12 +104,29 @@ export const constantRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/auth/login/index.vue'),
     meta: {
       hidden: true,
-      title: '统一登录',
+      title: '个人/企业登录',
+    },
+  },
+  {
+    path: '/operator-login',
+    name: 'OperatorLogin',
+    component: () => import('@/views/auth/operator-login/index.vue'),
+    meta: {
+      hidden: true,
+      title: '运营方登录',
     },
   },
   {
     path: '/platform/:pathMatch(.*)*',
     name: 'LegacyPlatformRedirect',
+    redirect: (to) => mapLegacyPlatformPath(to.params.pathMatch as string | string[] | undefined),
+    meta: {
+      hidden: true,
+    },
+  },
+  {
+    path: '/admin/:pathMatch(.*)*',
+    name: 'LegacyAdminRedirect',
     redirect: (to) => mapLegacyPlatformPath(to.params.pathMatch as string | string[] | undefined),
     meta: {
       hidden: true,

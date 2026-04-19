@@ -14,6 +14,10 @@ export interface Pagination {
 
 export interface PageResult<T> extends Pagination {
   list: T[]
+  records?: T[]
+  current?: number
+  size?: number
+  pages?: number
 }
 
 export interface PageQuery {

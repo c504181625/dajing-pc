@@ -1,12 +1,14 @@
 import NProgress from 'nprogress'
-import type { NavigationGuardNext, Router } from 'vue-router'
+import type { LocationQueryRaw, NavigationGuardNext, Router } from 'vue-router'
 
 import { canAccessRoute, usePermissionStore } from '@/store/modules/permission'
 import { useUserStore } from '@/store/modules/user'
+import { ACCOUNT_TYPE } from '@/enum/role'
 import { getAccessToken } from '@/utils/auth'
 
 const whiteList = [
   '/login',
+  '/operator-login',
   '/register/personal',
   '/register/enterprise',
   '/apply/institution',
@@ -14,29 +16,58 @@ const whiteList = [
   '/auth-result',
 ]
 
-let isRecoveringDynamicRoute = false
-
 function isBackendPath(path: string) {
   return ['/personal', '/enterprise', '/operator', '/platform', '/system'].some((prefix) =>
     path.startsWith(prefix),
   )
 }
 
-function buildLoginRedirect(_path: string) {
+function buildLoginRedirect(path: string) {
+  const isOperatorTarget = ['/operator', '/platform', '/system', '/admin'].some((prefix) =>
+    path.startsWith(prefix),
+  )
+  const loginPath = isOperatorTarget ? '/operator-login' : '/login'
   return {
-    path: '/login',
+    path: loginPath,
+    query: path && path !== loginPath ? { redirect: path } : undefined,
     replace: true,
   }
 }
 
-function getSafeLandingPath(router: Router, landingPath?: string | null) {
-  if (!landingPath || landingPath === '/') return '/login'
-  return router.resolve(landingPath).name === 'NotFound' ? '/login' : landingPath
+function getFallbackLandingPath(accountType?: string | null) {
+  if (accountType === ACCOUNT_TYPE.operator) return '/operator/dashboard'
+  if (accountType === ACCOUNT_TYPE.enterprise) return '/enterprise/dashboard'
+  return '/personal/dashboard'
 }
 
-function redirectToPath(next: NavigationGuardNext, path: string) {
+function getSafeLandingPath(landingPath?: string | null, accountType?: string | null) {
+  const fallbackPath = getFallbackLandingPath(accountType)
+  if (!landingPath || landingPath === '/' || landingPath === '/login' || landingPath === '/operator-login') {
+    return fallbackPath
+  }
+  return landingPath
+}
+
+function redirectToPath(
+  to: { fullPath: string; name?: string | symbol | null },
+  next: NavigationGuardNext,
+  target: {
+    path: string
+    query?: LocationQueryRaw
+    hash?: string
+  },
+) {
+  const targetFullPath = `${target.path}${target.hash || ''}`
+
+  if ((target.path === to.fullPath || targetFullPath === to.fullPath) && to.name !== 'NotFound') {
+    next()
+    return
+  }
+
   next({
-    path,
+    path: target.path,
+    query: target.query,
+    hash: target.hash,
     replace: true,
   })
 }
@@ -68,6 +99,11 @@ export function setupRouterGuard(router: Router) {
         await userStore.fetchCurrentUser()
       }
 
+      const safeLandingPath = getSafeLandingPath(
+        userStore.landingPath,
+        userStore.userInfo?.accountType,
+      )
+
       if (userStore.needResetPassword && to.path !== '/first-login-reset-password') {
         next({
           path: '/first-login-reset-password',
@@ -77,50 +113,77 @@ export function setupRouterGuard(router: Router) {
         return
       }
 
-      const shouldRecoverDynamicRoute =
-        to.name === 'NotFound' &&
-        !!userStore.userInfo &&
-        !whiteList.includes(to.path) &&
-        !isRecoveringDynamicRoute
+      if (!permissionStore.isRoutesGenerated && userStore.userInfo) {
+        permissionStore.mountRoutes(router, userStore.userInfo)
 
-      if ((!permissionStore.isRoutesGenerated || shouldRecoverDynamicRoute) && userStore.userInfo) {
-        if (shouldRecoverDynamicRoute) {
-          permissionStore.resetRoutes(router)
-          isRecoveringDynamicRoute = true
+        if (to.path === '/login' || to.path === '/operator-login' || to.path === '/') {
+          const redirect = typeof to.query.redirect === 'string' ? to.query.redirect : ''
+          redirectToPath(to, next, {
+            path:
+              redirect && redirect !== '/login' && redirect !== '/operator-login'
+                ? redirect
+                : safeLandingPath,
+          })
+          return
         }
 
-        permissionStore.mountRoutes(router, userStore.userInfo)
-        const targetPath = to.path === '/' || to.path === '/login' ? '/login' : to.fullPath
-        redirectToPath(next, targetPath)
+        if (to.name === 'NotFound') {
+          redirectToPath(to, next, {
+            path: to.path,
+            query: to.query,
+            hash: to.hash,
+          })
+          return
+        }
+
+        next()
         return
       }
     } catch {
-      isRecoveringDynamicRoute = false
       userStore.resetUser()
       permissionStore.resetRoutes(router)
+
+      if (to.path === '/login' || to.path === '/operator-login') {
+        next()
+        return
+      }
+
       next(buildLoginRedirect(to.fullPath))
       return
     }
 
-    const safeLandingPath = getSafeLandingPath(router, userStore.landingPath)
+    const safeLandingPath = getSafeLandingPath(
+      userStore.landingPath,
+      userStore.userInfo?.accountType,
+    )
 
-    if (to.path === '/login' && !userStore.needResetPassword) {
-      next()
+    if ((to.path === '/login' || to.path === '/operator-login') && !userStore.needResetPassword) {
+      const redirect = typeof to.query.redirect === 'string' ? to.query.redirect : ''
+      redirectToPath(to, next, {
+        path:
+          redirect && redirect !== '/login' && redirect !== '/operator-login'
+            ? redirect
+            : safeLandingPath,
+      })
       return
     }
 
     if (to.path === '/') {
-      redirectToPath(next, '/login')
+      redirectToPath(to, next, {
+        path: safeLandingPath,
+      })
       return
     }
 
     if (to.name === 'NotFound' && userStore.userInfo && isBackendPath(to.path)) {
       if (to.path === safeLandingPath) {
-        next(buildLoginRedirect(to.fullPath))
+        next('/401')
         return
       }
 
-      redirectToPath(next, safeLandingPath)
+      redirectToPath(to, next, {
+        path: safeLandingPath,
+      })
       return
     }
 
@@ -131,21 +194,20 @@ export function setupRouterGuard(router: Router) {
           return
         }
 
-        redirectToPath(next, safeLandingPath)
+        redirectToPath(to, next, {
+          path: safeLandingPath,
+        })
         return
       }
 
-      isRecoveringDynamicRoute = false
       next('/401')
       return
     }
 
-    isRecoveringDynamicRoute = false
     next()
   })
 
   router.afterEach(() => {
-    isRecoveringDynamicRoute = false
     NProgress.done()
   })
 }

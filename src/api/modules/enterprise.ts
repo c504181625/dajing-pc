@@ -1,3 +1,4 @@
+import { createClientPageResult, isUseOpenApi, normalizePageResult, toRecord } from '@/api/helper'
 import type { PageResult } from '@/types/api'
 import type {
   AttachmentItem,
@@ -10,18 +11,11 @@ import type {
   EnterpriseProfile,
   EnterpriseAuditQuery,
 } from '@/types/business'
+import { AuditAction, AuditStatus, OperationStatus } from '@/enum/status'
 import { http } from '@/utils/request'
-import { isUseOpenApi } from '../helper'
-import { AuditStatus, OperationStatus } from '@/enum/status'
-import {
-  mockGetEnterpriseAuditDetail,
-  mockGetEnterpriseAuditList,
-  mockGetEnterpriseCapabilities,
-  mockGetEnterpriseProfile,
-  mockSubmitEnterpriseProfile,
-  mockUpdateEnterpriseProfile,
-  mockSubmitEnterpriseAuditAction,
-} from '@/mock/modules/enterprise'
+
+const adminApiPrefix = '/api/admin'
+const userApiPrefix = '/api/user'
 
 function normalizeEnterpriseProfile(raw: unknown, enterpriseId?: string): EnterpriseProfile {
   const source = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
@@ -194,37 +188,42 @@ function certificateToAttachment(item: EnterpriseCertificate): AttachmentItem {
 }
 
 export function getEnterpriseAuditList(params?: EnterpriseAuditQuery): Promise<PageResult<EnterpriseAuditItem>> {
-  if (!isUseOpenApi()) return mockGetEnterpriseAuditList(params)
+  if (!isUseOpenApi()) return Promise.resolve({ total: 0, list: [], pageNum: 1, pageSize: 20 } as any)
+
+  const needClientFilter = Boolean(params?.enterpriseType)
+  const certStatus =
+    params?.status === AuditStatus.Pending
+      ? 0
+      : params?.status === AuditStatus.Approved
+        ? 1
+        : params?.status === AuditStatus.Rejected
+          ? 2
+          : undefined
+
   return http<unknown>({
-    url: '/api/user/enterprise/list',
+    url: `${adminApiPrefix}/admin/enterprise/list`,
     method: 'get',
     params: {
-      page: params?.pageNum || 1,
-      size: params?.pageSize || 10,
-      keyword: params?.keyword || '',
-      enterpriseType:
-        params?.enterpriseType !== undefined && params?.enterpriseType !== ''
-          ? Number(params.enterpriseType)
-          : params?.serviceType
-            ? Number(params.serviceType)
-            : undefined,
+      page: needClientFilter ? 1 : params?.pageNum || 1,
+      size: needClientFilter ? Math.max(Number(params?.pageSize || 10) * 10, 200) : params?.pageSize || 10,
+      keyword: params?.keyword || undefined,
+      certStatus,
     },
   }).then((res) => {
-    const source = (res && typeof res === 'object' ? res : {}) as Record<string, unknown>
-    const records = Array.isArray(source.records) ? source.records : []
-    return {
-      total: Number(source.total || 0),
-      pageNum: Number(source.current || params?.pageNum || 1),
-      pageSize: Number(source.size || params?.pageSize || 10),
-      list: records.map((item) => normalizeEnterpriseAuditItem(item)),
-    }
+    const page = normalizePageResult(res, normalizeEnterpriseAuditItem, params)
+    const filtered = params?.enterpriseType
+      ? page.list.filter((item) => String(item.enterpriseType || '').includes(params.enterpriseType === '1' ? '检测' : '基础'))
+      : page.list
+
+    return needClientFilter ? createClientPageResult(filtered, params) : page
   })
 }
 
 export function getEnterpriseAuditDetail(id: string): Promise<EnterpriseAuditDetail> {
-  if (!isUseOpenApi()) return mockGetEnterpriseAuditDetail(id)
+  if (!isUseOpenApi()) return Promise.resolve({ total: 0, list: [], pageNum: 1, pageSize: 20 } as any)
+
   return Promise.all([
-    http<unknown>({ url: `/api/user/enterprise/${id}`, method: 'get' }),
+    http<unknown>({ url: `${userApiPrefix}/enterprise/${id}`, method: 'get' }),
     loadEnterpriseCertFiles(id),
   ]).then(([detailRes, certs]) => {
     const source = (detailRes && typeof detailRes === 'object' ? detailRes : {}) as Record<string, unknown>
@@ -280,18 +279,29 @@ export function getEnterpriseAuditDetail(id: string): Promise<EnterpriseAuditDet
 }
 
 export function submitEnterpriseAuditAction(payload: AuditActionPayload): Promise<boolean> {
-  return mockSubmitEnterpriseAuditAction(payload)
+  if (!isUseOpenApi()) return Promise.resolve(true)
+
+  return http<boolean>({
+    url: `${adminApiPrefix}/admin/enterprise/${payload.auditId}/audit`,
+    method: 'put',
+    params: {
+      passed: payload.action === AuditAction.Approve,
+      rejectReason:
+        payload.action === AuditAction.Approve ? undefined : payload.remark || undefined,
+    },
+  }).then(() => true)
 }
 
 export function getEnterpriseProfile(enterpriseId?: string): Promise<EnterpriseProfile> {
-  if (!isUseOpenApi()) return mockGetEnterpriseProfile(enterpriseId)
+  if (!isUseOpenApi()) return Promise.resolve({ total: 0, list: [], pageNum: 1, pageSize: 20 } as any)
+
   const request = enterpriseId
     ? http<EnterpriseProfile>({
-        url: `/api/user/enterprise/${enterpriseId}`,
+        url: `${userApiPrefix}/enterprise/${enterpriseId}`,
         method: 'get',
       })
     : http<EnterpriseProfile>({
-        url: '/api/user/enterprise/my',
+        url: `${userApiPrefix}/enterprise/my`,
         method: 'get',
       })
 
@@ -316,7 +326,8 @@ export function getEnterpriseProfile(enterpriseId?: string): Promise<EnterpriseP
 }
 
 export function getEnterpriseCapabilities(enterpriseId?: string): Promise<EnterpriseCapabilityProfile> {
-  if (!isUseOpenApi()) return mockGetEnterpriseCapabilities(enterpriseId)
+  if (!isUseOpenApi()) return Promise.resolve({ total: 0, list: [], pageNum: 1, pageSize: 20 } as any)
+
   return getEnterpriseProfile(enterpriseId).then((profile) => ({
     enterpriseId: profile.enterpriseId,
     enterpriseName: profile.enterpriseName,
@@ -325,11 +336,17 @@ export function getEnterpriseCapabilities(enterpriseId?: string): Promise<Enterp
 }
 
 export function updateEnterpriseProfile(payload: EnterpriseProfile): Promise<boolean> {
-  return mockUpdateEnterpriseProfile(payload)
+  if (!isUseOpenApi() || !payload.enterpriseId) return Promise.resolve(true)
+
+  return http<boolean>({
+    url: `${userApiPrefix}/enterprise/${payload.enterpriseId}`,
+    method: 'put',
+    data: payload,
+  }).then(() => true)
 }
 
 export function submitEnterpriseProfile(): Promise<boolean> {
-  return mockSubmitEnterpriseProfile()
+  return Promise.resolve(true)
 }
 
 function normalizeEnterpriseCertificate(raw: unknown): EnterpriseCertificate {
@@ -373,9 +390,9 @@ export function ocrBusinessLicense(imageUrl: string): Promise<EnterpriseBusiness
   }
 
   return http<EnterpriseBusinessLicenseOcrResult>({
-    url: '/api/user/enterprise/ocr/business-license',
+    url: `${userApiPrefix}/enterprise/ocr/business-license`,
     method: 'post',
-    params: { imageUrl },
+    data: { imageUrl },
   }).then((res) => normalizeOcrBusinessLicense(res, imageUrl))
 }
 
@@ -391,10 +408,18 @@ export function createEnterpriseCertificate(
   }
 
   return http<EnterpriseCertificate>({
-    url: `/api/user/enterprise/${enterpriseId}/cert`,
+    url: `${userApiPrefix}/enterprise/${enterpriseId}/cert`,
     method: 'post',
     data: payload,
-  }).then((res) => normalizeEnterpriseCertificate(res))
+  }).then((res) => {
+    if (typeof res === 'number' || typeof res === 'string') {
+      return {
+        ...payload,
+        id: String(res),
+      }
+    }
+    return normalizeEnterpriseCertificate(res)
+  })
 }
 
 export function getEnterpriseCertificateList(enterpriseId: string): Promise<EnterpriseCertificate[]> {
@@ -403,7 +428,7 @@ export function getEnterpriseCertificateList(enterpriseId: string): Promise<Ente
   }
 
   return http<unknown>({
-    url: `/api/user/enterprise/${enterpriseId}/cert`,
+    url: `${userApiPrefix}/enterprise/${enterpriseId}/cert`,
     method: 'get',
   }).then((res) => {
     const payload = Array.isArray(res)
@@ -422,7 +447,7 @@ export function deleteEnterpriseCertificate(enterpriseId: string, certId: string
   }
 
   return http<boolean>({
-    url: `/api/user/enterprise/${enterpriseId}/cert/${certId}`,
+    url: `${userApiPrefix}/enterprise/${enterpriseId}/cert/${certId}`,
     method: 'delete',
   })
 }

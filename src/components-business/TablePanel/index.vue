@@ -3,7 +3,7 @@ import { computed } from 'vue'
 
 const props = withDefaults(
   defineProps<{
-    title: string
+    title?: string
     description?: string
     total?: number
     pageNum?: number
@@ -45,9 +45,11 @@ function handleSizeChange(size: number) {
   <el-card shadow="never" class="app-card">
     <template #header>
       <div class="panel-header">
-        <div>
-          <div class="title">{{ title }}</div>
-          <div v-if="description" class="description">{{ description }}</div>
+        <div class="panel-main">
+          <div v-if="title" class="title">{{ title }}</div>
+          <div v-if="$slots.stats" class="stats-row">
+            <slot name="stats" />
+          </div>
         </div>
         <div class="toolbar">
           <slot name="toolbar" />
@@ -82,21 +84,28 @@ function handleSizeChange(size: number) {
   gap: 16px;
 }
 
+.panel-main {
+  min-width: 0;
+}
+
 .title {
   font-size: 16px;
   font-weight: 600;
-}
-
-.description {
-  margin-top: 6px;
-  font-size: 13px;
-  color: var(--dj-color-text-regular);
 }
 
 .toolbar {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 2px;
+  min-height: 28px;
+  align-items: center;
 }
 
 .pagination-wrap {

@@ -7,10 +7,13 @@ import PermissionButton from './components-business/PermissionButton/index.vue'
 import router from './router'
 import pinia from './store'
 import { setupPermissionDirective } from './directives/permission'
+import { initTheme } from './theme'
 
 import 'element-plus/dist/index.css'
 import 'nprogress/nprogress.css'
 import './styles/index.scss'
+
+initTheme()
 
 const app = createApp(App)
 

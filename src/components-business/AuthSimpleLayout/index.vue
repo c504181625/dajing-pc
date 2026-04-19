@@ -33,9 +33,8 @@ withDefaults(
       </div>
 
       <section class="form-card" :style="{ maxWidth }">
-        <div v-if="cardTitle || cardDescription" class="form-card__head">
+        <div v-if="cardTitle" class="form-card__head">
           <h2 v-if="cardTitle">{{ cardTitle }}</h2>
-          <p v-if="cardDescription">{{ cardDescription }}</p>
         </div>
         <slot />
       </section>
@@ -143,13 +142,6 @@ withDefaults(
   margin: 0;
   font-size: 26px;
   color: #18243d;
-}
-
-.form-card__head p {
-  margin: 8px 0 0;
-  font-size: 14px;
-  line-height: 1.75;
-  color: #647695;
 }
 
 @media (max-width: 768px) {

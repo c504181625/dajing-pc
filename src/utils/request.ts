@@ -5,41 +5,58 @@ import { ElMessage } from 'element-plus'
 import type { ApiResponse } from '@/types/api'
 import { getAccessToken, removeAccessToken } from './auth'
 
-const defaultBaseURL = import.meta.env.VITE_API_BASE_URL || 'http://43.138.0.218:8080'
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://43.138.0.218:8080'
+
+export interface ResultEnvelope<T = unknown> extends ApiResponse<T> {
+  success?: boolean
+}
+
+function normalizeAuthorization(token: string) {
+  if (!token) return ''
+  return /^Bearer\s+/i.test(token) ? token : `Bearer ${token}`
+}
 
 const request = axios.create({
-  baseURL: defaultBaseURL,
+  baseURL: API_BASE_URL,
   timeout: 15000,
 })
 
 request.interceptors.request.use((config) => {
   const token = getAccessToken()
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+    config.headers.Authorization = normalizeAuthorization(token)
   }
   return config
 })
 
-function isEnvelope(value: unknown): value is ApiResponse<unknown> {
-  return !!value && typeof value === 'object' && typeof (value as ApiResponse<unknown>).code === 'number'
+export function isResultEnvelope(value: unknown): value is ResultEnvelope<unknown> {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    typeof (value as ResultEnvelope<unknown>).code === 'number'
+  )
 }
 
-function unwrapResponse<T>(response: AxiosResponse): T {
-  const body = response.data as unknown
+export function unwrapResult<T>(body: unknown): T {
+  if (isResultEnvelope(body)) {
+    const message = body.message || '请求失败'
 
-  if (isEnvelope(body)) {
-    if (body.code !== 0) {
-      const message = body.message || '璇锋眰澶辫触'
+    if (body.success === false || (body.code !== 0 && body.code !== 200)) {
       ElMessage.error(message)
       throw body
     }
-    return (body.data ?? body) as T
+
+    if (body.data !== undefined) {
+      return body.data as T
+    }
+
+    return body as T
   }
 
   if (body && typeof body === 'object') {
     const record = body as Record<string, unknown>
     if (record.success === false) {
-      const message = (record.message as string) || '璇锋眰澶辫触'
+      const message = (record.message as string) || '请求失败'
       ElMessage.error(message)
       throw body
     }
@@ -50,6 +67,10 @@ function unwrapResponse<T>(response: AxiosResponse): T {
   }
 
   return body as T
+}
+
+function unwrapResponse<T>(response: AxiosResponse): T {
+  return unwrapResult<T>(response.data as unknown)
 }
 
 request.interceptors.response.use(
@@ -65,7 +86,7 @@ request.interceptors.response.use(
       removeAccessToken()
     }
 
-    ElMessage.error(error.response?.data?.message || error.message || '缃戠粶寮傚父')
+    ElMessage.error(error.response?.data?.message || error.message || '网络异常')
     return Promise.reject(error)
   },
 )

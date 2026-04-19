@@ -162,7 +162,7 @@ function scrollToSection(id: string) {
 
 async function handleSubmit() {
   if (!USERNAME_PATTERN.test(form.loginAccount)) {
-    ElMessage.warning('登录账户名需为 4-20 位字母、数字或下划线')
+    ElMessage.warning('登录账户名需为 4-20 位中文、字母、数字或下划线')
     return
   }
   if (!UNIFIED_SOCIAL_CODE_PATTERN.test(form.unifiedSocialCode)) {

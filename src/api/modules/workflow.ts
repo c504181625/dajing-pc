@@ -1,20 +1,24 @@
+import { resolveEmptyPageResult } from '@/api/helper'
 import type { PageResult } from '@/types/api'
-import type { WorkflowNodeItem, WorkflowQuery, WorkflowRecordItem, WorkflowTemplateItem } from '@/types/business'
-import { http } from '@/utils/request'
-import { isUseMock } from '../helper'
-import { mockGetWorkflowNodes, mockGetWorkflowRecords, mockGetWorkflowTemplates } from '@/mock/modules/workflow'
+import type {
+  WorkflowNodeItem,
+  WorkflowQuery,
+  WorkflowRecordItem,
+  WorkflowTemplateItem,
+} from '@/types/business'
 
-export function getWorkflowTemplates(params?: WorkflowQuery): Promise<PageResult<WorkflowTemplateItem>> {
-  if (isUseMock()) return mockGetWorkflowTemplates(params)
-  return http<PageResult<WorkflowTemplateItem>>({ url: '/workflow/template/page', method: 'get', params })
+export function getWorkflowTemplates(
+  params?: WorkflowQuery,
+): Promise<PageResult<WorkflowTemplateItem>> {
+  return resolveEmptyPageResult<WorkflowTemplateItem>(params)
 }
 
 export function getWorkflowNodes(params?: WorkflowQuery): Promise<PageResult<WorkflowNodeItem>> {
-  if (isUseMock()) return mockGetWorkflowNodes(params)
-  return http<PageResult<WorkflowNodeItem>>({ url: '/workflow/node/page', method: 'get', params })
+  return resolveEmptyPageResult<WorkflowNodeItem>(params)
 }
 
-export function getWorkflowRecords(params?: WorkflowQuery): Promise<PageResult<WorkflowRecordItem>> {
-  if (isUseMock()) return mockGetWorkflowRecords(params)
-  return http<PageResult<WorkflowRecordItem>>({ url: '/workflow/record/page', method: 'get', params })
+export function getWorkflowRecords(
+  params?: WorkflowQuery,
+): Promise<PageResult<WorkflowRecordItem>> {
+  return resolveEmptyPageResult<WorkflowRecordItem>(params)
 }
