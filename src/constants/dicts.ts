@@ -53,6 +53,11 @@ export const SERVICE_SHELF_STATUS_MAP: Record<string, DictOption> = {
     value: ServiceShelfStatus.Disabled,
     tagType: 'info',
   },
+  [ServiceShelfStatus.Reviewing]: {
+    label: '审核中',
+    value: ServiceShelfStatus.Reviewing,
+    tagType: 'warning',
+  },
 }
 
 export const COMMUNITY_STATUS_MAP: Record<string, DictOption> = {

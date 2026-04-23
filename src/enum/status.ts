@@ -65,6 +65,7 @@ export enum AccountStatus {
 export enum ServiceShelfStatus {
   Enabled = 'enabled',
   Disabled = 'disabled',
+  Reviewing = 'reviewing',
 }
 
 export enum CommunityContentStatus {

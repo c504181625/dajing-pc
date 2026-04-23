@@ -378,8 +378,10 @@ export interface MessageStats {
 
 export interface ServiceItem {
   id: string
+  institutionId?: string
   enterpriseId?: string
   enterpriseName?: string
+  inspectionItemId?: string
   serviceCode?: string
   serviceName: string
   serviceType: ServiceType
@@ -387,12 +389,24 @@ export interface ServiceItem {
   categoryName?: string
   specification?: string
   targetCustomer: string
-  contactName: string
-  contactPhone: string
+  contactName?: string
+  contactPhone?: string
   priceText: string
   status: ServiceShelfStatus
   updatedAt: string
   description?: string
+  sampleType?: string
+  defaultStd?: string
+  price?: number
+  cycleDays?: number
+  supportCma?: boolean
+  supportCnas?: boolean
+  supportUrgent?: boolean
+  urgentExtraFee?: number
+  coverUrl?: string
+  sort?: number
+  viewCount?: number
+  orderCount?: number
 }
 
 export interface ServiceQuery extends ListQuery {
@@ -401,17 +415,67 @@ export interface ServiceQuery extends ListQuery {
   status?: ServiceShelfStatus | ''
 }
 
+export interface OperatorEnterpriseServiceItem {
+  id: string
+  enterpriseId: string
+  enterpriseName: string
+  socialCreditCode: string
+  contactName: string
+  contactPhone: string
+  enterpriseType: string
+  serviceTypes: ServiceType[]
+  status: AuditStatus
+  submitTime: string
+  serviceTotal: number | null
+  enabledServiceCount: number | null
+  disabledServiceCount: number | null
+  latestServiceUpdate?: string
+}
+
+export interface OperatorEnterpriseServiceQuery extends ListQuery {
+  status?: AuditStatus | ''
+  serviceType?: ServiceType | ''
+}
+
+export interface OperatorEnterpriseServiceDetail {
+  enterpriseId: string
+  enterpriseName: string
+  socialCreditCode: string
+  contactName: string
+  contactPhone: string
+  enterpriseType: string
+  serviceTypes: ServiceType[]
+  address: string
+  email?: string
+  intro?: string
+  serviceRange?: string
+  qualificationCount: number
+}
+
 export interface ServiceForm {
   serviceName: string
   serviceCode?: string
+  inspectionItemId?: string
+  institutionId?: string
   serviceType: ServiceType
   categoryCode?: string
+  categoryName?: string
   specification?: string
+  sampleType?: string
+  defaultStd?: string
   targetCustomer: string
-  contactName: string
-  contactPhone: string
+  contactName?: string
+  contactPhone?: string
   priceText: string
+  price?: number
+  cycleDays?: number
+  supportCma?: boolean
+  supportCnas?: boolean
+  supportUrgent?: boolean
+  urgentExtraFee?: number
   description: string
+  coverUrl?: string
+  sort?: number
 }
 
 export interface CommunityArticleItem {

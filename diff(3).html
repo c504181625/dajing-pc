@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<title>API Diff Report</title>
+<style>
+  body { font-family: -apple-system, 'Segoe UI', sans-serif; max-width: 960px; margin: 40px auto; padding: 0 20px; color: #1a1a1a; }
+  h1 { border-bottom: 2px solid #333; padding-bottom: 8px; }
+  h2 { margin-top: 32px; color: #0366d6; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-right: 6px; }
+  .added { background: #d4edda; color: #155724; }
+  .removed { background: #f8d7da; color: #721c24; }
+  .modified { background: #fff3cd; color: #856404; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+  th { background: #f6f8fa; }
+  tr:hover { background: #f0f7ff; }
+  .method { font-weight: 700; text-transform: uppercase; }
+  .get { color: #28a745; } .post { color: #fd7e14; } .put { color: #007bff; } .delete { color: #dc3545; }
+  .summary { background: #f6f8fa; padding: 16px; border-radius: 8px; margin: 16px 0; }
+  .summary span { font-size: 24px; font-weight: 700; margin-right: 24px; }
+  code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
+</style></head><body>
+<h1>📋 API Diff Report</h1>
+<p>Generated: 2026-04-22 11:49:07 (UTC+8)</p>
+<div class="summary">
+  <span class="added">+11 endpoints</span>
+  <span class="removed">-0 endpoints</span>
+  <span class="modified">~12 modified</span>
+  <span class="added">+10 schemas</span>
+  <span class="modified">~5 schemas changed</span>
+</div>
+
+<h2>✅ New Endpoints (11)</h2>
+<table><tr><th>Method</th><th>Path</th><th>Summary</th></tr>
+<tr><td class="method post">POST</td><td><code>/api/base/institution/service</code></td><td>新建服务项目（机构方）</td></tr><tr><td class="method get">GET</td><td><code>/api/base/institution/service/my</code></td><td>我的服务列表（机构方）</td></tr><tr><td class="method get">GET</td><td><code>/api/base/institution/service/{id}</code></td><td>服务详情（公开）</td></tr><tr><td class="method put">PUT</td><td><code>/api/base/institution/service/{id}</code></td><td>编辑服务项目（机构方）</td></tr><tr><td class="method delete">DELETE</td><td><code>/api/base/institution/service/{id}</code></td><td>删除服务项目（机构方）</td></tr><tr><td class="method put">PUT</td><td><code>/api/base/institution/service/{id}/shelve</code></td><td>上架服务（机构方）</td></tr><tr><td class="method put">PUT</td><td><code>/api/base/institution/service/{id}/unshelve</code></td><td>下架服务（机构方）</td></tr><tr><td class="method get">GET</td><td><code>/api/base/institution/{institutionId}/service/list</code></td><td>机构服务列表（公开，仅上架）</td></tr><tr><td class="method get">GET</td><td><code>/api/base/news/list</code></td><td>首页资讯聚合（公开）</td></tr><tr><td class="method get">GET</td><td><code>/api/trade/order/prepare</code></td><td>下单预览（根据 SKU 获取机构+服务信息）</td></tr><tr><td class="method post">POST</td><td><code>/api/trade/order/sku</code></td><td>SKU 下单（选定机构服务直接下单）</td></tr>
+</table>
+
+
+
+<h2>⚠️ Modified Endpoints (12)</h2>
+<table><tr><th>Path</th><th>Changes</th></tr>
+<tr><td><code>/api/base/consultation/{id}</code></td><td><span class="badge modified">~ GET</span></td></tr><tr><td><code>/api/base/diagnosis/tool</code></td><td><span class="badge modified">~ POST</span></td></tr><tr><td><code>/api/base/diagnosis/tool/list</code></td><td><span class="badge modified">~ GET</span></td></tr><tr><td><code>/api/base/diagnosis/tool/{id}</code></td><td><span class="badge modified">~ GET, PUT</span></td></tr><tr><td><code>/api/base/inspection-item</code></td><td><span class="badge modified">~ POST</span></td></tr><tr><td><code>/api/base/inspection-item/list</code></td><td><span class="badge modified">~ GET</span></td></tr><tr><td><code>/api/base/inspection-item/{id}</code></td><td><span class="badge modified">~ GET, PUT, DELETE</span></td></tr><tr><td><code>/api/base/institution/list</code></td><td><span class="badge modified">~ GET</span></td></tr><tr><td><code>/api/base/knowledge/list</code></td><td><span class="badge modified">~ GET</span></td></tr><tr><td><code>/api/base/measurement-instrument/list</code></td><td><span class="badge modified">~ GET</span></td></tr><tr><td><code>/api/base/measurement/list</code></td><td><span class="badge modified">~ GET</span></td></tr><tr><td><code>/api/trade/order/admin/list</code></td><td><span class="badge modified">~ GET</span></td></tr>
+</table>
+
+<h2>📦 New Schemas (10)</h2>
+<table><tr><th>Schema</th><th>Properties</th></tr>
+<tr><td><code>base_InstitutionServiceItem</code></td><td>id, createTime, updateTime, isDeleted, institutionId, enterpriseId, inspectionItemId, serviceName, category, sampleType, defaultStd, price, cycleDays, supportCma, supportCnas, supportUrgent, urgentExtraFee, description, coverUrl, status, sort, viewCount, orderCount</td></tr><tr><td><code>base_NewsItemVO</code></td><td>id, type, tag, title, coverUrl, subtitle, publisherName, publishTime, viewCount</td></tr><tr><td><code>base_PageResultInstitutionServiceItem</code></td><td>total, pages, current, size, records</td></tr><tr><td><code>base_ResultInstitutionServiceItem</code></td><td>code, message, data, success</td></tr><tr><td><code>base_ResultMapStringListNewsItemVO</code></td><td>code, message, data, success</td></tr><tr><td><code>base_ResultPageResultInstitutionServiceItem</code></td><td>code, message, data, success</td></tr><tr><td><code>base_ServiceItemCreateDTO</code></td><td>serviceName, category, sampleType, defaultStd, price, cycleDays, supportCma, supportCnas, supportUrgent, urgentExtraFee, description, coverUrl, inspectionItemId, sort</td></tr><tr><td><code>trade_OrderPrepareVO</code></td><td>institutionId, institutionName, serviceItemId, serviceName, category, defaultStd, price, cycleDays, supportCma, supportCnas, supportUrgent, urgentExtraFee</td></tr><tr><td><code>trade_ResultOrderPrepareVO</code></td><td>code, message, data, success</td></tr><tr><td><code>trade_SkuOrderReqDTO</code></td><td>serviceItemId, quantity, shippingMethod, shippingAddressId, invoiceInfoId, serviceAgreementAgreed, ndaAgreed, orderRemark</td></tr>
+</table>
+
+<h2>🔧 Modified Schemas (5)</h2>
+<table><tr><th>Schema</th><th>Added Properties</th><th>Removed Properties</th></tr>
+<tr><td><code>base_Standard</code></td><td class="added">publisherName</td><td class="removed">-</td></tr><tr><td><code>base_Policy</code></td><td class="added">publisherName</td><td class="removed">-</td></tr><tr><td><code>base_Knowledge</code></td><td class="added">publisherName, articleType</td><td class="removed">-</td></tr><tr><td><code>base_Institution</code></td><td class="added">serviceCount</td><td class="removed">-</td></tr><tr><td><code>trade_OrderVO</code></td><td class="added">bidId, institutionUserId, cancelReason, buyerContactName, buyerContactPhone, buyerRegion, buyerAddress, payChannel, outTradeNo, escrowReleaseTime, offlinePaymentVoucher, offlinePaymentConfirmed, invoiceType, invoiceTitle, invoiceTaxNo, invoiceBankName, invoiceBankAccount, invoiceRegisterAddress, invoiceRegisterPhone, serviceAgreementAgreed, ndaAgreed, orderRemark, demandUserName, demandUserPhone, institutionUserName, institutionUserPhone, serviceItemId, serviceName, unitPrice, quantity, orderSource</td><td class="removed">-</td></tr>
+</table>
+
+</body></html>

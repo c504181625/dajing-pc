@@ -78,6 +78,17 @@ export const operatorRoutes: RouteRecordRaw = {
           },
         },
         {
+          path: 'service',
+          name: 'OperatorServiceManagement',
+          component: () => import('@/views/platform/service/index.vue'),
+          meta: {
+            title: '服务管理',
+            accountTypes: operatorAccountTypes,
+            permissions: [PERMISSION_CODE.operatorServiceView],
+            menuCode: MENU_CODE.operatorService,
+          },
+        },
+        {
           path: 'demand',
           name: 'OperatorDemandManagement',
           component: () => import('@/views/platform/demand/index.vue'),
